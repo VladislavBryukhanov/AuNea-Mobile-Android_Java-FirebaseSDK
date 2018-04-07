@@ -1,0 +1,42 @@
+{
+  "project_info": {
+    "project_number": "764475212052",
+    "firebase_url": "https://messager-d15a0.firebaseio.com",
+    "project_id": "messager-d15a0",
+    "storage_bucket": "messager-d15a0.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:764475212052:android:8b9acb94a9ed8669",
+        "android_client_info": {
+          "package_name": "com.example.nameless.autoupdating"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "764475212052-u3p2vp3s3mppi8tklli3nu24edkg0s8u.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBifl1ocKAG_GFBwdg1-zLJ-aS3mYtCII8"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
