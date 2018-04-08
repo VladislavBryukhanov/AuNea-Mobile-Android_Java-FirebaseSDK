@@ -43,11 +43,14 @@ public class UserList extends AppCompatActivity {
         database = FirebaseDatabase.getInstance();
         myRef = database.getReference("Users");
 
-        myRef.addValueEventListener(new ValueEventListener() {
+        myRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 for(DataSnapshot user : dataSnapshot.getChildren()) {
-                    users.add(user.getValue(User.class));
+                    User newUserItem = user.getValue(User.class);
+                    if (!newUserItem.getLogin().equals(MainActivity.myAcc.getLogin())) {
+                        users.add(newUserItem);
+                    }
                 }
                 adapter.notifyDataSetChanged();
             }

@@ -33,6 +33,7 @@ public class Chat extends AppCompatActivity {
 
     private ArrayList<Message> messages;
     private User to;
+    private String tableName;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,40 +51,68 @@ public class Chat extends AppCompatActivity {
         lvMessages.setAdapter(adapter);
 
         database = FirebaseDatabase.getInstance();
-//        myRef = database.getReference("Messages").child(
-//                MainActivity.myAcc.getLogin() +  "+" + to.getLogin());
-        Query dialogName = database.getReference("Messages")
-                .startAt(MainActivity.myAcc.getLogin())
-                .endAt(MainActivity.myAcc.getLogin() +  "\uf8ff");
-        myRef = dialogName.getRef();
+        myRef = database.getReference("Messages");
 
-        myRef.addChildEventListener(new ChildEventListener() {
+//todo с помощью запроса получить название таблицы, которае содержит подстроку - логин нашего профиля, вместо поиска через листенер
+//todo time to live for messages
+//todo paging
+//todo authorise, cookie, security for dialogs
+//todo оптимизация алгоритма выборки, разобраться какой расход трафика при выборке, что такое датаснэпшот, является ли он полностью готовым пришедшим с сервера пакетом данных или делает динамические запросы на выборку
+//todo сохранение состояниея при повороте экрана
+//todo каскадное удаление
+//        Query dialogName = database.getReference("Messages")//.child(MainActivity.myAcc.getLogin() +  "+" + to.getLogin())
+//                .orderByKey()
+//                .startAt(MainActivity.myAcc.getLogin())
+//                .endAt(MainActivity.myAcc.getLogin() +  "\uf8ff");
+//        myRef = dialogName.getRef();
+//        Toast.makeText(this, myRef.getKey(), Toast.LENGTH_SHORT).show();
+
+        myRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
-            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-                messages.add(dataSnapshot.getValue(Message.class));
-                adapter.notifyDataSetChanged();
-            }
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                tableName = to.getLogin() +  "+" + MainActivity.myAcc.getLogin();
+                if (dataSnapshot.hasChild(tableName)) {
+                    myRef = database.getReference("Messages").child(tableName);
+                } else {
+                    tableName = MainActivity.myAcc.getLogin() +  "+" + to.getLogin();
+                    myRef = database.getReference("Messages").child(tableName);
+                }
 
-            @Override
-            public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+                myRef.addChildEventListener(new ChildEventListener() {
+                    @Override
+                    public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+                        messages.add(dataSnapshot.getValue(Message.class));
+                        adapter.notifyDataSetChanged();
+                    }
 
-            }
+                    @Override
+                    public void onChildChanged(DataSnapshot dataSnapshot, String s) {
 
-            @Override
-            public void onChildRemoved(DataSnapshot dataSnapshot) {
+                    }
 
-            }
+                    @Override
+                    public void onChildRemoved(DataSnapshot dataSnapshot) {
 
-            @Override
-            public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+                    }
+
+                    @Override
+                    public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+
+                    }
+                });
 
             }
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
-
             }
         });
+
 
 //        myRef.addListenerForSingleValueEvent(new ValueEventListener() {
 //            @Override
