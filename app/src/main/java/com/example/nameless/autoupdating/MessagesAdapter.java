@@ -9,8 +9,11 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Filter;
 import android.widget.Filterable;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 
 /**
@@ -36,9 +39,45 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
         if(filteredMessageList.size() > 0) {
             LayoutInflater li = (LayoutInflater)ma.getSystemService( Context.LAYOUT_INFLATER_SERVICE );
             convertView = li.inflate(R.layout.message_item, parent, false);
-            String sender = filteredMessageList.get(position).getWho();
-            ((TextView)convertView.findViewById(R.id.tvSender)).setText(sender);
-            ((TextView)convertView.findViewById(R.id.tvContent)).setText(filteredMessageList.get(position).getContent());
+
+            if((filteredMessageList.get(position).getWho())
+                    .equals(Authentification.myAcc.getLogin())) {
+                (convertView.findViewById(R.id.content))
+                        .setBackgroundResource(R.drawable.in_message_bg);
+
+                RelativeLayout.LayoutParams layoutParams =
+                        (RelativeLayout.LayoutParams) convertView.findViewById(
+                                R.id.content).getLayoutParams();
+                layoutParams.addRule(RelativeLayout.ALIGN_PARENT_LEFT, 0);
+                layoutParams.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+
+                layoutParams = (RelativeLayout.LayoutParams) convertView.findViewById(
+                                R.id.tvDate).getLayoutParams();
+                layoutParams.addRule(RelativeLayout.LEFT_OF, R.id.content);
+
+            } else {
+                (convertView.findViewById(R.id.content))
+                        .setBackgroundResource(R.drawable.out_message_bg);
+
+                RelativeLayout.LayoutParams layoutParams =
+                        (RelativeLayout.LayoutParams) convertView.findViewById(
+                                R.id.content).getLayoutParams();
+
+                layoutParams.addRule(RelativeLayout.ALIGN_PARENT_RIGHT, 0);
+                layoutParams.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
+
+                layoutParams = (RelativeLayout.LayoutParams) convertView.findViewById(
+                        R.id.tvDate).getLayoutParams();
+                layoutParams.addRule(RelativeLayout.RIGHT_OF, R.id.content);
+            }
+
+            ((TextView)convertView.findViewById(R.id.tvContent))
+                    .setText(filteredMessageList.get(position).getContent());
+
+            DateFormat dateFormat = (new SimpleDateFormat("HH:mm:ss \n dd MMM"));
+            ((TextView)convertView.findViewById(R.id.tvDate))
+                    .setText(dateFormat.format(filteredMessageList
+                            .get(position).getDateOfSend()));
         }
         return convertView;
     }

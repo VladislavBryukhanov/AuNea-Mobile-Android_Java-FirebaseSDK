@@ -4,9 +4,9 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/darkTheme"
+    android:background="@drawable/auth_gradient"
     android:orientation="vertical"
-    tools:context="com.example.nameless.autoupdating.MainActivity">
+    tools:context="com.example.nameless.autoupdating.Authentification">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -55,7 +55,7 @@
             android:id="@+id/btnSignIn"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="#00726a"
+            android:background="#5098e4"
             android:text="Sign in" />
 
     </LinearLayout>

@@ -2,6 +2,7 @@ package com.example.nameless.autoupdating;
 
 import android.app.Notification;
 import android.app.NotificationManager;
+import android.net.Uri;
 
 import com.google.firebase.messaging.RemoteMessage;
 
@@ -14,8 +15,10 @@ public class FirebaseMessagingService extends com.google.firebase.messaging.Fire
     public void onMessageReceived(RemoteMessage remoteMessage) {
         NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         Notification notification = new Notification.Builder(getApplicationContext())
+                        .setSound(Uri.parse("android.resource://" + this.getApplicationContext()
+                        .getPackageName() + "/" + R.raw.notify))
                         .setSmallIcon(android.R.mipmap.sym_def_app_icon)
-                        .setContentTitle("Content")
+                        .setContentTitle(remoteMessage.getNotification().getTitle())
                         .setContentText(remoteMessage.getNotification().getBody()).build();
         notificationManager.notify(1, notification);
 //

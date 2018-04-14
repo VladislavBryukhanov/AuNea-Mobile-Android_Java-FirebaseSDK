@@ -24,7 +24,7 @@ import java.net.NetworkInterface;
 import java.util.Collections;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity {
+public class Authentification extends AppCompatActivity {
 
     private EditText etLogin, etPassword;
     private Button btnSignIn;
@@ -41,7 +41,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_auth);
 
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
@@ -73,11 +73,16 @@ public class MainActivity extends AppCompatActivity {
                 myAcc = new User(String.valueOf(etLogin.getText()),
                         String.valueOf(etPassword.getText()));
                 myRef = database.getReference("Users");
-                myRef.child(myAcc.getLogin()).setValue(myAcc);
+
+                if (myAcc.getLogin().trim().length() > 0) {
+                    myRef.child(myAcc.getLogin()).setValue(myAcc);
+                } else {
+                    isAccessGranted = false;
+                }
 
 
                 if (isAccessGranted) {
-                    Intent intent = new Intent(MainActivity.this, UserList.class);
+                    Intent intent = new Intent(Authentification.this, UserList.class);
                     startActivity(intent);
                 }
             }
@@ -102,10 +107,10 @@ public class MainActivity extends AppCompatActivity {
                         lastVersion =  dataSnapshot.child("Ver").getValue().toString();
 
                         if (Double.parseDouble(lastVersion) > Double.parseDouble(myVersion)) {
-                            Updating update = new Updating(MainActivity.this);
+                            Updating update = new Updating(Authentification.this);
                             update.startUpdating();
                         } else {
-                            Toast.makeText(MainActivity.this, "You have latest version", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(Authentification.this, "You have latest version", Toast.LENGTH_SHORT).show();
                         }
                     }
 
@@ -116,7 +121,7 @@ public class MainActivity extends AppCompatActivity {
                 break;
             }
             case R.id.mGetVer: {
-                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                AlertDialog.Builder builder = new AlertDialog.Builder(Authentification.this);
                 builder.setTitle("Current version");
                 builder.setMessage("Application's version: " + myVersion);
                 builder.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
@@ -160,5 +165,16 @@ public class MainActivity extends AppCompatActivity {
         } catch (Exception ex) {
         }
         return "02:00:00:00:00:00";
+    }
+    @Override
+    protected void onStart() {
+        stopService(new Intent(getApplicationContext(), NotifyService.class));
+        super.onStart();
+    }
+
+    @Override
+    protected void onDestroy() { //пока нет логаута и автоматического входа по кукам
+        stopService(new Intent(getApplicationContext(), NotifyService.class));
+        super.onDestroy();
     }
 }

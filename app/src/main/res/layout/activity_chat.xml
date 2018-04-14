@@ -20,11 +20,23 @@
         android:id="@+id/lvMessages"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_weight="1">
+        android:layout_weight="1"
+        android:divider="@null">
 
     </ListView>
 
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="2dp"
+        android:background="#dfdfdf"
+        android:layout_marginBottom="0dp"
+        android:layout_marginTop="0dp"
+        app:layout_constraintBottom_toTopOf="@+id/llMsgBox"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"/>
+
     <LinearLayout
+        android:id="@+id/llMsgBox"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal">
@@ -35,14 +47,43 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:ems="10"
-            android:inputType="textPersonName" />
+            android:inputType="textMultiLine"
+            android:layout_margin="12dp"
+            android:hint="Enter message"
+            android:background="@android:color/transparent"
+            android:maxLines="6"/>
 
-        <Button
-            android:id="@+id/btnSend"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+        <ImageButton
+            android:id="@+id/btnAffixFile"
+            android:layout_width="28dp"
+            android:layout_height="31dp"
             android:layout_weight="1"
-            android:text="Send" />
+            android:background="@android:color/transparent"
+            android:gravity="center"
+            android:scaleType="fitCenter"
+            android:layout_margin="8dp"
+            app:srcCompat="@drawable/clip" />
+
+        <ImageButton
+            android:id="@+id/btnSend"
+            android:layout_width="28dp"
+            android:layout_height="42dp"
+            android:layout_weight="1"
+            android:background="@android:color/transparent"
+            android:gravity="center"
+            android:scaleType="fitCenter"
+            app:srcCompat="@drawable/send"
+            android:visibility="gone"/>
+
+
+        <!--<Button-->
+            <!--android:id="@+id/btnSend"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:layout_weight="1"-->
+            <!--android:text="SEND"-->
+            <!--android:gravity="center"-->
+            <!--android:background="?attr/selectableItemBackground"/>-->
     </LinearLayout>
 
 </LinearLayout>

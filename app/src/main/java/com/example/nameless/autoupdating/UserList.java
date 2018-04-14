@@ -9,7 +9,6 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.ListView;
-import android.widget.Toast;
 
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -48,7 +47,7 @@ public class UserList extends AppCompatActivity {
             public void onDataChange(DataSnapshot dataSnapshot) {
                 for(DataSnapshot user : dataSnapshot.getChildren()) {
                     User newUserItem = user.getValue(User.class);
-                    if (!newUserItem.getLogin().equals(MainActivity.myAcc.getLogin())) {
+                    if (!newUserItem.getLogin().equals(Authentification.myAcc.getLogin())) {
                         users.add(newUserItem);
                     }
                 }
@@ -64,8 +63,8 @@ public class UserList extends AppCompatActivity {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Intent intent = new Intent(getApplicationContext(), Chat.class);
-                User to = users.get(position);
-                intent.putExtra("to", to);
+                String toUser = users.get(position).getLogin();
+                intent.putExtra("to", toUser);
                 startActivity(intent);
             }
         });
@@ -86,5 +85,24 @@ public class UserList extends AppCompatActivity {
 
             }
         });
+    }
+
+    @Override
+    protected void onStop() {
+//        startService(new Intent(getApplicationContext(), NotifyService.class));
+        super.onStop();
+    }
+
+    @Override
+    protected void onStart() {
+//        stopService(new Intent(getApplicationContext(), NotifyService.class));
+        super.onStart();
+    }
+
+
+    @Override
+    protected void onDestroy() {
+//        startService(new Intent(getApplicationContext(), NotifyService.class));
+        super.onDestroy();
     }
 }

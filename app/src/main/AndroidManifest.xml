@@ -12,7 +12,8 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".MainActivity">
+        <activity android:name=".Authentification"
+            android:label="Authentification">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -25,6 +26,7 @@
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
+        <service android:name=".NotifyService"/>
 
         <provider
             android:name="android.support.v4.content.FileProvider"
@@ -36,8 +38,9 @@
                 android:resource="@xml/provider_paths" />
         </provider>
 
-        <activity android:name=".UserList" />
-        <activity android:name=".Chat"></activity>
+        <activity android:name=".UserList"
+            android:label="List of users"/>
+        <activity android:name=".Chat"/>
     </application>
 
 </manifest>
