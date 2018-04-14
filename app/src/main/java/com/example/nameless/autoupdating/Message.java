@@ -8,13 +8,15 @@ import java.util.Date;
 
 public class Message {
     private String content;
+    private String fileUrl;
     private Date dateOfSend;
     private String who;
     private String to;
 
     public Message(){}
-    public Message(String content, Date dateOfSend, String who, String to) {
+    public Message(String content, String fileUrl, Date dateOfSend, String who, String to) {
         this.content = content;
+        this.fileUrl = fileUrl;
         this.dateOfSend = dateOfSend;
         this.who = who;
         this.to = to;
@@ -26,6 +28,14 @@ public class Message {
 
     public void setContent(String content) {
         this.content = content;
+    }
+
+    public String getFileUrl() {
+        return fileUrl;
+    }
+
+    public void setFileUrl(String fileUrl) {
+        this.fileUrl = fileUrl;
     }
 
     public Date getDateOfSend() {

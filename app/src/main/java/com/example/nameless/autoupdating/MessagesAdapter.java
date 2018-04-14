@@ -9,6 +9,7 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Filter;
 import android.widget.Filterable;
+import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
@@ -55,6 +56,12 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
                                 R.id.tvDate).getLayoutParams();
                 layoutParams.addRule(RelativeLayout.LEFT_OF, R.id.content);
 
+                if(filteredMessageList.get(position).getFileUrl() != null) {
+                    layoutParams = (RelativeLayout.LayoutParams) convertView.findViewById(
+                                    R.id.ivImage).getLayoutParams();
+                    layoutParams.addRule(RelativeLayout.ALIGN_PARENT_LEFT, 0);
+                    layoutParams.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+                }
             } else {
                 (convertView.findViewById(R.id.content))
                         .setBackgroundResource(R.drawable.out_message_bg);
@@ -69,10 +76,22 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
                 layoutParams = (RelativeLayout.LayoutParams) convertView.findViewById(
                         R.id.tvDate).getLayoutParams();
                 layoutParams.addRule(RelativeLayout.RIGHT_OF, R.id.content);
+
+                if(filteredMessageList.get(position).getFileUrl() != null) {
+                    layoutParams = (RelativeLayout.LayoutParams) convertView.findViewById(
+                            R.id.ivImage).getLayoutParams();
+                    layoutParams.addRule(RelativeLayout.ALIGN_PARENT_RIGHT, 0);
+                    layoutParams.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
+                }
             }
 
+//            if(filteredMessageList.get(position).getFileUrl() != null) {
+//                ((ImageView)convertView.findViewById(R.id.ivImage))
+//                        .setImageURI(filteredMessageList.get(position).getFileUrl());
+//            }
+
             ((TextView)convertView.findViewById(R.id.tvContent))
-                    .setText(filteredMessageList.get(position).getContent());
+                .setText(filteredMessageList.get(position).getContent());
 
             DateFormat dateFormat = (new SimpleDateFormat("HH:mm:ss \n dd MMM"));
             ((TextView)convertView.findViewById(R.id.tvDate))

@@ -79,7 +79,9 @@ public class Chat extends AppCompatActivity {
         myRef = database.getReference("Messages");
 
         setTitle(toUser);
-        setListenerForScrollWhenKeyboarOpened();
+//        setListenerForScrollWhenKeyboarOpened();
+        lvMessages.setTranscriptMode(ListView.TRANSCRIPT_MODE_NORMAL);
+        lvMessages.setStackFromBottom(false);
 //todo с помощью запроса получить название таблицы, которае содержит подстроку - логин нашего профиля, вместо поиска через листенер
 //todo time to live for messages
 //todo paging/cache
@@ -91,59 +93,11 @@ public class Chat extends AppCompatActivity {
 //todo add message notify
 // todo last online
 //todo media sending
-//        Query dialogName = database.getReference("Messages")//.child(Authentification.myAcc.getLogin() +  "+" + to.getLogin())
-//                .orderByKey()
-//                .startAt(Authentification.myAcc.getLogin())
-//                .endAt(Authentification.myAcc.getLogin() +  "\uf8ff");
-//        myRef = dialogName.getRef();
-//        Toast.makeText(this, myRef.getKey(), Toast.LENGTH_SHORT).show();
+
 
         myRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-//                tableName = to.getLogin() +  "+" + Authentification.myAcc.getLogin();
-//                if (dataSnapshot.hasChild(tableName)) {
-//                    myRef = database.getReference("Messages").child(tableName);
-//                } else {
-//                    tableName = Authentification.myAcc.getLogin() +  "+" + to.getLogin();
-//                    myRef = database.getReference("Messages").child(tableName);
-//                }
-
-//                myRef.orderByChild("listener1").equalTo(Authentification.myAcc.getLogin())
-//                myRef.orderByChild("listener2").equalTo(Authentification.myAcc.getLogin());
-
-               /* Query chatRoomsQuery = myRef.orderByChild("listener1").equalTo(Authentification.myAcc.getLogin());
-                chatRoomsQuery.addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(DataSnapshot dataSnapshot) {
-                        if (dataSnapshot.exists()) {
-                            for(DataSnapshot data : dataSnapshot.getChildren()) {
-                                myRef = myRef.child(data.getKey()).child("content");
-                            }
-                        } else {
-                            Query chatRoomsQuery = myRef.orderByChild("listener2").equalTo(Authentification.myAcc.getLogin());
-                            chatRoomsQuery.addListenerForSingleValueEvent(new ValueEventListener() {
-                                @Override
-                                public void onDataChange(DataSnapshot dataSnapshot) {
-                                    if (dataSnapshot.exists()) {
-                                        for(DataSnapshot data : dataSnapshot.getChildren()) {
-                                            myRef = myRef.child(data.getKey()).child("content");
-                                        }
-                                    } else {
-
-                                        myRef = myRef.push();
-                                        myRef.child("listener1").setValue(Authentification.myAcc.getLogin());
-                                        myRef.child("listener2").setValue(to.getLogin());
-                                        myRef = myRef.child("content");
-                                    }
-                                }
-
-                                @Override
-                                public void onCancelled(DatabaseError databaseError) {
-
-                                }
-                            });
-                        }*/
 
                         if (dataSnapshot.getChildrenCount() == 0) {
                             myRef = myRef.push();
@@ -174,7 +128,7 @@ public class Chat extends AppCompatActivity {
                             public void onChildAdded(DataSnapshot dataSnapshot, String s) {
                                 messages.add(dataSnapshot.getValue(Message.class));
                                 adapter.notifyDataSetChanged();
-                                lvMessages.setSelection(adapter.getCount() - 1);
+//                                lvMessages.setSelection(adapter.getCount() - 1);
                             }
 
                             @Override
@@ -205,42 +159,6 @@ public class Chat extends AppCompatActivity {
 
                     }
                 });
-
-/*                myRef.addChildEventListener(new ChildEventListener() {
-                    @Override
-                    public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-                        messages.add(dataSnapshot.getValue(Message.class));
-                        adapter.notifyDataSetChanged();
-                        lvMessages.setSelection(adapter.getCount() - 1);
-                    }
-
-                    @Override
-                    public void onChildChanged(DataSnapshot dataSnapshot, String s) {
-
-                    }
-
-                    @Override
-                    public void onChildRemoved(DataSnapshot dataSnapshot) {
-
-                    }
-
-                    @Override
-                    public void onChildMoved(DataSnapshot dataSnapshot, String s) {
-
-                    }
-
-                    @Override
-                    public void onCancelled(DatabaseError databaseError) {
-
-                    }
-                });*/
-
-//            }
-
-//            @Override
-//            public void onCancelled(DatabaseError databaseError) {
-//            }
-//        });
 
         etMessage.addTextChangedListener(new TextWatcher() {
             @Override
@@ -278,7 +196,7 @@ public class Chat extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 if (!String.valueOf(etMessage.getText()).equals("")) {
-                    Message newMsg = new Message(String.valueOf(etMessage.getText()),
+                    Message newMsg = new Message(String.valueOf(etMessage.getText()), null,
                             new Date(), Authentification.myAcc.getLogin(), toUser);
                     myRef.push().setValue(newMsg);
                     etMessage.setText("");
@@ -306,7 +224,7 @@ public class Chat extends AppCompatActivity {
     }
 
     //фокус в конец диалога при открытии клавиатуры
-    public void setListenerForScrollWhenKeyboarOpened() {
+ /*   public void setListenerForScrollWhenKeyboarOpened() {
         final View activityRootView = getWindow().getDecorView().findViewById(android.R.id.content);
         activityRootView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
             @Override
@@ -320,7 +238,7 @@ public class Chat extends AppCompatActivity {
                 }
             }
         });
-    }
+    }*/
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -340,6 +258,10 @@ public class Chat extends AppCompatActivity {
                 public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                     Toast.makeText(Chat.this, taskSnapshot.
                             getDownloadUrl().toString(), Toast.LENGTH_SHORT).show();
+
+                    Message newMsg = new Message(String.valueOf(etMessage.getText()), taskSnapshot.getDownloadUrl().toString(),
+                            new Date(), Authentification.myAcc.getLogin(), toUser);
+                    myRef.push().setValue(newMsg);
                 }
             });
 

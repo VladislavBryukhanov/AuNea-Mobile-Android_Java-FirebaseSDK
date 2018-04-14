@@ -31,18 +31,24 @@
         android:id="@+id/content"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:background="@drawable/in_message_bg"
+        android:paddingLeft="10dp"
+        android:paddingBottom="10dp"
+        android:orientation="vertical">
 
-            android:background="@drawable/in_message_bg"
-            android:paddingLeft="10dp"
-            android:paddingBottom="10dp"
-            android:orientation="vertical">
-            <TextView
-                android:id="@+id/tvContent"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="@android:color/black"
-                android:maxWidth="240dp" />
-        </LinearLayout>
+        <TextView
+            android:id="@+id/tvContent"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@android:color/black"
+            android:maxWidth="240dp" />
+
+        <ImageView
+            android:id="@+id/ivImage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="gone"/>
+    </LinearLayout>
 
     <TextView
         android:id="@+id/tvDate"
