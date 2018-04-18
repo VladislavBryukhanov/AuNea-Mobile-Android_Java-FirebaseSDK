@@ -3,7 +3,9 @@ package com.example.nameless.autoupdating;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.res.Configuration;
+import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
@@ -37,6 +39,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
 
@@ -81,7 +84,7 @@ public class Chat extends AppCompatActivity {
         setTitle(toUser);
 //        setListenerForScrollWhenKeyboarOpened();
         lvMessages.setTranscriptMode(ListView.TRANSCRIPT_MODE_NORMAL);
-        lvMessages.setStackFromBottom(false);
+        lvMessages.setStackFromBottom(true); // if dialog started first time need false
 //todo с помощью запроса получить название таблицы, которае содержит подстроку - логин нашего профиля, вместо поиска через листенер
 //todo time to live for messages
 //todo paging/cache
@@ -160,7 +163,7 @@ public class Chat extends AppCompatActivity {
                     }
                 });
 
-        etMessage.addTextChangedListener(new TextWatcher() {
+        /*etMessage.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
 
@@ -181,7 +184,7 @@ public class Chat extends AppCompatActivity {
                     btnSend.setVisibility(View.GONE);
                 }
             }
-        });
+        });*/
 
         btnAffixFile.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -249,19 +252,23 @@ public class Chat extends AppCompatActivity {
                     "gs://messager-d15a0.appspot.com/");
 
             Uri file = data.getData();
+            String extension = getContentResolver().getType(file);
+
+            extension = "." + extension.split("/")[1];
             StorageReference riversRef = gsReference.child(Authentification.myAcc
-                    .getLogin() + "/" + file.getLastPathSegment());
+                    .getLogin() + "/" + java.util.UUID.randomUUID() + extension); //file.getLastPathSegment()
             UploadTask uploadTask = riversRef.putFile(file);
 
             uploadTask.addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                 @Override
                 public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                    Toast.makeText(Chat.this, taskSnapshot.
-                            getDownloadUrl().toString(), Toast.LENGTH_SHORT).show();
+//                    Toast.makeText(Chat.this, taskSnapshot.
+//                            getDownloadUrl().toString(), Toast.LENGTH_SHORT).show();
 
                     Message newMsg = new Message(String.valueOf(etMessage.getText()), taskSnapshot.getDownloadUrl().toString(),
                             new Date(), Authentification.myAcc.getLogin(), toUser);
                     myRef.push().setValue(newMsg);
+                    etMessage.setText("");
                 }
             });
 
@@ -273,4 +280,8 @@ public class Chat extends AppCompatActivity {
             });
         }
     }
+
+//    public String getRealPathFromURI (Uri uri) {
+//        Cursor cursor = getApplicationContext().getContentResolver().query(uri, {MediaStore.Images.Media.DATA}, null, null, null);
+//    }
 }

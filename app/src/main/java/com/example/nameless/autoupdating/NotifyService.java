@@ -5,6 +5,7 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
@@ -18,6 +19,10 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Created by nameless on 11.04.18.
  */
@@ -26,7 +31,7 @@ public class NotifyService extends Service {
 
     private FirebaseDatabase database;
     private DatabaseReference myRef;
-    private boolean timeOut = true; //первым childAdded всегда будет последнее отправленное нам сообщение во время диалога, пропускаем его
+    private Map<String, Boolean> timeOut; //первым childAdded всегда будет последнее отправленное нам сообщение во время диалога, пропускаем его
 
     private ChildEventListener newMsgListener;
     private Query refToListener;
@@ -39,7 +44,7 @@ public class NotifyService extends Service {
 
     @Override
     public void onCreate() {
-
+        timeOut = new HashMap<>();
         database = FirebaseDatabase.getInstance();
         myRef = database.getReference("Messages");
 
@@ -47,8 +52,17 @@ public class NotifyService extends Service {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 for (DataSnapshot dlg : dataSnapshot.getChildren()) {
-                    if ((dlg.child("listener1").getValue()).equals(Authentification.myAcc.getLogin())
-                            || (dlg.child("listener2").getValue()).equals(Authentification.myAcc.getLogin())) {
+                    String myListener =   String.valueOf(dlg.child("listener1").getValue());
+                    String foreignListener =   String.valueOf(dlg.child("listener2").getValue());
+
+                    if (myListener.equals(Authentification.myAcc.getLogin())
+                            || foreignListener.equals(Authentification.myAcc.getLogin())) {
+
+                        if (!myListener.equals(Authentification.myAcc.getLogin()) ) {
+                            foreignListener = myListener;
+                        }
+
+                        final String foreignListenerTmp = foreignListener;
 
                         refToListener = myRef.child(dlg.getKey()).child("content").limitToLast(1);
 //                        myRef.child(dlg.getKey()).child("content").limitToLast(1).addChildEventListener(newMsgListener = new ChildEventListener() {
@@ -58,8 +72,8 @@ public class NotifyService extends Service {
 
                                 Message newMsg = dataSnapshot.getValue(Message.class);
                                 if ((newMsg.getTo()).equals((Authentification.myAcc.getLogin()))) {
-                                    if(timeOut) {
-                                        timeOut = false;
+                                    if(!timeOut.get(foreignListenerTmp)) {
+                                        timeOut.put(foreignListenerTmp, true);
                                     } else {
                                         sendNotify(newMsg);
                                     }
@@ -88,6 +102,7 @@ public class NotifyService extends Service {
                         });
 //                        refToListener.removeEventListener(newMsgListener);
 
+                        timeOut.put(foreignListener, false);
                     }
                 }
             }
@@ -129,6 +144,7 @@ public class NotifyService extends Service {
                 .setContentTitle(msg.getWho())
                 .setContentText(msg.getContent())
                 .setContentIntent(intent)
+                .setSmallIcon(R.drawable.send2)
                 .setSound(Uri.parse("android.resource://" + this.getApplicationContext()
                         .getPackageName() + "/" + R.raw.notify)).build();
         notification.flags |= Notification.FLAG_AUTO_CANCEL;

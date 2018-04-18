@@ -41,18 +41,6 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal">
 
-        <EditText
-            android:id="@+id/etMessage"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:ems="10"
-            android:inputType="textMultiLine"
-            android:layout_margin="12dp"
-            android:hint="Enter message"
-            android:background="@android:color/transparent"
-            android:maxLines="6"/>
-
         <ImageButton
             android:id="@+id/btnAffixFile"
             android:layout_width="28dp"
@@ -61,19 +49,42 @@
             android:background="@android:color/transparent"
             android:gravity="center"
             android:scaleType="fitCenter"
-            android:layout_margin="8dp"
+            android:layout_margin="6dp"
             app:srcCompat="@drawable/clip" />
+
+        <EditText
+            android:id="@+id/etMessage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:ems="10"
+            android:inputType="textMultiLine"
+            android:layout_margin="8dp"
+            android:hint="Enter message"
+            android:background="@android:color/transparent"
+            android:maxLines="6"/>
 
         <ImageButton
             android:id="@+id/btnSend"
-            android:layout_width="28dp"
-            android:layout_height="42dp"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
             android:layout_weight="1"
             android:background="@android:color/transparent"
             android:gravity="center"
             android:scaleType="fitCenter"
-            app:srcCompat="@drawable/send"
-            android:visibility="gone"/>
+            android:layout_margin="5dp"
+            android:layout_marginRight="10dp"
+            app:srcCompat="@drawable/send" />
+
+        <!--<ImageButton-->
+            <!--android:id="@+id/btnSend"-->
+            <!--android:layout_width="28dp"-->
+            <!--android:layout_height="42dp"-->
+            <!--android:layout_weight="1"-->
+            <!--android:background="@android:color/transparent"-->
+            <!--android:gravity="center"-->
+            <!--android:scaleType="fitCenter"-->
+            <!--app:srcCompat="@drawable/send2" />-->
 
 
         <!--<Button-->
