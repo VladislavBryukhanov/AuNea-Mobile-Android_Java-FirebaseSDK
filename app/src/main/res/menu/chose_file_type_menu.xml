@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:title="Use camera"
+        android:id="@+id/mCamera"></item>
+    <item android:title="Load from gallery"
+        android:id="@+id/mGallery"></item>
+    <item android:title="Load from device"
+        android:id="@+id/mFileSystem"></item>
+</menu>

@@ -1,24 +1,27 @@
 package com.example.nameless.autoupdating;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
-import android.content.res.Configuration;
-import android.database.Cursor;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.net.Uri;
+import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
+import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.text.Editable;
-import android.text.TextWatcher;
+import android.view.Gravity;
+import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewTreeObserver;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ListView;
+import android.widget.PopupMenu;
+import android.widget.PopupWindow;
 import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnFailureListener;
@@ -28,24 +31,25 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
-import com.google.firebase.storage.FileDownloadTask;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Chat extends AppCompatActivity {
 
-    private final int REQUEST_GALLERY = 100;
+//    private static final int REQUEST_GALLERY = 100;
+    private static final int PICKFILE_RESULT_CODE = 200;
+    private static final int CAMERA_REQUEST = 10;
 
     private ImageButton btnSend, btnAffixFile;
     private EditText etMessage;
@@ -75,8 +79,14 @@ public class Chat extends AppCompatActivity {
         messages = new ArrayList<>();
         Intent intent = getIntent();
         toUser = intent.getStringExtra("to");
-        adapter = new MessagesAdapter(this, messages);
-        lvMessages.setAdapter(adapter);
+
+//        lvMessages.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                registerForContextMenu(R.menu.message_context_menu);
+//            }
+//        });
+
 
         database = FirebaseDatabase.getInstance();
         myRef = database.getReference("Messages");
@@ -85,6 +95,8 @@ public class Chat extends AppCompatActivity {
 //        setListenerForScrollWhenKeyboarOpened();
         lvMessages.setTranscriptMode(ListView.TRANSCRIPT_MODE_NORMAL);
         lvMessages.setStackFromBottom(true); // if dialog started first time need false
+
+
 //todo с помощью запроса получить название таблицы, которае содержит подстроку - логин нашего профиля, вместо поиска через листенер
 //todo time to live for messages
 //todo paging/cache
@@ -126,10 +138,13 @@ public class Chat extends AppCompatActivity {
                             }
                         }
 
+                        adapter = new MessagesAdapter(getApplicationContext(), messages, myRef);
+                        lvMessages.setAdapter(adapter);
+
                         myRef.addChildEventListener(new ChildEventListener() {
                             @Override
                             public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-                                messages.add(dataSnapshot.getValue(Message.class));
+                                messages.add(new Message(dataSnapshot.getKey(), dataSnapshot.getValue(Message.class)));
                                 adapter.notifyDataSetChanged();
 //                                lvMessages.setSelection(adapter.getCount() - 1);
                             }
@@ -189,20 +204,17 @@ public class Chat extends AppCompatActivity {
         btnAffixFile.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent();
-                intent.setType("image/*");
-                intent.setAction(Intent.ACTION_GET_CONTENT);
-                startActivityForResult(Intent.createChooser(intent, "Select Picture"), REQUEST_GALLERY);
+                showPopupWindow(v);
             }
         });
+
         btnSend.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (!String.valueOf(etMessage.getText()).equals("")) {
+                if (!(String.valueOf(etMessage.getText()).trim()).equals("")) {
                     Message newMsg = new Message(String.valueOf(etMessage.getText()), null,
-                            new Date(), Authentification.myAcc.getLogin(), toUser);
-                    myRef.push().setValue(newMsg);
-                    etMessage.setText("");
+                            new Date(), Authentification.myAcc.getLogin(), toUser, null);
+                    parseMessageContent(newMsg);
                 }
             }
         });
@@ -245,43 +257,177 @@ public class Chat extends AppCompatActivity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if(requestCode == REQUEST_GALLERY && resultCode == Activity.RESULT_OK) {
-
-            FirebaseStorage storage = FirebaseStorage.getInstance();
-            StorageReference gsReference = storage.getReferenceFromUrl(
-                    "gs://messager-d15a0.appspot.com/");
-
-            Uri file = data.getData();
-            String extension = getContentResolver().getType(file);
-
-            extension = "." + extension.split("/")[1];
-            StorageReference riversRef = gsReference.child(Authentification.myAcc
-                    .getLogin() + "/" + java.util.UUID.randomUUID() + extension); //file.getLastPathSegment()
-            UploadTask uploadTask = riversRef.putFile(file);
-
-            uploadTask.addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-                @Override
-                public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-//                    Toast.makeText(Chat.this, taskSnapshot.
-//                            getDownloadUrl().toString(), Toast.LENGTH_SHORT).show();
-
-                    Message newMsg = new Message(String.valueOf(etMessage.getText()), taskSnapshot.getDownloadUrl().toString(),
-                            new Date(), Authentification.myAcc.getLogin(), toUser);
-                    myRef.push().setValue(newMsg);
-                    etMessage.setText("");
+        if(resultCode == Activity.RESULT_OK) {
+            if(requestCode == PICKFILE_RESULT_CODE || requestCode == CAMERA_REQUEST) {
+                FirebaseStorage storage = FirebaseStorage.getInstance();
+                StorageReference gsReference = storage.getReferenceFromUrl(
+                        "gs://messager-d15a0.appspot.com/");
+                Uri file;
+                if(requestCode == CAMERA_REQUEST) {
+//                    file = data.getData();
+//                    ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+//                    ((Bitmap)data.getExtras().get("data")).compress(Bitmap.CompressFormat.PNG,
+//                            100, bytes);
+                    String path = MediaStore.Images.Media.insertImage(getApplicationContext()
+                            .getContentResolver(), (Bitmap)data.getExtras().get("data"),
+                            "Title", null);
+                    file = Uri.parse(path);
+                } else {
+                    file = data.getData();
                 }
-            });
+                String extension = getContentResolver().getType(file);
 
-            uploadTask.addOnFailureListener(new OnFailureListener() {
-                @Override
-                public void onFailure(@NonNull Exception e) {
-                    Toast.makeText(Chat.this, ":c", Toast.LENGTH_SHORT).show();
-                }
-            });
+                final String fileType = extension.split("/")[0];
+                extension = "." + extension.split("/")[1];
+                Toast.makeText(this, fileType, Toast.LENGTH_SHORT).show();
+                StorageReference riversRef = gsReference.child(Authentification.myAcc
+                        .getLogin() + "/" + java.util.UUID.randomUUID() + extension); //file.getLastPathSegment()
+                UploadTask uploadTask = riversRef.putFile(file);
+
+                uploadTask.addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                    @Override
+                    public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                        Message newMsg = new Message(String.valueOf(etMessage.getText()), taskSnapshot.getDownloadUrl().toString(),
+                                new Date(), Authentification.myAcc.getLogin(), toUser, fileType);
+                        parseMessageContent(newMsg);
+                    }
+                });
+
+                uploadTask.addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        Toast.makeText(Chat.this, ":c", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
         }
+
     }
 
 //    public String getRealPathFromURI (Uri uri) {
 //        Cursor cursor = getApplicationContext().getContentResolver().query(uri, {MediaStore.Images.Media.DATA}, null, null, null);
 //    }
+
+    public void showPopupWindow(View v) {
+//        PopupMenu popupMenu = new PopupMenu(this, v);
+//        popupMenu.inflate(R.menu.chose_file_type_menu);
+//        popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+//            @Override
+//            public boolean onMenuItemClick(MenuItem item) {
+//                switch(item.getItemId()) {
+//                    case R.id.mGallery: {
+//                        Intent intent = new Intent();
+//                        intent.setType("image/*");
+//                        intent.setAction(Intent.ACTION_GET_CONTENT);
+//                        startActivityForResult(Intent.createChooser(intent, "Select Picture"), PICKFILE_RESULT_CODE);
+//                        break;
+//                    }
+//                    case R.id.mCamera: {
+//                        Toast.makeText(Chat.this, "it is a bad idea, close it", Toast.LENGTH_LONG).show();
+//                        Intent i = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+//
+//                       /* String fileName = "IMG" +
+//                                new SimpleDateFormat("yyyMMdd_HHmmss").format(new Date());
+//                        File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+//
+//                        File photoFile = null;
+//                        try {
+//                            photoFile = File.createTempFile(fileName, ".png", storageDir);
+//                        } catch (IOException e) {
+//                            e.printStackTrace();
+//                        }
+//                        Uri photoUri = FileProvider.getUriForFile(getApplicationContext(),
+//                                getPackageName(), photoFile);
+//                        i.putExtra(MediaStore.EXTRA_OUTPUT, photoUri); // Uri.fromFile(out)*/
+//                        startActivityForResult(i, CAMERA_REQUEST);
+//                        break;
+//                    }
+//                    case R.id.mFileSystem: {
+//                        Intent intent = new Intent();
+//                        intent.setType("*/*");
+//                        intent.setAction(Intent.ACTION_GET_CONTENT);
+//                        startActivityForResult(intent, PICKFILE_RESULT_CODE);
+//                        break;
+//                    }
+//                }
+//                return true;
+//            }
+//        });
+//        popupMenu.show();
+
+        LayoutInflater layoutInflater
+                = (LayoutInflater)getApplicationContext()
+                .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        View popupView = layoutInflater.inflate(R.layout.choose_file_type, null);
+
+        final PopupWindow popupWindow = new PopupWindow(popupView, ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT, true);
+        popupWindow.showAtLocation(v, Gravity.CENTER, 0, 0);
+        popupView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                popupWindow.dismiss();
+            }
+        });
+        Button btnCamera = popupView.findViewById(R.id.btnCamera);
+        Button btnGallery = popupView.findViewById(R.id.btnGallery);
+        Button btnDevice = popupView.findViewById(R.id.btnDevice);
+        btnCamera.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+            Intent i = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                       /* String fileName = "IMG" +
+                                new SimpleDateFormat("yyyMMdd_HHmmss").format(new Date());
+                        File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+
+                        File photoFile = null;
+                        try {
+                            photoFile = File.createTempFile(fileName, ".png", storageDir);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                        Uri photoUri = FileProvider.getUriForFile(getApplicationContext(),
+                                getPackageName(), photoFile);
+                        i.putExtra(MediaStore.EXTRA_OUTPUT, photoUri); // Uri.fromFile(out)*/
+            startActivityForResult(i, CAMERA_REQUEST);
+            popupWindow.dismiss();
+            }
+        });
+        btnGallery.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+            Intent intent = new Intent();
+            intent.setType("image/*");
+            intent.setAction(Intent.ACTION_GET_CONTENT);
+            startActivityForResult(Intent.createChooser(intent, "Select Picture"), PICKFILE_RESULT_CODE);
+            popupWindow.dismiss();
+            }
+        });
+        btnDevice.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent();
+                intent.setType("*/*");
+                intent.setAction(Intent.ACTION_GET_CONTENT);
+                startActivityForResult(intent, PICKFILE_RESULT_CODE);
+                popupWindow.dismiss();
+            }
+        });
+    }
+
+    public void parseMessageContent(Message message) {
+        String msg = message.getContent();
+        Pattern urlPattern = Pattern.compile(
+                "((https?|ftp|gopher|telnet|file):((//)|(\\\\))+[\\w\\d" +
+                        ":#@%/;$()~_?\\+-=\\\\\\.&]*)",
+                Pattern.CASE_INSENSITIVE | Pattern.MULTILINE | Pattern.DOTALL);
+
+        Matcher matcher = urlPattern.matcher(msg);
+        if (matcher.find()) {
+            message.setFileType("Url");
+        }
+
+        myRef.push().setValue(message);
+        etMessage.setText("");
+    }
 }

@@ -7,19 +7,49 @@ import java.util.Date;
  */
 
 public class Message {
+
+    private String uid;
     private String content;
     private String fileUrl;
     private Date dateOfSend;
     private String who;
     private String to;
+    private String fileType;
 
     public Message(){}
-    public Message(String content, String fileUrl, Date dateOfSend, String who, String to) {
+    public Message(String content, String fileUrl, Date dateOfSend, String who, String to, String fileType) {
         this.content = content;
         this.fileUrl = fileUrl;
         this.dateOfSend = dateOfSend;
         this.who = who;
         this.to = to;
+        this.fileType = fileType;
+    }
+
+    public Message(String uid, Message msg) {
+        this.uid = uid;
+        this.content = msg.content;
+        this.fileUrl = msg.fileUrl;
+        this.dateOfSend = msg.dateOfSend;
+        this.who = msg.who;
+        this.to = msg.to;
+        this.fileType = msg.fileType;
+    }
+
+    public String getUid() {
+        return uid;
+    }
+
+    public void setUid(String uid) {
+        this.uid = uid;
+    }
+
+    public String getFileType() {
+        return fileType;
+    }
+
+    public void setFileType(String fileType) {
+        this.fileType = fileType;
     }
 
     public String getContent() {

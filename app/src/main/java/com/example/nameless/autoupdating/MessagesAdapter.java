@@ -1,5 +1,7 @@
 package com.example.nameless.autoupdating;
 
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -8,34 +10,31 @@ import android.graphics.Color;
 import android.graphics.Point;
 import android.net.Uri;
 import android.os.Environment;
+import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.view.Display;
+import android.view.Gravity;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.Filter;
 import android.widget.Filterable;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.PopupWindow;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.SuccessContinuation;
-import com.google.android.gms.tasks.Task;
+import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.storage.FileDownloadTask;
 import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageMetadata;
 import com.google.firebase.storage.StorageReference;
 
 import java.io.File;
-import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -51,18 +50,20 @@ import java.util.regex.Pattern;
 public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterable{
 
     private Context ma;
+    private DatabaseReference myRef;
     private ArrayList<Message> messages;
     private ArrayList<Message> filteredMessageList;
     private Map<String, Bitmap> imageCollection;
     private Map<String, Uri> uriForIntentCollection;
 
-    public MessagesAdapter(Context ma, ArrayList<Message> messages) {
+    public MessagesAdapter(Context ma, ArrayList<Message> messages, DatabaseReference myRef) {
         super(ma, 0, messages);
         this.ma = ma;
         this.messages = messages;
         this.filteredMessageList = messages;
         imageCollection = new HashMap<>();
         uriForIntentCollection = new HashMap<>();
+        this.myRef = myRef;
     }
 
     @NonNull
@@ -134,7 +135,7 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
 
             }
 
-            parseMessageContent(filteredMessageList.get(position).getContent(), convertView);
+            parseMessageContent(filteredMessageList.get(position), convertView);
 
 //            ((TextView)convertView.findViewById(R.id.tvContent))
 //                .setText(filteredMessageList.get(position).getContent());
@@ -274,54 +275,163 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
     }
 
 
-    public void parseMessageContent(String message, View convertView) {
-        String msg = message;
-        Pattern urlPattern = Pattern.compile(
-                "((https?|ftp|gopher|telnet|file):((//)|(\\\\))+[\\w\\d" +
-                        ":#@%/;$()~_?\\+-=\\\\\\.&]*)",
-                Pattern.CASE_INSENSITIVE | Pattern.MULTILINE | Pattern.DOTALL);
+    public void parseMessageContent(final Message message, View convertView) {
+        String msg = message.getContent();
 
-        Matcher matcher = urlPattern.matcher(msg);
-        while (matcher.find()) {
-            int matchStart = matcher.start(0);
-            int matchEnd = matcher.end(0);
-            final String findUrl = msg.substring(matchStart, matchEnd);
+        if (message.getFileType() != null && (message.getFileType()).equals("Url")) {
 
-            ViewGroup.LayoutParams lparam = new LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            final TextView urlPart = new TextView(ma);
-            urlPart.setText(findUrl);
-            urlPart.setLayoutParams(lparam);
-            urlPart.setTextColor(Color.BLUE);
+            Pattern urlPattern = Pattern.compile(
+                    "((https?|ftp|gopher|telnet|file):((//)|(\\\\))+[\\w\\d" +
+                            ":#@%/;$()~_?\\+-=\\\\\\.&]*)",
+                    Pattern.CASE_INSENSITIVE | Pattern.MULTILINE | Pattern.DOTALL);
 
-            urlPart.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Intent i = new Intent();
-                    i.setAction(Intent.ACTION_VIEW);
-                    i.setData(Uri.parse(findUrl));
-                    ma.startActivity(i);
-                }
-            });
+            Matcher matcher = urlPattern.matcher(msg);
+            while (matcher.find()) {
+                int matchStart = matcher.start(0);
+                int matchEnd = matcher.end(0);
+                final String findUrl = msg.substring(matchStart, matchEnd);
 
-  /*          urlPart.setOnTouchListener(new View.OnTouchListener() {
-                @Override
-                public boolean onTouch(View v, MotionEvent event) {
-                        urlPart.setBackgroundColor(Color.rgb(30, 144, 255));
-                    return false;
-                }
-            });*/
+                ViewGroup.LayoutParams lparam = new LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                final TextView urlPart = new TextView(ma);
+                urlPart.setText(findUrl);
+                urlPart.setLayoutParams(lparam);
+                urlPart.setTextColor(Color.BLUE);
+                float dpi = getContext().getResources().getDisplayMetrics().density;
+                urlPart.setMaxWidth((int)(240 * dpi));
 
-            ((LinearLayout)convertView.findViewById(R.id.content))
-                    .addView(urlPart);
-            message = message.replace(findUrl, "");
+                urlPart.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Intent i = new Intent();
+                        i.setAction(Intent.ACTION_VIEW);
+                        i.setData(Uri.parse(findUrl));
+                        ma.startActivity(i);
+                    }
+                });
+
+      /*          urlPart.setOnTouchListener(new View.OnTouchListener() {
+                    @Override
+                    public boolean onTouch(View v, MotionEvent event) {
+                            urlPart.setBackgroundColor(Color.rgb(30, 144, 255));
+                        return false;
+                    }
+                });*/
+
+
+                ((LinearLayout)convertView.findViewById(R.id.content)).addView(urlPart);
+                msg = msg.replace(findUrl, "");
+            }
+
+
         }
 
-        TextView tvContent = (TextView)convertView.findViewById(R.id.tvContent);
-        if(message.length() > 0) {
-            tvContent.setText(message);
+        (convertView.findViewById(R.id.msgItem)).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showPopupMenu(v, message);
+            }
+        });
+
+        TextView tvContent = convertView.findViewById(R.id.tvContent);
+        if(msg.length() > 0) {
+            tvContent.setText(msg);
         } else {
             tvContent.setVisibility(View.GONE);
         }
+    }
+
+    public void showPopupMenu(final View view, final Message msg) {
+   /*     PopupMenu popupMenu = new PopupMenu(ma, v);
+        popupMenu.inflate(R.menu.message_context_menu);
+        popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                switch(item.getItemId()) {
+                    case R.id.mCpy: {
+                        ClipboardManager clipboard = (ClipboardManager)ma.getSystemService(Context.CLIPBOARD_SERVICE);
+                        ClipData clip = ClipData.newPlainText("buff", ((TextView)v.findViewById(R.id.tvContent)).getText());
+                        clipboard.setPrimaryClip(clip);
+                        break;
+                    }
+                    case R.id.mEdit: {
+                        FirebaseStorage storage = FirebaseStorage.getInstance();
+                        StorageReference delRef = storage.getReferenceFromUrl(msg.getFileUrl());
+
+//                        FirebaseStorage storage = FirebaseStorage.getInstance();
+//                        StorageReference delRef = storage.getReferenceFromUrl()
+                        break;
+                    }
+                    case R.id.mDelete: {
+                        if(msg.getFileUrl() != null ) {
+                            FirebaseStorage storage = FirebaseStorage.getInstance();
+                            StorageReference delRef = storage.getReferenceFromUrl(msg.getFileUrl());
+                            delRef.delete();
+                            //Мб можно еще и с устройства удалить, но лень
+                        }
+                        myRef.child(msg.getUid()).removeValue();
+                        messages.remove(msg);
+                        notifyDataSetChanged();
+                        break;
+                    }
+                }
+                return true;
+            }
+        });
+        popupMenu.show();*/
+
+        LayoutInflater layoutInflater
+                = (LayoutInflater)ma.getApplicationContext()
+                .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        View popupView = layoutInflater.inflate(R.layout.message_context, null);
+
+        final PopupWindow popupWindow = new PopupWindow(popupView, ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT, true);
+        popupWindow.showAtLocation(view, Gravity.CENTER, 0, 0);
+        popupView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                popupWindow.dismiss();
+            }
+        });
+        Button btnCopy = popupView.findViewById(R.id.btnCopy);
+        Button btnEdit= popupView.findViewById(R.id.btnEdit);
+        Button btnDelete= popupView.findViewById(R.id.btnDelete);
+        btnCopy.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ClipboardManager clipboard = (ClipboardManager)ma.getSystemService(Context.CLIPBOARD_SERVICE);
+                ClipData clip = ClipData.newPlainText("buff", ((TextView)view.findViewById(R.id.tvContent)).getText());
+                clipboard.setPrimaryClip(clip);
+                popupWindow.dismiss();
+            }
+        });
+        btnEdit.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                FirebaseStorage storage = FirebaseStorage.getInstance();
+                StorageReference delRef = storage.getReferenceFromUrl(msg.getFileUrl());
+
+//                        FirebaseStorage storage = FirebaseStorage.getInstance();
+//                        StorageReference delRef = storage.getReferenceFromUrl()
+                popupWindow.dismiss();
+            }
+        });
+        btnDelete.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(msg.getFileUrl() != null ) {
+                    FirebaseStorage storage = FirebaseStorage.getInstance();
+                    StorageReference delRef = storage.getReferenceFromUrl(msg.getFileUrl());
+                    delRef.delete();
+                    //Мб можно еще и с устройства удалить, но лень
+                }
+                myRef.child(msg.getUid()).removeValue();
+                messages.remove(msg);
+                notifyDataSetChanged();
+                popupWindow.dismiss();
+            }
+        });
+//        popupWindow.showAsDropDown(v);
     }
 }

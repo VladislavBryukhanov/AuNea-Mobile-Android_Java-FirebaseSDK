@@ -4,8 +4,9 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.example.nameless.autoupdating.Chat"
-    android:orientation="vertical">
+    android:background="@color/darkTheme"
+    android:orientation="vertical"
+    tools:context="com.example.nameless.autoupdating.Chat">
 
     <EditText
         android:id="@+id/etSearch"
@@ -28,73 +29,74 @@
     <View
         android:layout_width="match_parent"
         android:layout_height="2dp"
-        android:background="#dfdfdf"
         android:layout_marginBottom="0dp"
         android:layout_marginTop="0dp"
+        android:background="#dfdfdf"
         app:layout_constraintBottom_toTopOf="@+id/llMsgBox"
         app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"/>
+        app:layout_constraintRight_toRightOf="parent" />
 
     <LinearLayout
         android:id="@+id/llMsgBox"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="@android:color/background_light"
         android:orientation="horizontal">
 
         <ImageButton
             android:id="@+id/btnAffixFile"
             android:layout_width="28dp"
             android:layout_height="31dp"
+            android:layout_margin="6dp"
             android:layout_weight="1"
             android:background="@android:color/transparent"
             android:gravity="center"
             android:scaleType="fitCenter"
-            android:layout_margin="6dp"
             app:srcCompat="@drawable/clip" />
 
         <EditText
             android:id="@+id/etMessage"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:ems="10"
-            android:inputType="textMultiLine"
             android:layout_margin="8dp"
-            android:hint="Enter message"
+            android:layout_weight="1"
             android:background="@android:color/transparent"
-            android:maxLines="6"/>
+            android:ems="10"
+            android:hint="Enter message"
+            android:inputType="textMultiLine"
+            android:maxLines="6" />
 
         <ImageButton
             android:id="@+id/btnSend"
             android:layout_width="36dp"
             android:layout_height="36dp"
+            android:layout_margin="5dp"
+            android:layout_marginRight="10dp"
             android:layout_weight="1"
             android:background="@android:color/transparent"
             android:gravity="center"
             android:scaleType="fitCenter"
-            android:layout_margin="5dp"
-            android:layout_marginRight="10dp"
             app:srcCompat="@drawable/send" />
 
         <!--<ImageButton-->
-            <!--android:id="@+id/btnSend"-->
-            <!--android:layout_width="28dp"-->
-            <!--android:layout_height="42dp"-->
-            <!--android:layout_weight="1"-->
-            <!--android:background="@android:color/transparent"-->
-            <!--android:gravity="center"-->
-            <!--android:scaleType="fitCenter"-->
-            <!--app:srcCompat="@drawable/send2" />-->
+        <!--android:id="@+id/btnSend"-->
+        <!--android:layout_width="28dp"-->
+        <!--android:layout_height="42dp"-->
+        <!--android:layout_weight="1"-->
+        <!--android:background="@android:color/transparent"-->
+        <!--android:gravity="center"-->
+        <!--android:scaleType="fitCenter"-->
+        <!--app:srcCompat="@drawable/send2" />-->
 
 
         <!--<Button-->
-            <!--android:id="@+id/btnSend"-->
-            <!--android:layout_width="wrap_content"-->
-            <!--android:layout_height="wrap_content"-->
-            <!--android:layout_weight="1"-->
-            <!--android:text="SEND"-->
-            <!--android:gravity="center"-->
-            <!--android:background="?attr/selectableItemBackground"/>-->
+        <!--android:id="@+id/btnSend"-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:layout_weight="1"-->
+        <!--android:text="SEND"-->
+        <!--android:gravity="center"-->
+        <!--android:background="?attr/selectableItemBackground"/>-->
     </LinearLayout>
 
 </LinearLayout>
