@@ -34,14 +34,12 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
 
-            android:enabled="false"
             android:textAllCaps="false"
             android:textSize="16dp"
             android:layout_margin="0dip"
             android:background="@android:drawable/menuitem_background"
             android:gravity="left|center_horizontal"
             android:padding="18dip"
-
             android:text="Edit" />
 
         <Button

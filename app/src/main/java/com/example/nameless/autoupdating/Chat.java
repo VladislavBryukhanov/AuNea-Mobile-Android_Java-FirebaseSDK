@@ -11,6 +11,7 @@ import android.support.annotation.NonNull;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
@@ -19,9 +20,11 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.PopupMenu;
 import android.widget.PopupWindow;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnFailureListener;
@@ -42,6 +45,7 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -52,8 +56,10 @@ public class Chat extends AppCompatActivity {
     private static final int CAMERA_REQUEST = 10;
 
     private ImageButton btnSend, btnAffixFile;
-    private EditText etMessage;
+    private static EditText etMessage;
     private ListView lvMessages;
+    private static ImageView ivEdit;
+    private static Message messageForEditing;
     private MessagesAdapter adapter;
 
     private FirebaseDatabase database;
@@ -75,6 +81,7 @@ public class Chat extends AppCompatActivity {
         btnAffixFile = findViewById(R.id.btnAffixFile);
         etMessage = findViewById(R.id.etMessage);
         lvMessages = findViewById(R.id.lvMessages);
+        ivEdit = findViewById(R.id.ivEdit);
 
         messages = new ArrayList<>();
         Intent intent = getIntent();
@@ -138,7 +145,7 @@ public class Chat extends AppCompatActivity {
                             }
                         }
 
-                        adapter = new MessagesAdapter(getApplicationContext(), messages, myRef);
+                        adapter = new MessagesAdapter(getApplicationContext(), etMessage, messages, myRef);
                         lvMessages.setAdapter(adapter);
 
                         myRef.addChildEventListener(new ChildEventListener() {
@@ -151,22 +158,38 @@ public class Chat extends AppCompatActivity {
 
                             @Override
                             public void onChildChanged(DataSnapshot dataSnapshot, String s) {
-
+                                for (int i=0; i<messages.size(); i++) {
+                                    if(((messages.get(i)).getUid()).equals(dataSnapshot.getKey())) {
+                                        messages.set(i, new Message(dataSnapshot.getKey(), dataSnapshot.getValue(Message.class)));
+                                        adapter.notifyDataSetChanged();
+                                    }
+                                }
                             }
 
                             @Override
                             public void onChildRemoved(DataSnapshot dataSnapshot) {
-
+                                Iterator<Message> itr = messages.iterator();
+                                while(itr.hasNext()) {
+                                    Message message = itr.next();
+                                    if(message.getUid().equals(dataSnapshot.getKey())) {
+                                        itr.remove();
+                                        adapter.notifyDataSetChanged();
+                                    }
+                                }
+//                                for (Message msg : messages) {
+//                                    if(msg.getUid().equals(dataSnapshot.getKey())) {
+//                                        messages.remove(msg);
+//                                        adapter.notifyDataSetChanged();
+//                                    }
+//                                }
                             }
 
                             @Override
                             public void onChildMoved(DataSnapshot dataSnapshot, String s) {
-
                             }
 
                             @Override
                             public void onCancelled(DatabaseError databaseError) {
-
                             }
                         });
 
@@ -211,7 +234,15 @@ public class Chat extends AppCompatActivity {
         btnSend.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (!(String.valueOf(etMessage.getText()).trim()).equals("")) {
+                    if(messageForEditing != null) {
+                        messageForEditing.setContent(String.valueOf(etMessage.getText()));
+                        parseMessageContent(messageForEditing);
+                        messageForEditing = null;
+                        etMessage.setText("");
+                        ivEdit.setVisibility(View.GONE);
+                        return;
+                    }
+                    if (!(String.valueOf(etMessage.getText()).trim()).equals("")) {
                     Message newMsg = new Message(String.valueOf(etMessage.getText()), null,
                             new Date(), Authentification.myAcc.getLogin(), toUser, null);
                     parseMessageContent(newMsg);
@@ -427,7 +458,36 @@ public class Chat extends AppCompatActivity {
             message.setFileType("Url");
         }
 
+        if(message.getUid() != null) {
+            String uid = message.getUid();
+            message.setUid(null);
+            //в базу записываем объект мессадж без uid  тк это поле является название узла в бд и не требуется
+            myRef.child(uid).setValue(message);
+            message.setUid(uid);
+            return;
+        }
+
         myRef.push().setValue(message);
         etMessage.setText("");
+    }
+
+    public static void onEdit(Message message) {
+        messageForEditing = message;
+        etMessage.setText(message.getContent());
+        etMessage.setSelection(etMessage.getText().length());
+        etMessage.requestFocus();
+
+        ivEdit.setVisibility(View.VISIBLE);
+    }
+
+    @Override
+    public void onBackPressed() {
+        if(messageForEditing != null) {
+            messageForEditing = null;
+            etMessage.setText("");
+            ivEdit.setVisibility(View.GONE);
+        } else {
+            super.onBackPressed();
+        }
     }
 }

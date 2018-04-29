@@ -4,12 +4,11 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
-import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
-import android.widget.Toast;
 
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
@@ -19,7 +18,6 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -27,7 +25,9 @@ import java.util.Map;
  * Created by nameless on 11.04.18.
  */
 
-public class NotifyService extends Service {
+public class NotifyServiceClass {
+
+    private Context ma;
 
     private FirebaseDatabase database;
     private DatabaseReference myRef;
@@ -36,17 +36,8 @@ public class NotifyService extends Service {
     private ChildEventListener newMsgListener;
     private Query refToListener;
 
-    private HashMap<Query, ChildEventListener> refToListeners;
-
-    @Nullable
-    @Override
-    public IBinder onBind(Intent intent) {
-        return null;
-    }
-
-    @Override
-    public void onCreate() {
-        refToListeners = new HashMap<>();
+    public NotifyServiceClass( Context ma) {
+        this.ma = ma;
 
         timeOut = new HashMap<>();
         database = FirebaseDatabase.getInstance();
@@ -105,7 +96,7 @@ public class NotifyService extends Service {
                             }
                         });
 //                        refToListener.removeEventListener(newMsgListener);
-                        refToListeners.put(refToListener, newMsgListener);
+
                         timeOut.put(foreignListener, false);
                     }
                 }
@@ -118,45 +109,22 @@ public class NotifyService extends Service {
         });
     }
 
-    @Override
-    public void onDestroy() {
-//        if(refToListener != null) {
-//            refToListener.removeEventListener(newMsgListener);
-//        }
-        for(Map.Entry<Query, ChildEventListener> entry : refToListeners.entrySet()) {
-            (entry.getKey()).removeEventListener(entry.getValue());
-        }
-
-//        NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-//        Notification notification = new Notification.Builder(getApplicationContext())
-//                .setSmallIcon(android.R.mipmap.sym_def_app_icon)
-//                .setContentTitle("DSTR")
-//                .setContentText("DSTR").build();
-//        notificationManager.notify(1, notification);
-    }
-
-    @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        return START_STICKY;
-    }
-
     public void sendNotify(Message msg) {
 
-        Intent notificationIntent = new Intent(getApplicationContext(), Chat.class);
+        Intent notificationIntent = new Intent(ma, Chat.class);
         notificationIntent.putExtra("to", msg.getWho());
         notificationIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP
                 | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        PendingIntent intent = PendingIntent.getActivity(getApplicationContext(), 0,
+        PendingIntent intent = PendingIntent.getActivity(ma, 0,
                 notificationIntent, 0);
 
-        NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        Notification notification = new Notification.Builder(getApplicationContext())
-                .setSmallIcon(android.R.mipmap.sym_def_app_icon)
+        NotificationManager notificationManager = (NotificationManager) ma.getSystemService(Context.NOTIFICATION_SERVICE);
+        Notification notification = new Notification.Builder(ma)
                 .setContentTitle(msg.getWho())
                 .setContentText(msg.getContent())
                 .setContentIntent(intent)
                 .setSmallIcon(R.drawable.send2)
-                .setSound(Uri.parse("android.resource://" + this.getApplicationContext()
+                .setSound(Uri.parse("android.resource://" + ma
                         .getPackageName() + "/" + R.raw.notify)).build();
         notification.flags |= Notification.FLAG_AUTO_CANCEL;
 

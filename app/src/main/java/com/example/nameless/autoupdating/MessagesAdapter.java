@@ -20,6 +20,7 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.Filter;
 import android.widget.Filterable;
 import android.widget.ImageView;
@@ -50,14 +51,17 @@ import java.util.regex.Pattern;
 public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterable{
 
     private Context ma;
+    private EditText etMessage;
+
     private DatabaseReference myRef;
     private ArrayList<Message> messages;
     private ArrayList<Message> filteredMessageList;
     private Map<String, Bitmap> imageCollection;
     private Map<String, Uri> uriForIntentCollection;
 
-    public MessagesAdapter(Context ma, ArrayList<Message> messages, DatabaseReference myRef) {
+    public MessagesAdapter(Context ma, EditText etMessage, ArrayList<Message> messages, DatabaseReference myRef) {
         super(ma, 0, messages);
+        this.etMessage = etMessage;
         this.ma = ma;
         this.messages = messages;
         this.filteredMessageList = messages;
@@ -409,11 +413,10 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
         btnEdit.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                FirebaseStorage storage = FirebaseStorage.getInstance();
-                StorageReference delRef = storage.getReferenceFromUrl(msg.getFileUrl());
+//                FirebaseStorage storage = FirebaseStorage.getInstance();
+//                StorageReference edRef = storage.getReferenceFromUrl(msg.getFileUrl());
 
-//                        FirebaseStorage storage = FirebaseStorage.getInstance();
-//                        StorageReference delRef = storage.getReferenceFromUrl()
+                Chat.onEdit(msg);
                 popupWindow.dismiss();
             }
         });
