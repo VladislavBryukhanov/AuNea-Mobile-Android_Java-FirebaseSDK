@@ -88,21 +88,8 @@ public class UserList extends AppCompatActivity {
     }
 
     @Override
-    protected void onStop() {
-//        startService(new Intent(getApplicationContext(), NotifyService.class));
-        super.onStop();
-    }
-
-    @Override
     protected void onStart() {
-//        stopService(new Intent(getApplicationContext(), NotifyService.class));
+        startService(new Intent(getApplicationContext(), NotifyService.class));
         super.onStart();
-    }
-
-
-    @Override
-    protected void onDestroy() {
-//        startService(new Intent(getApplicationContext(), NotifyService.class));
-        super.onDestroy();
     }
 }

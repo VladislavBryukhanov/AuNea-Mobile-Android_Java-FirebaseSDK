@@ -173,7 +173,7 @@ public class Authentification extends AppCompatActivity {
     }
 
     @Override
-    protected void onDestroy() { //пока нет логаута и автоматического входа по кукам
+    protected void onDestroy() { //пока нет логаута и автоматического входа по "кукам"
         stopService(new Intent(getApplicationContext(), NotifyService.class));
         super.onDestroy();
     }

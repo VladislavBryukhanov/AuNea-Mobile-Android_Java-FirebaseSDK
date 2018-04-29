@@ -32,6 +32,7 @@ public class NotifyService extends Service {
     private FirebaseDatabase database;
     private DatabaseReference myRef;
     private Map<String, Boolean> timeOut; //первым childAdded всегда будет последнее отправленное нам сообщение во время диалога, пропускаем его
+    private boolean isServiceStoped; // т к он старт является асинхронным может произойти так, что он отработает после дестроя, тоесть обработчики будут навешаны после попытки их удаления => при дестрое ни 1 обработчик не удалится
 
     private ChildEventListener newMsgListener;
     private Query refToListener;
@@ -46,6 +47,12 @@ public class NotifyService extends Service {
 
     @Override
     public void onCreate() {
+
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        isServiceStoped = false;
         refToListeners = new HashMap<>();
 
         timeOut = new HashMap<>();
@@ -59,7 +66,7 @@ public class NotifyService extends Service {
                     String myListener =   String.valueOf(dlg.child("listener1").getValue());
                     String foreignListener =   String.valueOf(dlg.child("listener2").getValue());
 
-                    if (myListener.equals(Authentification.myAcc.getLogin())
+                    if (!isServiceStoped && myListener.equals(Authentification.myAcc.getLogin())
                             || foreignListener.equals(Authentification.myAcc.getLogin())) {
 
                         if (!myListener.equals(Authentification.myAcc.getLogin()) ) {
@@ -116,28 +123,15 @@ public class NotifyService extends Service {
 
             }
         });
+        return START_STICKY;
     }
 
     @Override
     public void onDestroy() {
-//        if(refToListener != null) {
-//            refToListener.removeEventListener(newMsgListener);
-//        }
+        isServiceStoped = true;
         for(Map.Entry<Query, ChildEventListener> entry : refToListeners.entrySet()) {
             (entry.getKey()).removeEventListener(entry.getValue());
         }
-
-//        NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-//        Notification notification = new Notification.Builder(getApplicationContext())
-//                .setSmallIcon(android.R.mipmap.sym_def_app_icon)
-//                .setContentTitle("DSTR")
-//                .setContentText("DSTR").build();
-//        notificationManager.notify(1, notification);
-    }
-
-    @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        return START_STICKY;
     }
 
     public void sendNotify(Message msg) {

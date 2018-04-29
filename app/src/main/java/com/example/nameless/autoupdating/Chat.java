@@ -118,6 +118,7 @@ public class Chat extends AppCompatActivity {
 
 
         myRef.addListenerForSingleValueEvent(new ValueEventListener() {
+
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
 
@@ -153,7 +154,6 @@ public class Chat extends AppCompatActivity {
                             public void onChildAdded(DataSnapshot dataSnapshot, String s) {
                                 messages.add(new Message(dataSnapshot.getKey(), dataSnapshot.getValue(Message.class)));
                                 adapter.notifyDataSetChanged();
-//                                lvMessages.setSelection(adapter.getCount() - 1);
                             }
 
                             @Override
@@ -176,12 +176,6 @@ public class Chat extends AppCompatActivity {
                                         adapter.notifyDataSetChanged();
                                     }
                                 }
-//                                for (Message msg : messages) {
-//                                    if(msg.getUid().equals(dataSnapshot.getKey())) {
-//                                        messages.remove(msg);
-//                                        adapter.notifyDataSetChanged();
-//                                    }
-//                                }
                             }
 
                             @Override
@@ -251,11 +245,11 @@ public class Chat extends AppCompatActivity {
         });
     }
 
-    @Override
-    protected void onStop() {
-        startService(new Intent(getApplicationContext(), NotifyService.class));
-        super.onStop();
-    }
+//    @Override
+//    protected void onStop() {
+//        startService(new Intent(getApplicationContext(), NotifyService.class));
+//        super.onStop();
+//    }
 
     @Override
     protected void onStart() {
