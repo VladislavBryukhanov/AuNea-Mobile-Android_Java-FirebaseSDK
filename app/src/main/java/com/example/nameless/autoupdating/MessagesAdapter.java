@@ -30,6 +30,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.storage.FileDownloadTask;
 import com.google.firebase.storage.FirebaseStorage;
@@ -58,6 +59,7 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
     private ArrayList<Message> filteredMessageList;
     private Map<String, Bitmap> imageCollection;
     private Map<String, Uri> uriForIntentCollection;
+    private FirebaseAuth mAuth;
 
     public MessagesAdapter(Context ma, EditText etMessage, ArrayList<Message> messages, DatabaseReference myRef) {
         super(ma, 0, messages);
@@ -68,6 +70,7 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
         imageCollection = new HashMap<>();
         uriForIntentCollection = new HashMap<>();
         this.myRef = myRef;
+        mAuth = FirebaseAuth.getInstance();
     }
 
     @NonNull
@@ -78,7 +81,7 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
             convertView = li.inflate(R.layout.message_item, parent, false);
 
             if((filteredMessageList.get(position).getWho())
-                    .equals(Authentification.myAcc.getLogin())) {
+                    .equals(mAuth.getCurrentUser().getEmail())) {
                 (convertView.findViewById(R.id.content))
                         .setBackgroundResource(R.drawable.in_message_bg);
 

@@ -34,22 +34,22 @@
             android:textStyle="bold"
             tools:layout_editor_absoluteY="233dp" />
 
-        <EditText
-            android:id="@+id/etPassword"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="25dp"
-            android:backgroundTint="@android:color/darker_gray"
-            android:ems="10"
-            android:hint="Password"
-            android:padding="15dp"
-            android:singleLine="true"
-            android:textColor="#14aba8"
-            android:textColorHint="@android:color/darker_gray"
-            android:textColorLink="#00726a"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            tools:layout_editor_absoluteY="233dp" />
+        <!--<EditText-->
+            <!--android:id="@+id/etPassword"-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:layout_marginBottom="25dp"-->
+            <!--android:backgroundTint="@android:color/darker_gray"-->
+            <!--android:ems="10"-->
+            <!--android:hint="Password"-->
+            <!--android:padding="15dp"-->
+            <!--android:singleLine="true"-->
+            <!--android:textColor="#14aba8"-->
+            <!--android:textColorHint="@android:color/darker_gray"-->
+            <!--android:textColorLink="#00726a"-->
+            <!--android:textSize="20sp"-->
+            <!--android:textStyle="bold"-->
+            <!--tools:layout_editor_absoluteY="233dp" />-->
 
         <Button
             android:id="@+id/btnSignIn"

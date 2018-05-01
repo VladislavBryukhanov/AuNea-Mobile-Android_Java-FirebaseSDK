@@ -14,15 +14,6 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity
-            android:name=".Authentification"
-            android:label="Authentification">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
 
         <service android:name=".FirebaseMessagingService">
             <intent-filter>
@@ -41,9 +32,22 @@
                 android:resource="@xml/provider_paths" />
         </provider>
 
+        <activity android:name=".GlobalMenu" />
+
+        <activity
+            android:name=".Authentification"
+            android:label="Authentification"/>
+
         <activity
             android:name=".UserList"
-            android:label="List of users" />
+            android:label="List of users" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
         <activity android:name=".Chat" />
         <activity android:name=".ImageViewer"></activity>
     </application>

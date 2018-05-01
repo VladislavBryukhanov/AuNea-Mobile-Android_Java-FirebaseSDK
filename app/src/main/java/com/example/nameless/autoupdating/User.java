@@ -9,14 +9,24 @@ import java.io.Serializable;
 public class User implements Serializable{
 
     private String login;
-    private String password;
+    private String uid;
+    private String email;
+    private String nickname;
+    private String bio;
     //avatar, bio ...
 
     public User(){}
 
-    public User(String login, String password) {
+    public User(String email, String login) {
+        this.email = email;
         this.login = login;
-        this.password = password;
+    }
+
+    public User(String login, String email, String nickname, String bio) {
+        this.login = login;
+        this.email = email;
+        this.nickname = nickname;
+        this.bio = bio;
     }
 
     public String getLogin() {
@@ -27,11 +37,27 @@ public class User implements Serializable{
         this.login = login;
     }
 
-    public String getPassword() {
-        return password;
+    public String getEmail() {
+        return email;
     }
 
-    public void setPassword(String password) {
-        this.password = password;
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getNickname() {
+        return nickname;
+    }
+
+    public void setNickname(String nickname) {
+        this.nickname = nickname;
+    }
+
+    public String getBio() {
+        return bio;
+    }
+
+    public void setBio(String bio) {
+        this.bio = bio;
     }
 }

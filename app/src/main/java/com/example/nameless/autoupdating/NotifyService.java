@@ -8,9 +8,12 @@ import android.content.Intent;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.IBinder;
+import android.renderscript.Sampler;
 import android.support.annotation.Nullable;
+import android.util.Log;
 import android.widget.Toast;
 
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -36,8 +39,8 @@ public class NotifyService extends Service {
 
     private ChildEventListener newMsgListener;
     private Query refToListener;
-
     private HashMap<Query, ChildEventListener> refToListeners;
+    private FirebaseAuth mAuth;
 
     @Nullable
     @Override
@@ -47,7 +50,8 @@ public class NotifyService extends Service {
 
     @Override
     public void onCreate() {
-
+        database = FirebaseDatabase.getInstance();
+        mAuth = FirebaseAuth.getInstance();
     }
 
     @Override
@@ -56,9 +60,7 @@ public class NotifyService extends Service {
         refToListeners = new HashMap<>();
 
         timeOut = new HashMap<>();
-        database = FirebaseDatabase.getInstance();
         myRef = database.getReference("Messages");
-
         myRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -66,10 +68,10 @@ public class NotifyService extends Service {
                     String myListener =   String.valueOf(dlg.child("listener1").getValue());
                     String foreignListener =   String.valueOf(dlg.child("listener2").getValue());
 
-                    if (!isServiceStoped && myListener.equals(Authentification.myAcc.getLogin())
-                            || foreignListener.equals(Authentification.myAcc.getLogin())) {
+                    if (!isServiceStoped && myListener.equals(mAuth.getCurrentUser().getEmail())
+                            || foreignListener.equals(mAuth.getCurrentUser().getEmail())) {
 
-                        if (!myListener.equals(Authentification.myAcc.getLogin()) ) {
+                        if (!myListener.equals(mAuth.getCurrentUser().getEmail()) ) {
                             foreignListener = myListener;
                         }
 
@@ -82,7 +84,7 @@ public class NotifyService extends Service {
                             public void onChildAdded(DataSnapshot dataSnapshot, String s) {
 
                                 Message newMsg = dataSnapshot.getValue(Message.class);
-                                if ((newMsg.getTo()).equals((Authentification.myAcc.getLogin()))) {
+                                if ((newMsg.getTo()).equals((mAuth.getCurrentUser().getEmail()))) {
                                     if(!timeOut.get(foreignListenerTmp)) {
                                         timeOut.put(foreignListenerTmp, true);
                                     } else {
@@ -90,26 +92,14 @@ public class NotifyService extends Service {
                                     }
                                 }
                             }
-
                             @Override
-                            public void onChildChanged(DataSnapshot dataSnapshot, String s) {
-
-                            }
-
+                            public void onChildChanged(DataSnapshot dataSnapshot, String s) {}
                             @Override
-                            public void onChildRemoved(DataSnapshot dataSnapshot) {
-
-                            }
-
+                            public void onChildRemoved(DataSnapshot dataSnapshot) {}
                             @Override
-                            public void onChildMoved(DataSnapshot dataSnapshot, String s) {
-
-                            }
-
+                            public void onChildMoved(DataSnapshot dataSnapshot, String s) {}
                             @Override
-                            public void onCancelled(DatabaseError databaseError) {
-
-                            }
+                            public void onCancelled(DatabaseError databaseError) {}
                         });
 //                        refToListener.removeEventListener(newMsgListener);
                         refToListeners.put(refToListener, newMsgListener);
@@ -134,10 +124,29 @@ public class NotifyService extends Service {
         }
     }
 
-    public void sendNotify(Message msg) {
 
+    public void sendNotify(final Message msg) {
+
+
+        Query getUser = database.getReference("Users").orderByChild("email").equalTo(msg.getWho());
+        getUser.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                for(DataSnapshot data : dataSnapshot.getChildren()) {
+                    User user = data.getValue(User.class);
+                    buildNotify(user, msg);
+                }
+            }
+            @Override
+            public void onCancelled(DatabaseError databaseError) {}
+        });
+//        notificationIntent.putExtra("to", msg.getWho());
+
+    }
+
+    private void buildNotify(User to, Message msg) {
         Intent notificationIntent = new Intent(getApplicationContext(), Chat.class);
-        notificationIntent.putExtra("to", msg.getWho());
+        notificationIntent.putExtra("to", to);
         notificationIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP
                 | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         PendingIntent intent = PendingIntent.getActivity(getApplicationContext(), 0,
@@ -146,7 +155,7 @@ public class NotifyService extends Service {
         NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         Notification notification = new Notification.Builder(getApplicationContext())
                 .setSmallIcon(android.R.mipmap.sym_def_app_icon)
-                .setContentTitle(msg.getWho())
+                .setContentTitle(to.getLogin())
                 .setContentText(msg.getContent())
                 .setContentIntent(intent)
                 .setSmallIcon(R.drawable.send2)

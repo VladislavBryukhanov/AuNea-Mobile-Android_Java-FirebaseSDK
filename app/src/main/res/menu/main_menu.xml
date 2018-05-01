@@ -4,4 +4,6 @@
         android:id="@+id/mUpdate"></item>
     <item android:title="Current Version"
         android:id="@+id/mGetVer"></item>
+    <item android:title="Log out"
+        android:id="@+id/mLogOut"></item>
 </menu>

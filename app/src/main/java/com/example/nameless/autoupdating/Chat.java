@@ -14,6 +14,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
@@ -29,6 +30,7 @@ import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -49,7 +51,7 @@ import java.util.Iterator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class Chat extends AppCompatActivity {
+public class Chat extends GlobalMenu {
 
 //    private static final int REQUEST_GALLERY = 100;
     private static final int PICKFILE_RESULT_CODE = 200;
@@ -70,6 +72,7 @@ public class Chat extends AppCompatActivity {
 
     private boolean keyboardListenerLocker = false;
     private boolean dialogFound = false;
+    private FirebaseAuth mAuth;
 
 
     @Override
@@ -85,7 +88,9 @@ public class Chat extends AppCompatActivity {
 
         messages = new ArrayList<>();
         Intent intent = getIntent();
-        toUser = intent.getStringExtra("to");
+        User user = (User)intent.getSerializableExtra("to");
+        toUser = user.getEmail();
+        mAuth = FirebaseAuth.getInstance();
 
 //        lvMessages.setOnClickListener(new View.OnClickListener() {
 //            @Override
@@ -98,7 +103,7 @@ public class Chat extends AppCompatActivity {
         database = FirebaseDatabase.getInstance();
         myRef = database.getReference("Messages");
 
-        setTitle(toUser);
+        setTitle(user.getLogin());
 //        setListenerForScrollWhenKeyboarOpened();
         lvMessages.setTranscriptMode(ListView.TRANSCRIPT_MODE_NORMAL);
         lvMessages.setStackFromBottom(true); // if dialog started first time need false
@@ -124,11 +129,11 @@ public class Chat extends AppCompatActivity {
 
                         if (dataSnapshot.getChildrenCount() == 0) {
                             myRef = myRef.push();
-                            myRef.child("listener1").setValue(Authentification.myAcc.getLogin());
+                            myRef.child("listener1").setValue(UserList.myAcc.getEmail());
                             myRef.child("listener2").setValue(toUser);
                             myRef = myRef.child("content");
                         } else {
-                            String myLogin = Authentification.myAcc.getLogin();
+                            String myLogin = mAuth.getCurrentUser().getEmail();
                             for(DataSnapshot data : dataSnapshot.getChildren()) {
                                 String listener1 = (String)data.child("listener1").getValue();
                                 String listener2 = (String)data.child("listener2").getValue();
@@ -140,7 +145,7 @@ public class Chat extends AppCompatActivity {
                             }
                             if (!dialogFound) {
                                 myRef = myRef.push();
-                                myRef.child("listener1").setValue(Authentification.myAcc.getLogin());
+                                myRef.child("listener1").setValue(UserList.myAcc.getEmail());
                                 myRef.child("listener2").setValue(toUser);
                                 myRef = myRef.child("content");
                             }
@@ -238,18 +243,20 @@ public class Chat extends AppCompatActivity {
                     }
                     if (!(String.valueOf(etMessage.getText()).trim()).equals("")) {
                     Message newMsg = new Message(String.valueOf(etMessage.getText()), null,
-                            new Date(), Authentification.myAcc.getLogin(), toUser, null);
+                            new Date(), mAuth.getCurrentUser().getEmail(), toUser, null);
                     parseMessageContent(newMsg);
                 }
             }
         });
     }
 
-//    @Override
-//    protected void onStop() {
-//        startService(new Intent(getApplicationContext(), NotifyService.class));
-//        super.onStop();
-//    }
+
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.main_menu, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
 
     @Override
     protected void onStart() {
@@ -261,6 +268,12 @@ public class Chat extends AppCompatActivity {
     protected void onResume() {
         stopService(new Intent(getApplicationContext(), NotifyService.class));
         super.onResume();
+    }
+
+    @Override
+    protected void onStop() {
+        startService(new Intent(getApplicationContext(), NotifyService.class));
+        super.onStop();
     }
 
     //фокус в конец диалога при открытии клавиатуры
@@ -305,15 +318,15 @@ public class Chat extends AppCompatActivity {
                 final String fileType = extension.split("/")[0];
                 extension = "." + extension.split("/")[1];
                 Toast.makeText(this, fileType, Toast.LENGTH_SHORT).show();
-                StorageReference riversRef = gsReference.child(Authentification.myAcc
-                        .getLogin() + "/" + java.util.UUID.randomUUID() + extension); //file.getLastPathSegment()
+                StorageReference riversRef = gsReference.child(UserList.myAcc
+                        .getEmail() + "/" + java.util.UUID.randomUUID() + extension); //file.getLastPathSegment()
                 UploadTask uploadTask = riversRef.putFile(file);
 
                 uploadTask.addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                     @Override
                     public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                         Message newMsg = new Message(String.valueOf(etMessage.getText()), taskSnapshot.getDownloadUrl().toString(),
-                                new Date(), Authentification.myAcc.getLogin(), toUser, fileType);
+                                new Date(), mAuth.getCurrentUser().getEmail(), toUser, fileType);
                         parseMessageContent(newMsg);
                     }
                 });
