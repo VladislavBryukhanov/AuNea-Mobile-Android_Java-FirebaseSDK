@@ -251,16 +251,18 @@ public class Chat extends AppCompatActivity {
     }
 
 //    @Override
-//    protected void onStop() {
-//        startService(new Intent(getApplicationContext(), NotifyService.class));
-//        super.onStop();
-//    }
-
-//    @Override
 //    public boolean onCreateOptionsMenu(Menu menu) {
 //        getMenuInflater().inflate(R.menu.main_menu, menu);
 //        return super.onCreateOptionsMenu(menu);
 //    }
+
+    @Override
+    protected void onStop() {
+        if (!UserList.isMyServiceRunning(NotifyService.class, this)) {
+            startService(new Intent(getApplicationContext(), NotifyService.class));
+        }
+        super.onStop();
+    }
 
     @Override
     protected void onStart() {
@@ -273,6 +275,7 @@ public class Chat extends AppCompatActivity {
         stopService(new Intent(getApplicationContext(), NotifyService.class));
         super.onResume();
     }
+
 
     //фокус в конец диалога при открытии клавиатуры
  /*   public void setListenerForScrollWhenKeyboarOpened() {
