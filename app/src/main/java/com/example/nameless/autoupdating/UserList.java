@@ -19,6 +19,7 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
@@ -92,7 +93,7 @@ public class UserList extends GlobalMenu {
             public void onDataChange(DataSnapshot dataSnapshot) {
                 for (DataSnapshot user : dataSnapshot.getChildren()) {
                     User newUserItem = user.getValue(User.class);
-                    if (!newUserItem.getEmail().equals(myAcc.getEmail())) {
+                    if (!newUserItem.getUid().equals(myAcc.getUid())) {
                         users.add(newUserItem);
                     }
                 }
@@ -134,19 +135,17 @@ public class UserList extends GlobalMenu {
 
     public void signIn() {
         FirebaseDatabase database = FirebaseDatabase.getInstance();
-        DatabaseReference myRef = database.getReference("Users");
-
-        myRef.child(mAuth.getUid()).addListenerForSingleValueEvent(new ValueEventListener() {
+        Query getUser = database.getReference("Users").orderByChild("uid").equalTo(mAuth.getUid());
+        getUser.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                myAcc = dataSnapshot.getValue(User.class);
-                initialiseData();
+                for(DataSnapshot data : dataSnapshot.getChildren()) {
+                    myAcc = data.getValue(User.class);
+                    initialiseData();
+                }
             }
-
             @Override
-            public void onCancelled(DatabaseError databaseError) {
-
-            }
+            public void onCancelled(DatabaseError databaseError) {}
         });
     }
 }

@@ -17,16 +17,17 @@ public class User implements Serializable{
 
     public User(){}
 
-    public User(String email, String login) {
-        this.email = email;
+    public User(String uid, String login) {
+        this.uid = uid;
         this.login = login;
     }
 
-    public User(String login, String email, String nickname, String bio) {
-        this.login = login;
-        this.email = email;
-        this.nickname = nickname;
-        this.bio = bio;
+    public String getUid() {
+        return uid;
+    }
+
+    public void setUid(String uid) {
+        this.uid = uid;
     }
 
     public String getLogin() {

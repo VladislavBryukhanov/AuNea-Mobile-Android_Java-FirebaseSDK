@@ -81,7 +81,7 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
             convertView = li.inflate(R.layout.message_item, parent, false);
 
             if((filteredMessageList.get(position).getWho())
-                    .equals(mAuth.getCurrentUser().getEmail())) {
+                    .equals(mAuth.getUid())) {
                 (convertView.findViewById(R.id.content))
                         .setBackgroundResource(R.drawable.in_message_bg);
 

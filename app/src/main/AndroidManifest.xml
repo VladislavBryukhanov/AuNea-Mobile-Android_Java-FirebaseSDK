@@ -34,9 +34,7 @@
 
         <activity android:name=".GlobalMenu" />
 
-        <activity
-            android:name=".Authentification"
-            android:label="Authentification"/>
+        <activity android:name=".Authentification"/>
 
         <activity
             android:name=".UserList"

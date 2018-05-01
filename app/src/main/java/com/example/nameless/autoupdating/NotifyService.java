@@ -34,7 +34,7 @@ public class NotifyService extends Service {
 
     private FirebaseDatabase database;
     private DatabaseReference myRef;
-    private Map<String, Boolean> timeOut; //первым childAdded всегда будет последнее отправленное нам сообщение во время диалога, пропускаем его
+    private HashMap<String, Boolean> timeOut; //первым childAdded всегда будет последнее отправленное нам сообщение во время диалога, пропускаем его
     private boolean isServiceStoped; // т к он старт является асинхронным может произойти так, что он отработает после дестроя, тоесть обработчики будут навешаны после попытки их удаления => при дестрое ни 1 обработчик не удалится
 
     private ChildEventListener newMsgListener;
@@ -58,20 +58,22 @@ public class NotifyService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         isServiceStoped = false;
         refToListeners = new HashMap<>();
+//        timeOut = new HashMap<>();
 
-        timeOut = new HashMap<>();
         myRef = database.getReference("Messages");
         myRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
+                timeOut = new HashMap<>();
+
                 for (DataSnapshot dlg : dataSnapshot.getChildren()) {
                     String myListener =   String.valueOf(dlg.child("listener1").getValue());
                     String foreignListener =   String.valueOf(dlg.child("listener2").getValue());
 
-                    if (!isServiceStoped && myListener.equals(mAuth.getCurrentUser().getEmail())
-                            || foreignListener.equals(mAuth.getCurrentUser().getEmail())) {
+                    if (!isServiceStoped && myListener.equals(mAuth.getUid())
+                            || foreignListener.equals(mAuth.getUid())) {
 
-                        if (!myListener.equals(mAuth.getCurrentUser().getEmail()) ) {
+                        if (!myListener.equals(mAuth.getUid()) ) {
                             foreignListener = myListener;
                         }
 
@@ -84,7 +86,7 @@ public class NotifyService extends Service {
                             public void onChildAdded(DataSnapshot dataSnapshot, String s) {
 
                                 Message newMsg = dataSnapshot.getValue(Message.class);
-                                if ((newMsg.getTo()).equals((mAuth.getCurrentUser().getEmail()))) {
+                                if ((newMsg.getTo()).equals((mAuth.getUid()))) {
                                     if(!timeOut.get(foreignListenerTmp)) {
                                         timeOut.put(foreignListenerTmp, true);
                                     } else {
@@ -127,8 +129,7 @@ public class NotifyService extends Service {
 
     public void sendNotify(final Message msg) {
 
-
-        Query getUser = database.getReference("Users").orderByChild("email").equalTo(msg.getWho());
+        Query getUser = database.getReference("Users").orderByChild("uid").equalTo(msg.getWho());
         getUser.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -140,8 +141,6 @@ public class NotifyService extends Service {
             @Override
             public void onCancelled(DatabaseError databaseError) {}
         });
-//        notificationIntent.putExtra("to", msg.getWho());
-
     }
 
     private void buildNotify(User to, Message msg) {

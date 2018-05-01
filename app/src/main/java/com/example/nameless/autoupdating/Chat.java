@@ -51,7 +51,7 @@ import java.util.Iterator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class Chat extends GlobalMenu {
+public class Chat extends AppCompatActivity {
 
 //    private static final int REQUEST_GALLERY = 100;
     private static final int PICKFILE_RESULT_CODE = 200;
@@ -89,7 +89,7 @@ public class Chat extends GlobalMenu {
         messages = new ArrayList<>();
         Intent intent = getIntent();
         User user = (User)intent.getSerializableExtra("to");
-        toUser = user.getEmail();
+        toUser = user.getUid();
         mAuth = FirebaseAuth.getInstance();
 
 //        lvMessages.setOnClickListener(new View.OnClickListener() {
@@ -129,11 +129,11 @@ public class Chat extends GlobalMenu {
 
                         if (dataSnapshot.getChildrenCount() == 0) {
                             myRef = myRef.push();
-                            myRef.child("listener1").setValue(UserList.myAcc.getEmail());
+                            myRef.child("listener1").setValue(UserList.myAcc.getUid());
                             myRef.child("listener2").setValue(toUser);
                             myRef = myRef.child("content");
                         } else {
-                            String myLogin = mAuth.getCurrentUser().getEmail();
+                            String myLogin = mAuth.getUid();
                             for(DataSnapshot data : dataSnapshot.getChildren()) {
                                 String listener1 = (String)data.child("listener1").getValue();
                                 String listener2 = (String)data.child("listener2").getValue();
@@ -145,7 +145,7 @@ public class Chat extends GlobalMenu {
                             }
                             if (!dialogFound) {
                                 myRef = myRef.push();
-                                myRef.child("listener1").setValue(UserList.myAcc.getEmail());
+                                myRef.child("listener1").setValue(UserList.myAcc.getUid());
                                 myRef.child("listener2").setValue(toUser);
                                 myRef = myRef.child("content");
                             }
@@ -243,20 +243,24 @@ public class Chat extends GlobalMenu {
                     }
                     if (!(String.valueOf(etMessage.getText()).trim()).equals("")) {
                     Message newMsg = new Message(String.valueOf(etMessage.getText()), null,
-                            new Date(), mAuth.getCurrentUser().getEmail(), toUser, null);
+                            new Date(), mAuth.getUid(), toUser, null);
                     parseMessageContent(newMsg);
                 }
             }
         });
     }
 
+//    @Override
+//    protected void onStop() {
+//        startService(new Intent(getApplicationContext(), NotifyService.class));
+//        super.onStop();
+//    }
 
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.main_menu, menu);
-        return super.onCreateOptionsMenu(menu);
-    }
+//    @Override
+//    public boolean onCreateOptionsMenu(Menu menu) {
+//        getMenuInflater().inflate(R.menu.main_menu, menu);
+//        return super.onCreateOptionsMenu(menu);
+//    }
 
     @Override
     protected void onStart() {
@@ -268,12 +272,6 @@ public class Chat extends GlobalMenu {
     protected void onResume() {
         stopService(new Intent(getApplicationContext(), NotifyService.class));
         super.onResume();
-    }
-
-    @Override
-    protected void onStop() {
-        startService(new Intent(getApplicationContext(), NotifyService.class));
-        super.onStop();
     }
 
     //фокус в конец диалога при открытии клавиатуры
@@ -319,14 +317,14 @@ public class Chat extends GlobalMenu {
                 extension = "." + extension.split("/")[1];
                 Toast.makeText(this, fileType, Toast.LENGTH_SHORT).show();
                 StorageReference riversRef = gsReference.child(UserList.myAcc
-                        .getEmail() + "/" + java.util.UUID.randomUUID() + extension); //file.getLastPathSegment()
+                        .getUid() + "/" + java.util.UUID.randomUUID() + extension); //file.getLastPathSegment()
                 UploadTask uploadTask = riversRef.putFile(file);
 
                 uploadTask.addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                     @Override
                     public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                         Message newMsg = new Message(String.valueOf(etMessage.getText()), taskSnapshot.getDownloadUrl().toString(),
-                                new Date(), mAuth.getCurrentUser().getEmail(), toUser, fileType);
+                                new Date(), mAuth.getUid(), toUser, fileType);
                         parseMessageContent(newMsg);
                     }
                 });

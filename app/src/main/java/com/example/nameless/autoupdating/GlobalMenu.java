@@ -123,8 +123,7 @@ public class GlobalMenu extends AppCompatActivity {
                 mAuth.signOut();
                 mGoogleSignInClient.signOut();
 
-                System.runFinalizersOnExit(true);
-                System.exit(0);
+                finish();
                 break;
             }
         }
@@ -132,4 +131,3 @@ public class GlobalMenu extends AppCompatActivity {
     }
 
 }
-

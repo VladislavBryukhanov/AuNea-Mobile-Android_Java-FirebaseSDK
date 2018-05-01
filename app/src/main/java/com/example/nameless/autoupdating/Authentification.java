@@ -1,17 +1,11 @@
 package com.example.nameless.autoupdating;
 
 import android.app.Activity;
-import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.support.annotation.NonNull;
-import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -29,15 +23,14 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
-import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
+
 import java.net.NetworkInterface;
 import java.util.Collections;
 import java.util.List;
@@ -50,7 +43,6 @@ public class Authentification extends GlobalMenu {
     private FirebaseDatabase database;
     private DatabaseReference myRef;
 
-//    private SQLiteDatabase db; // храним "куки" авторизации
 
     private FirebaseAuth mAuth;
     public GoogleSignInClient mGoogleSignInClient;
@@ -79,11 +71,6 @@ public class Authentification extends GlobalMenu {
                 .build();
         mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
         mAuth = FirebaseAuth.getInstance();
-       /*        FirebaseUser currentUser = mAuth.getCurrentUser();
-
-        if(currentUser != null) {
-            signIn();
-        }*/
 
         btnSignIn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -128,8 +115,7 @@ public class Authentification extends GlobalMenu {
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         if (task.isSuccessful()) {
-                            FirebaseUser currentUser = mAuth.getCurrentUser();
-                            UserList.myAcc = new User(currentUser.getEmail(), String.valueOf(etLogin.getText()));
+                            UserList.myAcc = new User(mAuth.getUid(), String.valueOf(etLogin.getText()));
                             signUp();
                         } else {
                             Toast.makeText(Authentification.this, ":(9(9((", Toast.LENGTH_SHORT).show();
@@ -142,30 +128,30 @@ public class Authentification extends GlobalMenu {
         myRef = database.getReference("Users");
 
         if (UserList.myAcc.getLogin().trim().length() > 0) {
-            myRef.child(mAuth.getUid()).setValue(UserList.myAcc);
-//            Intent intent = new Intent(Authentification.this, UserList.class);
-//            startActivity(intent);
+            FirebaseDatabase database = FirebaseDatabase.getInstance();
+
+            Query getUser = database.getReference("Users").orderByChild("uid").equalTo(UserList.myAcc.getUid());
+
+            getUser.addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    if(dataSnapshot.getChildrenCount() == 0) {
+                        myRef.push().setValue(UserList.myAcc);
+                    }
+
+                    for(DataSnapshot data : dataSnapshot.getChildren()) {
+                        myRef.child(data.getKey()).setValue(UserList.myAcc);
+                    }
+                }
+                @Override
+                public void onCancelled(DatabaseError databaseError) {}
+            });
+        }
             setResult(Activity.RESULT_OK);
             finish();
-        }
     }
 
-/*    public void signIn() {
-        myRef = database.getReference("Users");
-        myRef.child(mAuth.getUid()).addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                myAcc = dataSnapshot.getValue(User.class);
-                Intent intent = new Intent(Authentification.this, UserList.class);
-                startActivity(intent);
-            }
 
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-
-            }
-        });
-    }*/
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -196,17 +182,9 @@ public class Authentification extends GlobalMenu {
         super.onStart();
     }
 
-/*     @Override
-    protected void onDestroy() { //пока нет логаута и автоматического входа по "кукам"
-        stopService(new Intent(getApplicationContext(), NotifyService.class));
-        super.onDestroy();
-    }*/
-
     @Override
     public void onBackPressed() {
         setResult(Activity.RESULT_CANCELED);
         finish();
-//        super.onBackPressed();
-
     }
 }
