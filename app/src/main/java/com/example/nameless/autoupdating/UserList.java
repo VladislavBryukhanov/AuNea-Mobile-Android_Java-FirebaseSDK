@@ -13,6 +13,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -97,7 +98,7 @@ public class UserList extends GlobalMenu {
         database = FirebaseDatabase.getInstance();
         myRef = database.getReference("Users");
 
-        if (!isMyServiceRunning(NotifyService.class, this)) {
+        if (!isMyServiceRunning(NotifyService.class, getApplicationContext())) {
             startService(new Intent(getApplicationContext(), NotifyService.class));
         }
 

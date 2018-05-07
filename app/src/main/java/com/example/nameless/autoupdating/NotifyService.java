@@ -42,6 +42,7 @@ public class NotifyService extends Service {
     private HashMap<Query, ChildEventListener> refToListeners;
     private FirebaseAuth mAuth;
 
+
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
@@ -50,40 +51,46 @@ public class NotifyService extends Service {
 
     @Override
     public void onCreate() {
+//        Toast.makeText(this, "Create", Toast.LENGTH_SHORT).show();
+
         database = FirebaseDatabase.getInstance();
         mAuth = FirebaseAuth.getInstance();
+        refToListeners = new HashMap<>();
+        timeOut = new HashMap<>();
+        isServiceStoped = false;
+
+        createListeners();
     }
 
-    @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        isServiceStoped = false;
-        refToListeners = new HashMap<>();
-//        timeOut = new HashMap<>();
-
+    private void createListeners() {
         myRef = database.getReference("Messages");
         myRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
+//                Toast.makeText(getApplicationContext(), "DCH", Toast.LENGTH_SHORT).show();
+
                 timeOut = new HashMap<>();
+                refToListeners = new HashMap<>();
 
                 for (DataSnapshot dlg : dataSnapshot.getChildren()) {
                     String myListener =   String.valueOf(dlg.child("listener1").getValue());
                     String foreignListener =   String.valueOf(dlg.child("listener2").getValue());
 
-                    if (!isServiceStoped && myListener.equals(mAuth.getUid())
-                            || foreignListener.equals(mAuth.getUid())) {
+                    if (!isServiceStoped && (myListener.equals(mAuth.getUid())
+                            || foreignListener.equals(mAuth.getUid()))) {
 
                         if (!myListener.equals(mAuth.getUid()) ) {
                             foreignListener = myListener;
                         }
+//                        Toast.makeText(getApplicationContext(), "S!Stoped", Toast.LENGTH_SHORT).show();
 
                         final String foreignListenerTmp = foreignListener;
 
                         refToListener = myRef.child(dlg.getKey()).child("content").limitToLast(1);
-//                        myRef.child(dlg.getKey()).child("content").limitToLast(1).addChildEventListener(newMsgListener = new ChildEventListener() {
                         refToListener.addChildEventListener(newMsgListener = new ChildEventListener() {
                             @Override
                             public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+//                                Toast.makeText(getApplicationContext(), "CA", Toast.LENGTH_SHORT).show();
 
                                 Message newMsg = dataSnapshot.getValue(Message.class);
                                 if ((newMsg.getTo()).equals((mAuth.getUid()))) {
@@ -103,7 +110,6 @@ public class NotifyService extends Service {
                             @Override
                             public void onCancelled(DatabaseError databaseError) {}
                         });
-//                        refToListener.removeEventListener(newMsgListener);
                         refToListeners.put(refToListener, newMsgListener);
                         timeOut.put(foreignListener, false);
                     }
@@ -115,6 +121,14 @@ public class NotifyService extends Service {
 
             }
         });
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+//        Toast.makeText(this, "Start", Toast.LENGTH_SHORT).show();
+        if(isServiceStoped) {
+            createListeners();
+        }
         return START_STICKY;
     }
 

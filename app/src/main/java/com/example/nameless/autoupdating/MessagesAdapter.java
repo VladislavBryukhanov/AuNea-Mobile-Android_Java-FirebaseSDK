@@ -83,7 +83,7 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
             if((filteredMessageList.get(position).getWho())
                     .equals(mAuth.getUid())) {
                 (convertView.findViewById(R.id.content))
-                        .setBackgroundResource(R.drawable.in_message_bg);
+                        .setBackgroundResource(R.drawable.bubble2);
 
                 RelativeLayout.LayoutParams layoutParams =
                         (RelativeLayout.LayoutParams) convertView.findViewById(
@@ -103,7 +103,7 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
                 }*/
             } else {
                 (convertView.findViewById(R.id.content))
-                        .setBackgroundResource(R.drawable.out_message_bg);
+                        .setBackgroundResource(R.drawable.bubble12);
 
                 RelativeLayout.LayoutParams layoutParams =
                         (RelativeLayout.LayoutParams) convertView.findViewById(

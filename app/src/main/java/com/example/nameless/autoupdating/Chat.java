@@ -258,7 +258,7 @@ public class Chat extends AppCompatActivity {
 
     @Override
     protected void onStop() {
-        if (!UserList.isMyServiceRunning(NotifyService.class, this)) {
+        if (!UserList.isMyServiceRunning(NotifyService.class, getApplicationContext())) {
             startService(new Intent(getApplicationContext(), NotifyService.class));
         }
         super.onStop();
@@ -270,11 +270,11 @@ public class Chat extends AppCompatActivity {
         super.onStart();
     }
 
-    @Override
-    protected void onResume() {
-        stopService(new Intent(getApplicationContext(), NotifyService.class));
-        super.onResume();
-    }
+//    @Override
+//    protected void onResume() {
+//        stopService(new Intent(getApplicationContext(), NotifyService.class));
+//        super.onResume();
+//    }
 
 
     //фокус в конец диалога при открытии клавиатуры
