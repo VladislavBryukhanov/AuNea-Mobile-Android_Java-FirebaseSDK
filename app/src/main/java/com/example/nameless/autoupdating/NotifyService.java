@@ -93,13 +93,13 @@ public class NotifyService extends Service {
 //                                Toast.makeText(getApplicationContext(), "CA", Toast.LENGTH_SHORT).show();
 
                                 Message newMsg = dataSnapshot.getValue(Message.class);
-                                if ((newMsg.getTo()).equals((mAuth.getUid()))) {
+//                                if ((newMsg.getTo()).equals((mAuth.getUid()))) {
                                     if(!timeOut.get(foreignListenerTmp)) {
                                         timeOut.put(foreignListenerTmp, true);
                                     } else {
                                         sendNotify(newMsg);
                                     }
-                                }
+//                                }
                             }
                             @Override
                             public void onChildChanged(DataSnapshot dataSnapshot, String s) {}
@@ -163,7 +163,7 @@ public class NotifyService extends Service {
         notificationIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP
                 | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         PendingIntent intent = PendingIntent.getActivity(getApplicationContext(), 0,
-                notificationIntent, 0);
+                notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
         NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         Notification notification = new Notification.Builder(getApplicationContext())
