@@ -6,7 +6,7 @@ android {
     buildToolsVersion "27.0.3"
     defaultConfig {
         applicationId "com.example.nameless.autoupdating"
-        minSdkVersion 16
+        minSdkVersion 19
         targetSdkVersion 27
         versionCode 1
         versionName "3.0"
@@ -38,6 +38,7 @@ dependencies {
     compile 'com.crashlytics.sdk.android:crashlytics:2.9.2'
     compile 'com.google.firebase:firebase-auth:15.0.0'
     compile 'com.google.android.gms:play-services-auth:15.0.0'
+    compile 'com.google.code.gson:gson:2.8.1'
 
     implementation 'com.crashlytics.sdk.android:crashlytics:2.9.2'
 

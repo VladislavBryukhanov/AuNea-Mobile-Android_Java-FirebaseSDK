@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:title="Call"
+        android:id="@+id/mCall"></item>
+    <item android:title="Stop Call"
+        android:id="@+id/mStopCall"></item>
+</menu>

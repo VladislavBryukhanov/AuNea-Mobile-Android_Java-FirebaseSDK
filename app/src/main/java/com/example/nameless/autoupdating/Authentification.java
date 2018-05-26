@@ -1,5 +1,7 @@
 package com.example.nameless.autoupdating;
 
+import android.*;
+import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -57,7 +59,9 @@ public class Authentification extends GlobalMenu {
                 != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this,
                     new String[]{android.Manifest.permission.INTERNET,
-                            android.Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
+                            android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                            android.Manifest.permission.RECORD_AUDIO,
+                            Manifest.permission.CAPTURE_AUDIO_OUTPUT}, 1);
         }
 
         etLogin = findViewById(R.id.etLogin);

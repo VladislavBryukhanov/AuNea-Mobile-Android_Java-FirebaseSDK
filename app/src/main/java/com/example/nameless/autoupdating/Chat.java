@@ -5,13 +5,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
-import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
-import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -23,9 +20,7 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ListView;
-import android.widget.PopupMenu;
 import android.widget.PopupWindow;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnFailureListener;
@@ -40,11 +35,9 @@ import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
+import com.google.gson.Gson;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
@@ -57,6 +50,10 @@ public class Chat extends AppCompatActivity {
     private static final int PICKFILE_RESULT_CODE = 200;
     private static final int CAMERA_REQUEST = 10;
 
+    public WriteVoiceStream voiceWriter;
+    private UDPClient client;
+
+    private Menu menu;
     private ImageButton btnSend, btnAffixFile;
     private static EditText etMessage;
     private ListView lvMessages;
@@ -293,6 +290,79 @@ public class Chat extends AppCompatActivity {
             }
         });
     }*/
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.dialog_menu, menu);
+        MenuItem hideItem = menu.findItem(R.id.mStopCall);
+        hideItem.setVisible(false);
+        this.menu = menu;
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch(item.getItemId()) {
+            case R.id.mCall: {
+                Thread streamThread = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            client = new UDPClient(UserList.voiceStreamServerIpAddress, UserList.voiceStreamServerPort);
+                            ClientToClient ctc = new ClientToClient(mAuth.getUid(), toUser);
+                            String json = new Gson().toJson(ctc);
+//                            UserList.voiceStreamServerPort = client.createPrivateStream(json);
+                            int port = client.createPrivateStream(json);
+                            voiceWriter = new WriteVoiceStream(port);
+                            voiceWriter.start();
+
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+
+                        Thread listenearThread = new Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                UserList.voiceStreamListenear = new ListenVoiceStream(client);
+                                UserList.voiceStreamListenear.start();
+
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        stopCall();
+                                    }
+                                });
+                            }
+                        });
+                        listenearThread.start();
+
+                    }
+                });
+                streamThread.start();
+
+                MenuItem hideItem = menu.findItem(R.id.mStopCall);
+                hideItem.setVisible(true);
+                hideItem = menu.findItem(R.id.mCall);
+                hideItem.setVisible(false);
+                break;
+            }
+            case R.id.mStopCall: {
+                stopCall();
+                break;
+            }
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    public void stopCall() {
+        voiceWriter.stop();
+        UserList.voiceStreamListenear.stop();
+        client.closeStream();
+
+        MenuItem hideItem = menu.findItem(R.id.mCall);
+        hideItem.setVisible(true);
+        hideItem = menu.findItem(R.id.mStopCall);
+        hideItem.setVisible(false);
+    }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -415,19 +485,19 @@ public class Chat extends AppCompatActivity {
             @Override
             public void onClick(View v) {
             Intent i = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                       /* String fileName = "IMG" +
-                                new SimpleDateFormat("yyyMMdd_HHmmss").format(new Date());
-                        File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+           /* String fileName = "IMG" +
+                    new SimpleDateFormat("yyyMMdd_HHmmss").format(new Date());
+            File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
 
-                        File photoFile = null;
-                        try {
-                            photoFile = File.createTempFile(fileName, ".png", storageDir);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                        Uri photoUri = FileProvider.getUriForFile(getApplicationContext(),
-                                getPackageName(), photoFile);
-                        i.putExtra(MediaStore.EXTRA_OUTPUT, photoUri); // Uri.fromFile(out)*/
+            File photoFile = null;
+            try {
+                photoFile = File.createTempFile(fileName, ".png", storageDir);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            Uri photoUri = FileProvider.getUriForFile(getApplicationContext(),
+                    getPackageName(), photoFile);
+            i.putExtra(MediaStore.EXTRA_OUTPUT, photoUri); // Uri.fromFile(out)*/
             startActivityForResult(i, CAMERA_REQUEST);
             popupWindow.dismiss();
             }

@@ -1,5 +1,6 @@
 package com.example.nameless.autoupdating;
 
+import android.*;
 import android.app.Activity;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -51,7 +52,9 @@ public class GlobalMenu extends AppCompatActivity {
                 != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this,
                     new String[]{android.Manifest.permission.INTERNET,
-                            android.Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
+                            android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                            android.Manifest.permission.RECORD_AUDIO,
+                            android.Manifest.permission.CAPTURE_AUDIO_OUTPUT}, 1);
         }
 
         PackageInfo pInfo = null;

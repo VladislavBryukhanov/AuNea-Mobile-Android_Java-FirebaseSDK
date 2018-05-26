@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -13,7 +12,6 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.ListView;
-import android.widget.Toast;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -24,11 +22,23 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 
 public class UserList extends GlobalMenu {
 
     public static User myAcc;
+    public static ListenVoiceStream voiceStreamListenear;
+    public static InetAddress voiceStreamServerIpAddress;
+    public static int voiceStreamServerPort = 2891;
+    static {
+        try {
+            voiceStreamServerIpAddress = InetAddress.getByName("192.168.0.102");
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        }
+    }
 
     private EditText etSearch;
     private ListView lvUsers;
@@ -41,6 +51,7 @@ public class UserList extends GlobalMenu {
 
     private final int AUTH_SUCESS = 789;
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -52,7 +63,6 @@ public class UserList extends GlobalMenu {
         users = new ArrayList<>();
         adapter = new UsersAdapter(this, users);
         lvUsers.setAdapter(adapter);
-
 
 //        FirebaseDatabase.getInstance().setPersistenceEnabled(true);
         mAuth = FirebaseAuth.getInstance();
@@ -95,6 +105,17 @@ public class UserList extends GlobalMenu {
     }
 
     private void initialiseData() {
+
+/*        Thread streamThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                voiceStreamListenear = new ListenVoiceStream(voiceStreamServerIpAddress, voiceStreamServerPort);
+                voiceStreamListenear.start();
+            }
+        });
+        streamThread.start();*/
+//        voiceStreamListenear = new ListenVoiceStream(voiceStreamServerIpAddress, voiceStreamServerPort);
+//        voiceStreamListenear.start();
         database = FirebaseDatabase.getInstance();
         myRef = database.getReference("Users");
 

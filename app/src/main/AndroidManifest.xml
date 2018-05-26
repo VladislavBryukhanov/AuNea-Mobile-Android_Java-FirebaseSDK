@@ -3,6 +3,8 @@
     package="com.example.nameless.autoupdating">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.CAPTURE_AUDIO_OUTPUT" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <application
@@ -14,7 +16,6 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-
         <service android:name=".FirebaseMessagingService">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
@@ -33,21 +34,18 @@
         </provider>
 
         <activity android:name=".GlobalMenu" />
-
-        <activity android:name=".Authentification"/>
-
+        <activity android:name=".Authentification" />
         <activity
             android:name=".UserList"
-            android:label="List of users" >
+            android:label="List of users">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
         <activity android:name=".Chat" />
-        <activity android:name=".ImageViewer"></activity>
+        <activity android:name=".ImageViewer" />
     </application>
 
 </manifest>
