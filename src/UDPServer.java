@@ -11,7 +11,6 @@ public class UDPServer {
 
     private DatagramSocket udpSocket;
     private int port;
-//    private HashMap<ClientToClient, Boolean> dialogs;
     private HashMap<String, ClientToClient> dialogs;
 
     public UDPServer(int port) throws SocketException {
@@ -22,44 +21,22 @@ public class UDPServer {
 
     private void listen() throws IOException {
         System.out.println("Server running at " + InetAddress.getLocalHost() + ":" + port);
-//        String msg;
         while(true) {
             byte[] buf = new byte[256];
             DatagramPacket packet = new DatagramPacket(buf, buf.length);
             udpSocket.receive(packet);
-//            ServerThread st = new ServerThread(udpSocket, packet);
-//            st.start();
-//            msg = new String(packet.getData()).trim();
-//            System.out.println(msg);
 
             String json = new String(packet.getData()).trim();
             ClientToClient ctc = new Gson().fromJson(json, ClientToClient.class);
-            if(dialogs.containsKey(ctc.getFirstUser()) || dialogs.containsKey(ctc.getSecondUser())) {
-                String key;
-                if(dialogs.containsKey(ctc.getFirstUser())) {
-                    key = ctc.getFirstUser();
-                } else {
-                    key = ctc.getSecondUser();
-                }
+            if(dialogs.containsKey(ctc.getFirstUser())) {
+                String key = ctc.getFirstUser();
                 ctc = dialogs.get(key);
                 ctc.setSecondUserIP(packet.getAddress());
                 ctc.setSecondUserPort(packet.getPort());
                 ctc.setConnected(true);
-//                dialogs.put(ctc.getFirstUser(), ctc);
-
-/*                byte[] sendData = new Gson().toJson(ctc).getBytes();
-
-                DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length,
-                        ctc.getFirstUserIP(), ctc.getFirstUserPort());
-                udpSocket.send(sendPacket);
-                sendPacket = new DatagramPacket(sendData, sendData.length,
-                        ctc.getSecondUserIP(), ctc.getSecondUserPort());
-                udpSocket.send(sendPacket);*/
-
                 ServerThread st = new ServerThread(ctc);
                 st.start();
                 dialogs.remove(key);
-
             } else {
                 ctc.setFirstUserIP(packet.getAddress());
                 ctc.setFirstUserPort(packet.getPort());

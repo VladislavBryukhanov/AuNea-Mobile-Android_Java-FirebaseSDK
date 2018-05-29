@@ -21,7 +21,7 @@ public class ServerThread extends Thread {
         udpSocket = new DatagramSocket(0);
         int port = udpSocket.getLocalPort();
         byte[] sendData = String.valueOf(port).getBytes();
-        udpSocket.setSoTimeout(4000);
+        udpSocket.setSoTimeout(1500);
 
         DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length,
                 ctc.getFirstUserIP(), ctc.getFirstUserPort());
