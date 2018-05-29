@@ -1,8 +1,9 @@
 package com.example.nameless.autoupdating;
 
+import java.io.Serializable;
 import java.net.InetAddress;
 
-public class ClientToClient {
+public class ClientToClient  implements Serializable {
 
     private String firstUser;
     private String secondUser;

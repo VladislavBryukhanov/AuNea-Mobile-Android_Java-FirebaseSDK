@@ -50,10 +50,6 @@ public class Chat extends AppCompatActivity {
     private static final int PICKFILE_RESULT_CODE = 200;
     private static final int CAMERA_REQUEST = 10;
 
-    public WriteVoiceStream voiceWriter;
-    private UDPClient client;
-
-    private Menu menu;
     private ImageButton btnSend, btnAffixFile;
     private static EditText etMessage;
     private ListView lvMessages;
@@ -293,9 +289,6 @@ public class Chat extends AppCompatActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.dialog_menu, menu);
-        MenuItem hideItem = menu.findItem(R.id.mStopCall);
-        hideItem.setVisible(false);
-        this.menu = menu;
         return super.onCreateOptionsMenu(menu);
     }
 
@@ -303,66 +296,17 @@ public class Chat extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch(item.getItemId()) {
             case R.id.mCall: {
-                Thread streamThread = new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            client = new UDPClient(UserList.voiceStreamServerIpAddress, UserList.voiceStreamServerPort);
-                            ClientToClient ctc = new ClientToClient(mAuth.getUid(), toUser);
-                            String json = new Gson().toJson(ctc);
-//                            UserList.voiceStreamServerPort = client.createPrivateStream(json);
-                            int port = client.createPrivateStream(json);
-                            voiceWriter = new WriteVoiceStream(port);
-                            voiceWriter.start();
-
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-
-                        Thread listenearThread = new Thread(new Runnable() {
-                            @Override
-                            public void run() {
-                                UserList.voiceStreamListenear = new ListenVoiceStream(client);
-                                UserList.voiceStreamListenear.start();
-
-                                runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        stopCall();
-                                    }
-                                });
-                            }
-                        });
-                        listenearThread.start();
-
-                    }
-                });
-                streamThread.start();
-
-                MenuItem hideItem = menu.findItem(R.id.mStopCall);
-                hideItem.setVisible(true);
-                hideItem = menu.findItem(R.id.mCall);
-                hideItem.setVisible(false);
-                break;
-            }
-            case R.id.mStopCall: {
-                stopCall();
+                Intent intent = new Intent(getApplicationContext(), VoiceCalling.class);
+                ClientToClient ctc = new ClientToClient(mAuth.getUid(), toUser);
+                intent.putExtra("dialog", ctc);
+                intent.putExtra("action", "call");
+                startActivity(intent);
                 break;
             }
         }
         return super.onOptionsItemSelected(item);
     }
 
-    public void stopCall() {
-        voiceWriter.stop();
-        UserList.voiceStreamListenear.stop();
-        client.closeStream();
-
-        MenuItem hideItem = menu.findItem(R.id.mCall);
-        hideItem.setVisible(true);
-        hideItem = menu.findItem(R.id.mStopCall);
-        hideItem.setVisible(false);
-    }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -418,51 +362,6 @@ public class Chat extends AppCompatActivity {
 //    }
 
     public void showPopupWindow(View v) {
-//        PopupMenu popupMenu = new PopupMenu(this, v);
-//        popupMenu.inflate(R.menu.chose_file_type_menu);
-//        popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-//            @Override
-//            public boolean onMenuItemClick(MenuItem item) {
-//                switch(item.getItemId()) {
-//                    case R.id.mGallery: {
-//                        Intent intent = new Intent();
-//                        intent.setType("image/*");
-//                        intent.setAction(Intent.ACTION_GET_CONTENT);
-//                        startActivityForResult(Intent.createChooser(intent, "Select Picture"), PICKFILE_RESULT_CODE);
-//                        break;
-//                    }
-//                    case R.id.mCamera: {
-//                        Toast.makeText(Chat.this, "it is a bad idea, close it", Toast.LENGTH_LONG).show();
-//                        Intent i = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-//
-//                       /* String fileName = "IMG" +
-//                                new SimpleDateFormat("yyyMMdd_HHmmss").format(new Date());
-//                        File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
-//
-//                        File photoFile = null;
-//                        try {
-//                            photoFile = File.createTempFile(fileName, ".png", storageDir);
-//                        } catch (IOException e) {
-//                            e.printStackTrace();
-//                        }
-//                        Uri photoUri = FileProvider.getUriForFile(getApplicationContext(),
-//                                getPackageName(), photoFile);
-//                        i.putExtra(MediaStore.EXTRA_OUTPUT, photoUri); // Uri.fromFile(out)*/
-//                        startActivityForResult(i, CAMERA_REQUEST);
-//                        break;
-//                    }
-//                    case R.id.mFileSystem: {
-//                        Intent intent = new Intent();
-//                        intent.setType("*/*");
-//                        intent.setAction(Intent.ACTION_GET_CONTENT);
-//                        startActivityForResult(intent, PICKFILE_RESULT_CODE);
-//                        break;
-//                    }
-//                }
-//                return true;
-//            }
-//        });
-//        popupMenu.show();
 
         LayoutInflater layoutInflater
                 = (LayoutInflater)getApplicationContext()
@@ -560,6 +459,7 @@ public class Chat extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
+//        stopCall();
         if(messageForEditing != null) {
             messageForEditing = null;
             etMessage.setText("");
@@ -569,3 +469,8 @@ public class Chat extends AppCompatActivity {
         }
     }
 }
+//todo в уведомлениях закрепить уведомление о том что сейчас происходит звонок, по клику а нем звонок завершать или переходить в соответствующий диалог
+//блокировать возможность звонить во врмея разговора
+//при входящем звонке вызывать диалог, при клике по ок происходит то же что и при нажати пн меню call
+//сделать таймаут в 10 сек для звонка, через 10 тсек если он не был принят то сбрасываем
+//голосовое оповещание для звонка

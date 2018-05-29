@@ -69,42 +69,27 @@ public class WriteVoiceStream {
     }
 
     public void startStreaming() {
-        Thread streamThread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    DatagramPacket packet;
+        try {
+            DatagramPacket packet;
+            recorder = new AudioRecord(MediaRecorder.AudioSource.MIC,sampleRate,channelConfig,audioFormat,minBufSize*10);
+            recorder.startRecording();
 
-
-/*                    UDPClient client = new UDPClient(UserList.voiceStreamServerIpAddress, UserList.voiceStreamServerPort);
-//                    ClientToClient ctc = new ClientToClient(me, to);
-                    ClientToClient ctc = new ClientToClient("second", "first");
-                    String json = new Gson().toJson(ctc);
-                    UserList.voiceStreamServerPort = client.createPrivateStream(json);*/
-                    //
-
-                    recorder = new AudioRecord(MediaRecorder.AudioSource.MIC,sampleRate,channelConfig,audioFormat,minBufSize*10);
-                    recorder.startRecording();
-
-                    while(status) {
+            while(status) {
 //                        minBufSize = recorder.read(buffer, 0, buffer.length);
-                        recorder.read(buffer, 0, buffer.length);
-                        packet = new DatagramPacket (buffer, buffer.length, UserList.voiceStreamServerIpAddress, port);
-                        socket.send(packet);
-                    }
+                recorder.read(buffer, 0, buffer.length);
+                packet = new DatagramPacket (buffer, buffer.length, UserList.voiceStreamServerIpAddress, port);
+                socket.send(packet);
+            }
 
 //                    writeToFile();
 //                    playFromFile();
 //                    playFromStream();
 
-                } catch(UnknownHostException e) {
-                    e.printStackTrace();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-        streamThread.start();
+        } catch(UnknownHostException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void writeToFile() {

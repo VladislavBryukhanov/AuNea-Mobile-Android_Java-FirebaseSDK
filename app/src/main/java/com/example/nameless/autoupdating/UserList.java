@@ -5,6 +5,7 @@ import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.speech.tts.Voice;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.Menu;
@@ -12,9 +13,11 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -29,7 +32,6 @@ import java.util.ArrayList;
 public class UserList extends GlobalMenu {
 
     public static User myAcc;
-    public static ListenVoiceStream voiceStreamListenear;
     public static InetAddress voiceStreamServerIpAddress;
     public static int voiceStreamServerPort = 2891;
     static {
@@ -106,16 +108,6 @@ public class UserList extends GlobalMenu {
 
     private void initialiseData() {
 
-/*        Thread streamThread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                voiceStreamListenear = new ListenVoiceStream(voiceStreamServerIpAddress, voiceStreamServerPort);
-                voiceStreamListenear.start();
-            }
-        });
-        streamThread.start();*/
-//        voiceStreamListenear = new ListenVoiceStream(voiceStreamServerIpAddress, voiceStreamServerPort);
-//        voiceStreamListenear.start();
         database = FirebaseDatabase.getInstance();
         myRef = database.getReference("Users");
 
@@ -130,6 +122,31 @@ public class UserList extends GlobalMenu {
                     User newUserItem = user.getValue(User.class);
                     if (!newUserItem.getUid().equals(myAcc.getUid())) {
                         users.add(newUserItem);
+                    } else {
+                        // делаем listener для голосового вызова, если нам кто-то позвонит то он отработает и перекинет нас на соответствующий интент
+                        myRef.child(user.getKey()).addChildEventListener(new ChildEventListener() {
+                            @Override
+                            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+                                if(dataSnapshot.getKey().equals("voiceCall")) {
+                                    String dialogChannel = (String)dataSnapshot.getValue();
+                                    if(!dialogChannel.equals(VoiceCalling.CALLING_STATE)) {
+                                        Intent intent = new Intent(getApplicationContext(), VoiceCalling.class);
+                                        ClientToClient ctc = new ClientToClient((String)dataSnapshot.getValue(), mAuth.getUid());
+                                        intent.putExtra("dialog", ctc);
+                                        intent.putExtra("action", dataSnapshot.getKey());
+                                        startActivity(intent);
+                                    }
+                                }
+                            }
+                            @Override
+                            public void onChildChanged(DataSnapshot dataSnapshot, String s) {}
+                            @Override
+                            public void onChildRemoved(DataSnapshot dataSnapshot) {}
+                            @Override
+                            public void onChildMoved(DataSnapshot dataSnapshot, String s) {}
+                            @Override
+                            public void onCancelled(DatabaseError databaseError) {}
+                        });
                     }
                 }
                 adapter.notifyDataSetChanged();
@@ -144,7 +161,6 @@ public class UserList extends GlobalMenu {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Intent intent = new Intent(getApplicationContext(), Chat.class);
-//                String toUser = users.get(position).getEmail();
                 intent.putExtra("to", users.get(position));
                 startActivity(intent);
             }
