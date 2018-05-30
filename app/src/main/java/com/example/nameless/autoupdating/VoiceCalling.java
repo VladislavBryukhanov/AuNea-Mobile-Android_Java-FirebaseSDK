@@ -77,9 +77,6 @@ public class VoiceCalling extends AppCompatActivity {
                         .child(dataSnapshot.getKey())
                         .child("voiceCall");
 
-//                myRef.onDisconnect().removeValue();
-//                myRef.onDisconnect().cancel();
-
                 if(action.equals("call")) {
                     CoordinatorLayout.LayoutParams lp = (CoordinatorLayout.LayoutParams) btnReject.getLayoutParams();
                     lp.anchorGravity = Gravity.CENTER;
@@ -88,11 +85,10 @@ public class VoiceCalling extends AppCompatActivity {
 
                     getDialogState(ctc.getSecondUser());
                     myRef.setValue(CALLING_STATE);
-//                    myRef.onDisconnect().setValue("Update any kind of values you want here");
                     myRef.onDisconnect().removeValue();
 
                     beep = MediaPlayer.create(getBaseContext(), R.raw.beep);
-                    beep.setLooping(false);
+                    beep.setLooping(true);
                     beep.start();
                 } else {
                     getDialogState(ctc.getFirstUser());
@@ -104,12 +100,6 @@ public class VoiceCalling extends AppCompatActivity {
             @Override
             public void onChildChanged(DataSnapshot dataSnapshot, String s) {
                 if(!dataSnapshot.child("voiceCall").exists()) {
-/*                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            closeConnection();
-                        }
-                    });*/
                     closeConnection();
                 }
             }
@@ -120,15 +110,6 @@ public class VoiceCalling extends AppCompatActivity {
             @Override
             public void onCancelled(DatabaseError databaseError) {}
         });
-
-/*        if(action.equals("call")) {
-//            setDialogState(ctc.getFirstUser(), ctc.getSecondUser());
-        } else {
-            Uri notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE);
-            ringtone = RingtoneManager.getRingtone(getApplicationContext(), notification);
-            ringtone.play();
-            getDialogState(ctc.getFirstUser());
-        }*/
 
         btnAccept.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -177,14 +158,15 @@ public class VoiceCalling extends AppCompatActivity {
                             @Override
                             public void onCancelled(DatabaseError databaseError) {}
                         });
-                        toRef.onDisconnect().removeValue(new DatabaseReference.CompletionListener() {
+                        toRef.onDisconnect().removeValue();
+/*                        toRef.onDisconnect().removeValue(new DatabaseReference.CompletionListener() {
                             @Override
                             public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
                                 if(connectionListener != null) {
                                     toRef.removeEventListener(connectionListener);
                                 }
                             }
-                        });
+                        });*/
 
                     }
                 }
@@ -199,6 +181,7 @@ public class VoiceCalling extends AppCompatActivity {
 
             @Override
             public void onComplete(@NonNull Task<Void> task) {
+                Toast.makeText(VoiceCalling.this, "connect", Toast.LENGTH_SHORT).show();
                 createConnection();
             }
         });
@@ -238,7 +221,7 @@ public class VoiceCalling extends AppCompatActivity {
                     writerThread.start();
 
 
-                Thread listenearThread = new Thread(new Runnable() {
+                Thread listenerThread = new Thread(new Runnable() {
                     @Override
                     public void run() {
                         voiceStreamListenear = new ListenVoiceStream(client);
@@ -247,7 +230,7 @@ public class VoiceCalling extends AppCompatActivity {
                         onReject();
                     }
                 });
-                listenearThread.start();
+                listenerThread.start();
 
                 } catch (IOException e) {
                     e.printStackTrace();

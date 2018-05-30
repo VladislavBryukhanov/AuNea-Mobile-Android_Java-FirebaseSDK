@@ -36,7 +36,7 @@ public class ListenVoiceStream {
 
         DatagramPacket packet = new DatagramPacket(buf, buf.length);
         DatagramSocket udpSocket = client.getUdpSocket();
-        udpSocket.setSoTimeout(1500);
+        udpSocket.setSoTimeout(3000);
 
 
         AudioTrack audio = new AudioTrack(AudioManager.STREAM_MUSIC,
