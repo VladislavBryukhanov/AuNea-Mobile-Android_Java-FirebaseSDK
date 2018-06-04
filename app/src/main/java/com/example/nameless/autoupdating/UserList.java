@@ -36,7 +36,8 @@ public class UserList extends GlobalMenu {
     public static int voiceStreamServerPort = 2891;
     static {
         try {
-            voiceStreamServerIpAddress = InetAddress.getByName("192.168.0.102");
+//            voiceStreamServerIpAddress = InetAddress.getByName("192.168.0.102");
+            voiceStreamServerIpAddress = InetAddress.getByName("134.249.226.227");
         } catch (UnknownHostException e) {
             e.printStackTrace();
         }
@@ -130,6 +131,7 @@ public class UserList extends GlobalMenu {
                                 if(dataSnapshot.getKey().equals("voiceCall")) {
                                     String dialogChannel = (String)dataSnapshot.getValue();
                                     if(!dialogChannel.equals(VoiceCalling.CALLING_STATE)) {
+                                        Toast.makeText(UserList.this, "rn", Toast.LENGTH_SHORT).show();
                                         Intent intent = new Intent(getApplicationContext(), VoiceCalling.class);
                                         ClientToClient ctc = new ClientToClient((String)dataSnapshot.getValue(), mAuth.getUid());
                                         intent.putExtra("dialog", ctc);

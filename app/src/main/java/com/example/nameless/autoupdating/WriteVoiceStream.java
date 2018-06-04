@@ -34,12 +34,12 @@ import java.net.UnknownHostException;
 
 public class WriteVoiceStream {
     //                    private int minBufSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat);
-    private int minBufSize = 320;
+//    private int minBufSize = 320;
+    private int minBufSize = 20;
     private byte[] buffer = new byte[minBufSize];
     private DatagramSocket socket;
     private AudioRecord recorder;
-    private int sampleRate = 8000 ; // 44100 for music
-    //    private int channelConfig = AudioFormat.CHANNEL_CONFIGURATION_MONO;
+    private int sampleRate = 8000;
     private int channelConfig = AudioFormat.CHANNEL_IN_MONO;
     private int audioFormat = AudioFormat.ENCODING_PCM_8BIT;
     private boolean status = true;

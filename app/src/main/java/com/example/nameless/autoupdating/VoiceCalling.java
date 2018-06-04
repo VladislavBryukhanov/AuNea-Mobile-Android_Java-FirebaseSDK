@@ -13,6 +13,7 @@ import android.support.design.widget.Snackbar;
 import android.support.v4.view.GravityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.Toast;
@@ -151,7 +152,6 @@ public class VoiceCalling extends AppCompatActivity {
                                 String key = dataSnapshot.getKey();
                                 String value = (String)(dataSnapshot.getValue());
                                 if(key.equals("voiceCall") && value != null && value.equals(CALLING_STATE)) {
-                                    Toast.makeText(VoiceCalling.this, "cc", Toast.LENGTH_SHORT).show();
                                     createConnection();
                                 }
                             }
@@ -181,7 +181,6 @@ public class VoiceCalling extends AppCompatActivity {
 
             @Override
             public void onComplete(@NonNull Task<Void> task) {
-                Toast.makeText(VoiceCalling.this, "connect", Toast.LENGTH_SHORT).show();
                 createConnection();
             }
         });
@@ -191,10 +190,15 @@ public class VoiceCalling extends AppCompatActivity {
         if(connectionListener != null) {
             toRef.removeEventListener(connectionListener);
         }
-        toRef.removeValue();
-        myRef.removeValue();
+        if(toRef != null) {
+            toRef.removeValue();
+        }
+        if(myRef != null) {
+            myRef.removeValue();
+        }
     }
-        private void createConnection() {
+
+    private void createConnection() {
         streamThread = new Thread(new Runnable() {
             @Override
             public void run() {
