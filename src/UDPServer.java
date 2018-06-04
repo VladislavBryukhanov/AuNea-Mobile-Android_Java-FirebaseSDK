@@ -9,12 +9,11 @@ import java.util.HashMap;
 
 public class UDPServer {
 
-    private DatagramSocket udpSocket;
-    private int port;
+    public static DatagramSocket udpSocket;
+    private final int port = 2891;
     private HashMap<String, ClientToClient> dialogs;
 
-    public UDPServer(int port) throws SocketException {
-        this.port = port;
+    public UDPServer() throws SocketException {
         this.udpSocket = new DatagramSocket(port);
         dialogs = new HashMap<>();
     }
@@ -47,7 +46,7 @@ public class UDPServer {
     }
     public static void main(String[] args) {
         try {
-            UDPServer serv = new UDPServer(2891);
+            UDPServer serv = new UDPServer();
             serv.listen();
         } catch (SocketException e) {
             e.printStackTrace();
