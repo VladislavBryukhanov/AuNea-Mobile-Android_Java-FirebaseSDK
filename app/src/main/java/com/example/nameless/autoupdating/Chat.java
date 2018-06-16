@@ -4,9 +4,12 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.Gravity;
@@ -21,7 +24,10 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.PopupWindow;
+import android.widget.TextView;
 import android.widget.Toast;
+//import android.widget.Toolbar;
+import android.support.v7.widget.Toolbar;
 
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -47,8 +53,8 @@ import java.util.regex.Pattern;
 public class Chat extends AppCompatActivity {
 
 //    private static final int REQUEST_GALLERY = 100;
-    private static final int PICKFILE_RESULT_CODE = 200;
-    private static final int CAMERA_REQUEST = 10;
+    public static final int PICKFILE_RESULT_CODE = 200;
+    public static final int CAMERA_REQUEST = 10;
 
     private ImageButton btnSend, btnAffixFile;
     private static EditText etMessage;
@@ -81,7 +87,7 @@ public class Chat extends AppCompatActivity {
 
         messages = new ArrayList<>();
         Intent intent = getIntent();
-        User user = (User)intent.getSerializableExtra("to");
+        final User user = (User)intent.getSerializableExtra("to");
         toUser = user.getUid();
         mAuth = FirebaseAuth.getInstance();
 
@@ -96,7 +102,31 @@ public class Chat extends AppCompatActivity {
         database = FirebaseDatabase.getInstance();
         myRef = database.getReference("Messages");
 
-        setTitle(user.getLogin());
+        final ViewGroup actionBarLayout = (ViewGroup) getLayoutInflater().inflate(
+                R.layout.chat_action_bar,
+                null);
+        final ActionBar actionBar = getSupportActionBar();
+        actionBar.setDisplayShowHomeEnabled(false);
+        actionBar.setDisplayShowTitleEnabled(false);
+        actionBar.setDisplayShowCustomEnabled(true);
+        actionBar.setCustomView(actionBarLayout);
+        ((TextView)findViewById(R.id.tvAlienLogin)).setText(user.getLogin());
+
+        ImageView alienAvatar = (ImageView)findViewById(R.id.alienAvatar);
+        if(user.getAvatarUrl() != null) {
+            DownloadAvatarByUrl downloadTask = new DownloadAvatarByUrl(alienAvatar, user);
+            downloadTask.execute(user.getAvatarUrl());
+        }
+        alienAvatar.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(getApplicationContext(), AlienPage.class);
+                intent.putExtra("to", user);
+                startActivity(intent);
+            }
+        });
+
+//        setTitle(user.getLogin());
 //        setListenerForScrollWhenKeyboarOpened();
         lvMessages.setTranscriptMode(ListView.TRANSCRIPT_MODE_NORMAL);
         lvMessages.setStackFromBottom(true); // if dialog started first time need false
@@ -408,6 +438,11 @@ public class Chat extends AppCompatActivity {
             intent.setType("image/*");
             intent.setAction(Intent.ACTION_GET_CONTENT);
             startActivityForResult(Intent.createChooser(intent, "Select Picture"), PICKFILE_RESULT_CODE);
+
+//             Intent intent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+//            Intent intent = new Intent(Intent.ACTION_GET_CONTENT, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+//            intent.setType("image/*");
+//            startActivityForResult(Intent.createChooser(intent, "Select Picture"), PICKFILE_RESULT_CODE);
             popupWindow.dismiss();
             }
         });

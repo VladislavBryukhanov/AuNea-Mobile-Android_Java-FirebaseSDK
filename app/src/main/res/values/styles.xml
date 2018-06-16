@@ -29,4 +29,13 @@
 
     <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
 
+
+
+    <style name="BlackActionBar" parent="Theme.AppCompat.Light.DarkActionBar">
+        <!-- Customize your theme here. -->
+        <item name="colorPrimary">#232728</item>
+        <item name="colorPrimaryDark">#232728</item>
+        <item name="colorAccent">#232728</item>
+    </style>
+
 </resources>

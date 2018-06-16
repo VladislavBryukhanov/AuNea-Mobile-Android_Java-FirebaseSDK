@@ -1,39 +1,41 @@
 package com.example.nameless.autoupdating;
 
-import android.content.pm.PackageManager;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioRecord;
 import android.media.AudioTrack;
+import android.media.MediaCodec;
+import android.media.MediaCodecInfo;
+import android.media.MediaExtractor;
+import android.media.MediaFormat;
 import android.media.MediaRecorder;
-import android.os.Bundle;
+import android.net.LocalServerSocket;
+import android.net.LocalSocket;
+import android.net.LocalSocketAddress;
 import android.os.Environment;
-import android.support.v4.app.ActivityCompat;
+import android.os.ParcelFileDescriptor;
 import android.util.Log;
-import android.view.View;
-import android.widget.Button;
-
-import com.example.nameless.autoupdating.UserList;
-import com.google.gson.Gson;
+import android.view.Surface;
 
 import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.InetAddress;
 import java.net.SocketException;
-import java.net.UnknownHostException;
+import java.nio.ByteBuffer;
 
 /**
  * Created by nameless on 21.05.18.
  */
 
 public class WriteVoiceStream {
-    //                    private int minBufSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat);
+//    private int minBufSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat);
 //    private int minBufSize = 320;
     private int minBufSize = 20;
     private byte[] buffer = new byte[minBufSize];
@@ -57,9 +59,12 @@ public class WriteVoiceStream {
     }
 
     public void start() {
-
         status = true;
-        startStreaming();
+        try {
+            startStreaming();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void stop() {
@@ -68,28 +73,27 @@ public class WriteVoiceStream {
         socket.close();
     }
 
-    public void startStreaming() {
-        try {
-            DatagramPacket packet;
-            recorder = new AudioRecord(MediaRecorder.AudioSource.MIC,sampleRate,channelConfig,audioFormat,minBufSize*10);
-            recorder.startRecording();
+    public void startStreaming() throws IOException {
+        DatagramPacket packet;
+        recorder = new AudioRecord(
+                MediaRecorder.AudioSource.MIC,
+                sampleRate,
+                channelConfig,
+                audioFormat,
+                minBufSize * 10);
+        recorder.startRecording();
 
-            while(status) {
-//                        minBufSize = recorder.read(buffer, 0, buffer.length);
-                recorder.read(buffer, 0, buffer.length);
-                packet = new DatagramPacket (buffer, buffer.length, UserList.voiceStreamServerIpAddress, port);
-                socket.send(packet);
-            }
-
-//                    writeToFile();
-//                    playFromFile();
-//                    playFromStream();
-
-        } catch(UnknownHostException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
+        while(status) {
+//            minBufSize = recorder.read(buffer, 0, buffer.length);
+            recorder.read(buffer, 0, buffer.length);
+            packet = new DatagramPacket (buffer, buffer.length, UserList.voiceStreamServerIpAddress, port);
+            socket.send(packet);
         }
+
+//        writeToFile();
+//        playFromFile();
+//        playFromStream();
+
     }
 
     public void writeToFile() {

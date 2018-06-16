@@ -4,7 +4,11 @@ import android.app.Activity;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.speech.tts.Voice;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -24,7 +28,12 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -194,6 +203,32 @@ public class UserList extends GlobalMenu {
             public void onDataChange(DataSnapshot dataSnapshot) {
                 for(DataSnapshot data : dataSnapshot.getChildren()) {
                     myAcc = data.getValue(User.class);
+    /*                Thread loadAvatarThread = new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            InputStream in =null;
+                            try {
+                                in = new java.net.URL(myAcc.getAvatarUrl()).openStream();
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                            myAcc.setAvatar(BitmapFactory.decodeStream(in));
+                        }
+                    });
+                    loadAvatarThread.start();*/
+                    FirebaseStorage storage = FirebaseStorage.getInstance();
+                    StorageReference fileReference = storage.getReferenceFromUrl(myAcc.getAvatarUrl());
+                    File path = new File(Environment.getExternalStorageDirectory()
+                            + "/AUMessanger/Users/");
+                    if(!path.exists()) {
+                        path.mkdir();
+                    }
+                    File imgFile = new File(path, fileReference.getName());
+                    if (!imgFile.exists()) {
+                        fileReference.getFile(imgFile);
+                    }
+                    myAcc.setAvatar(imgFile.getPath());
+
                     initialiseData();
                 }
             }

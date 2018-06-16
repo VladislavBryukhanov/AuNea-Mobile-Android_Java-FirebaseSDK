@@ -1,5 +1,8 @@
 package com.example.nameless.autoupdating;
 
+import android.graphics.Bitmap;
+import android.net.Uri;
+
 import java.io.Serializable;
 
 /**
@@ -13,13 +16,48 @@ public class User implements Serializable{
     private String email;
     private String nickname;
     private String bio;
-    //avatar, bio ...
+    private String avatarUrl;
+//    private Bitmap avatar;
+    private String status;
+    private String avatar;
 
     public User(){}
 
     public User(String uid, String login) {
         this.uid = uid;
         this.login = login;
+    }
+
+//    public Bitmap getAvatar() {
+//        return avatar;
+//    }
+
+//    public void setAvatar(Bitmap avatar) {
+//        this.avatar = avatar;
+//    }
+
+    public String getAvatar() {
+        return avatar;
+    }
+
+    public void setAvatar(String avatar) {
+        this.avatar = avatar;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getAvatarUrl() {
+        return avatarUrl;
+    }
+
+    public void setAvatarUrl(String avatarUrl) {
+        this.avatarUrl = avatarUrl;
     }
 
     public String getUid() {

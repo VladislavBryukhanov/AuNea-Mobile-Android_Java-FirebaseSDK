@@ -10,7 +10,6 @@ import android.graphics.Color;
 import android.graphics.Point;
 import android.net.Uri;
 import android.os.Environment;
-import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.view.Gravity;
@@ -83,7 +82,7 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
             if((filteredMessageList.get(position).getWho())
                     .equals(mAuth.getUid())) {
                 (convertView.findViewById(R.id.content))
-                        .setBackgroundResource(R.drawable.bubble2);
+                        .setBackgroundResource(R.drawable.message_background_out);
 
                 RelativeLayout.LayoutParams layoutParams =
                         (RelativeLayout.LayoutParams) convertView.findViewById(
@@ -103,7 +102,7 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
                 }*/
             } else {
                 (convertView.findViewById(R.id.content))
-                        .setBackgroundResource(R.drawable.bubble12);
+                        .setBackgroundResource(R.drawable.message_background_in);
 
                 RelativeLayout.LayoutParams layoutParams =
                         (RelativeLayout.LayoutParams) convertView.findViewById(

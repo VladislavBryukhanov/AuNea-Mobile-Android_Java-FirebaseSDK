@@ -4,35 +4,11 @@
     android:layout_height="match_parent"
     android:id="@+id/msgItem">
 
-    <!--<TextView-->
-        <!--android:id="@+id/tvSender"-->
-        <!--android:layout_width="wrap_content"-->
-        <!--android:layout_height="wrap_content"-->
-        <!--android:layout_weight="3"-->
-        <!--android:ems="10"-->
-        <!--android:maxLength="10"-->
-        <!--android:inputType="textPersonName" />-->
-
-    <!--<TextView-->
-        <!--android:id="@+id/tvContent"-->
-        <!--android:layout_width="wrap_content"-->
-        <!--android:layout_height="wrap_content"-->
-        <!--android:ems="10"-->
-        <!--android:inputType="textMultiLine" />-->
-
-    <!--<TextView-->
-        <!--android:id="@+id/tvDate"-->
-        <!--android:layout_width="wrap_content"-->
-        <!--android:layout_height="wrap_content"-->
-        <!--android:layout_weight="2"-->
-        <!--android:inputType="textMultiLine"-->
-        <!--android:textColor="@android:color/darker_gray" />-->
 
     <LinearLayout
         android:id="@+id/content"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="@drawable/in_message_bg"
         android:paddingLeft="10dp"
         android:paddingBottom="10dp"
         android:orientation="vertical">
@@ -41,7 +17,7 @@
             android:id="@+id/tvContent"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="@android:color/black"
+            android:textColor="#ffffff"
             android:maxWidth="240dp" />
 
         <ImageView

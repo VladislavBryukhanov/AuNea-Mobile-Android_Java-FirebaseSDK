@@ -9,10 +9,12 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Filter;
 import android.widget.Filterable;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Created by nameless on 07.04.18.
@@ -39,6 +41,21 @@ public class UsersAdapter extends ArrayAdapter<User>  implements Filterable{
             LayoutInflater li = (LayoutInflater)ma.getSystemService( Context.LAYOUT_INFLATER_SERVICE );
             convertView = li.inflate(R.layout.user_item, parent, false);
             ((TextView)convertView.findViewById(R.id.tvLogin)).setText(filteredUserList.get(position).getLogin());
+            ((TextView)convertView.findViewById(R.id.tvNickname)).setText('@'+filteredUserList.get(position).getNickname());
+
+            if(filteredUserList.get(position).getAvatarUrl() != null) {
+                DownloadAvatarByUrl downloadTask = new DownloadAvatarByUrl((ImageView)convertView.findViewById(R.id.profile_image), filteredUserList.get(position));
+//                downloadTask.execute(filteredUserList.get(position).getAvatarUrl());
+
+                try {
+                    downloadTask.execute(filteredUserList.get(position).getAvatarUrl()).get();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                } catch (ExecutionException e) {
+                    e.printStackTrace();
+                }
+            }
+
         }
         return convertView;
     }

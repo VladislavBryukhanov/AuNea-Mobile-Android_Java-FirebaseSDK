@@ -4,7 +4,9 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.IBinder;
@@ -166,14 +168,30 @@ public class NotifyService extends Service {
                 notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
         NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        Notification notification = new Notification.Builder(getApplicationContext())
+       /* Notification notification = new Notification.Builder(getApplicationContext())
                 .setSmallIcon(android.R.mipmap.sym_def_app_icon)
                 .setContentTitle(to.getLogin())
                 .setContentText(msg.getContent())
                 .setContentIntent(intent)
                 .setSmallIcon(R.drawable.send2)
                 .setSound(Uri.parse("android.resource://" + this.getApplicationContext()
-                        .getPackageName() + "/" + R.raw.notify)).build();
+                        .getPackageName() + "/" + R.raw.notify)).build();*/
+
+        Notification.Builder builder = new Notification.Builder(getApplicationContext());
+        builder .setSmallIcon(android.R.mipmap.sym_def_app_icon)
+                .setContentTitle(to.getLogin())
+                .setContentText(msg.getContent())
+                .setContentIntent(intent)
+                .setSmallIcon(R.drawable.send2);
+
+
+        SharedPreferences settings = getSharedPreferences(Settings.APP_PREFERENCES, Context.MODE_PRIVATE);
+        if(settings.getBoolean(Settings.IS_NOTIFY_ENABLED, false)) {
+            builder.setSound(Uri.parse("android.resource://" + this.getApplicationContext()
+                    .getPackageName() + "/" + R.raw.notify));
+        }
+
+        Notification notification = builder.build();
         notification.flags |= Notification.FLAG_AUTO_CANCEL;
 
         notificationManager.notify(1, notification);

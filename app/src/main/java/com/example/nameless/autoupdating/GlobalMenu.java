@@ -115,6 +115,11 @@ public class GlobalMenu extends AppCompatActivity {
                 dialog.show();
                 break;
             }
+            case R.id.mSettings: {
+                Intent intent = new Intent(this, Settings.class);
+                startActivity(intent);
+                break;
+            }
             case R.id.mLogOut: {
                 GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                         .requestIdToken(getString(R.string.default_web_client_id))

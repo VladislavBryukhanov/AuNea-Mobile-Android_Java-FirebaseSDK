@@ -1,23 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
+
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    style="@style/AppTheme.NoActionBar"
     android:focusable="true"
     android:focusableInTouchMode="true"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/darkTheme"
+    android:background="#121617"
     android:orientation="vertical"
     tools:context="com.example.nameless.autoupdating.Chat">
-
-    <EditText
-        android:id="@+id/etSearch"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:ems="10"
-        android:enabled="false"
-        android:hint="Search"
-        android:inputType="textPersonName" />
+    <!--android:background="@color/darkTheme"-->
+    <!--android:background="#17181a"-->
+    <!--android:background="#121617"-->
 
     <ListView
         android:id="@+id/lvMessages"

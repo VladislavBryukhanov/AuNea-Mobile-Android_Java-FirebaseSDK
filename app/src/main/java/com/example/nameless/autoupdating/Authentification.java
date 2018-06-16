@@ -144,7 +144,8 @@ public class Authentification extends GlobalMenu {
                     }
 
                     for(DataSnapshot data : dataSnapshot.getChildren()) {
-                        myRef.child(data.getKey()).setValue(UserList.myAcc);
+//                        myRef.child(data.getKey()).setValue(UserList.myAcc);
+                        myRef.child(data.getKey()).child("login").setValue(UserList.myAcc.getLogin());
                     }
                 }
                 @Override
