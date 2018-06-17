@@ -44,16 +44,20 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".Chat"
-            android:theme="@style/BlackActionBar"/>
+        <activity
+            android:name=".Chat"
+            android:theme="@style/BlackActionBar" />
         <activity android:name=".ImageViewer" />
         <activity
             android:name=".VoiceCalling"
             android:label="@string/title_activity_voice_calling"
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme.NoActionBar" />
-        <activity android:name=".Settings" />
-        <activity android:name=".AlienPage"></activity>
+        <activity android:name=".Settings"
+            android:theme="@style/AppTheme.NoActionBar"/>
+        <activity android:name=".AlienPage"
+            android:theme="@style/AppTheme.NoActionBar"/>
+        <activity android:name=".DialogList"></activity>
     </application>
 
 </manifest>

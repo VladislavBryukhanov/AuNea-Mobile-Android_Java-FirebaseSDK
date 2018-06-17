@@ -36,7 +36,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.Locale;
 
 public class UserList extends GlobalMenu {
 
@@ -116,6 +120,76 @@ public class UserList extends GlobalMenu {
         return false;
     }
 
+    public void setStatus() {
+        final DatabaseReference connectedRef = FirebaseDatabase
+                .getInstance()
+                .getReference(".info/connected");
+        connectedRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(final DataSnapshot snapshot) {
+
+                final Query getUser = FirebaseDatabase
+                        .getInstance()
+                        .getReference("Users")
+                        .orderByChild("uid")
+                        .equalTo(UserList.myAcc.getUid());
+                getUser.addListenerForSingleValueEvent(new ValueEventListener() {
+
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        for(DataSnapshot data : dataSnapshot.getChildren()) {
+
+                            final DatabaseReference userRef = getUser.getRef()
+                                    .child(data.getKey()).child("status");
+                            DateFormat dateFormat = (new SimpleDateFormat(" HH:mm dd MMM", Locale.ENGLISH));
+                            final String lastSeen = "last seen at" + dateFormat.format(new Date());
+
+                            boolean connected = snapshot.getValue(Boolean.class);
+                            if (connected) {
+                                userRef.onDisconnect().setValue(lastSeen);
+                                userRef.setValue("online");
+                            } else { //Вроде как else никогда не отрабатывает
+                                userRef.setValue(lastSeen);
+                            }
+                        }
+                    }
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {}
+                });
+            }
+
+            @Override
+            public void onCancelled(DatabaseError error) {
+            }
+        });
+    }
+
+    private void voiceNotifyListening(String key) {
+        myRef.child(key).addChildEventListener(new ChildEventListener() {
+            @Override
+            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+                if(dataSnapshot.getKey().equals("voiceCall")) {
+                    String dialogChannel = (String)dataSnapshot.getValue();
+                    if(!dialogChannel.equals(VoiceCalling.CALLING_STATE)) {
+                        Intent intent = new Intent(getApplicationContext(), VoiceCalling.class);
+                        ClientToClient ctc = new ClientToClient((String)dataSnapshot.getValue(), mAuth.getUid());
+                        intent.putExtra("dialog", ctc);
+                        intent.putExtra("action", dataSnapshot.getKey());
+                        startActivity(intent);
+                    }
+                }
+            }
+            @Override
+            public void onChildChanged(DataSnapshot dataSnapshot, String s) {}
+            @Override
+            public void onChildRemoved(DataSnapshot dataSnapshot) {}
+            @Override
+            public void onChildMoved(DataSnapshot dataSnapshot, String s) {}
+            @Override
+            public void onCancelled(DatabaseError databaseError) {}
+        });
+    }
+
     private void initialiseData() {
 
         database = FirebaseDatabase.getInstance();
@@ -133,31 +207,7 @@ public class UserList extends GlobalMenu {
                     if (!newUserItem.getUid().equals(myAcc.getUid())) {
                         users.add(newUserItem);
                     } else {
-                        // делаем listener для голосового вызова, если нам кто-то позвонит то он отработает и перекинет нас на соответствующий интент
-                        myRef.child(user.getKey()).addChildEventListener(new ChildEventListener() {
-                            @Override
-                            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-                                if(dataSnapshot.getKey().equals("voiceCall")) {
-                                    String dialogChannel = (String)dataSnapshot.getValue();
-                                    if(!dialogChannel.equals(VoiceCalling.CALLING_STATE)) {
-                                        Toast.makeText(UserList.this, "rn", Toast.LENGTH_SHORT).show();
-                                        Intent intent = new Intent(getApplicationContext(), VoiceCalling.class);
-                                        ClientToClient ctc = new ClientToClient((String)dataSnapshot.getValue(), mAuth.getUid());
-                                        intent.putExtra("dialog", ctc);
-                                        intent.putExtra("action", dataSnapshot.getKey());
-                                        startActivity(intent);
-                                    }
-                                }
-                            }
-                            @Override
-                            public void onChildChanged(DataSnapshot dataSnapshot, String s) {}
-                            @Override
-                            public void onChildRemoved(DataSnapshot dataSnapshot) {}
-                            @Override
-                            public void onChildMoved(DataSnapshot dataSnapshot, String s) {}
-                            @Override
-                            public void onCancelled(DatabaseError databaseError) {}
-                        });
+                        voiceNotifyListening(user.getKey());
                     }
                 }
                 adapter.notifyDataSetChanged();
@@ -228,7 +278,7 @@ public class UserList extends GlobalMenu {
                         fileReference.getFile(imgFile);
                     }
                     myAcc.setAvatar(imgFile.getPath());
-
+                    setStatus();
                     initialiseData();
                 }
             }

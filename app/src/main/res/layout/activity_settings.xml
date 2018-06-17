@@ -8,8 +8,11 @@
     tools:context="com.example.nameless.autoupdating.Settings">
 
     <LinearLayout
+        android:paddingTop="30dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:paddingBottom="10dp"
+        android:background="#232728"
         android:orientation="horizontal">
 
         <de.hdodenhof.circleimageview.CircleImageView
@@ -29,8 +32,9 @@
                 android:id="@+id/etLogin"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
                 android:ems="10"
+                android:textColor="#ffffff"
+                android:textSize="24sp"
                 android:hint="Login"
                 android:inputType="textPersonName" />
 

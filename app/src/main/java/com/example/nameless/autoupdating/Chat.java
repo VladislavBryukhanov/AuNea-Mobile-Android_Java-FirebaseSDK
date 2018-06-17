@@ -37,6 +37,7 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
@@ -67,7 +68,7 @@ public class Chat extends AppCompatActivity {
     private DatabaseReference myRef;
 
     private ArrayList<Message> messages;
-    private String toUser;
+    private User toUser;
 
     private boolean keyboardListenerLocker = false;
     private boolean dialogFound = false;
@@ -87,47 +88,12 @@ public class Chat extends AppCompatActivity {
 
         messages = new ArrayList<>();
         Intent intent = getIntent();
-        final User user = (User)intent.getSerializableExtra("to");
-        toUser = user.getUid();
+        toUser = (User)intent.getSerializableExtra("to");
         mAuth = FirebaseAuth.getInstance();
-
-//        lvMessages.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                registerForContextMenu(R.menu.message_context_menu);
-//            }
-//        });
-
-
         database = FirebaseDatabase.getInstance();
         myRef = database.getReference("Messages");
 
-        final ViewGroup actionBarLayout = (ViewGroup) getLayoutInflater().inflate(
-                R.layout.chat_action_bar,
-                null);
-        final ActionBar actionBar = getSupportActionBar();
-        actionBar.setDisplayShowHomeEnabled(false);
-        actionBar.setDisplayShowTitleEnabled(false);
-        actionBar.setDisplayShowCustomEnabled(true);
-        actionBar.setCustomView(actionBarLayout);
-        ((TextView)findViewById(R.id.tvAlienLogin)).setText(user.getLogin());
-
-        ImageView alienAvatar = (ImageView)findViewById(R.id.alienAvatar);
-        if(user.getAvatarUrl() != null) {
-            DownloadAvatarByUrl downloadTask = new DownloadAvatarByUrl(alienAvatar, user);
-            downloadTask.execute(user.getAvatarUrl());
-        }
-        alienAvatar.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(getApplicationContext(), AlienPage.class);
-                intent.putExtra("to", user);
-                startActivity(intent);
-            }
-        });
-
-//        setTitle(user.getLogin());
-//        setListenerForScrollWhenKeyboarOpened();
+        setActionBar();
         lvMessages.setTranscriptMode(ListView.TRANSCRIPT_MODE_NORMAL);
         lvMessages.setStackFromBottom(true); // if dialog started first time need false
 
@@ -153,15 +119,15 @@ public class Chat extends AppCompatActivity {
                         if (dataSnapshot.getChildrenCount() == 0) {
                             myRef = myRef.push();
                             myRef.child("listener1").setValue(UserList.myAcc.getUid());
-                            myRef.child("listener2").setValue(toUser);
+                            myRef.child("listener2").setValue(toUser.getUid());
                             myRef = myRef.child("content");
                         } else {
                             String myLogin = mAuth.getUid();
                             for(DataSnapshot data : dataSnapshot.getChildren()) {
                                 String listener1 = (String)data.child("listener1").getValue();
                                 String listener2 = (String)data.child("listener2").getValue();
-                                if (((listener1.equals(myLogin)) && (listener2.equals(toUser)))
-                                        || ((listener2).equals(myLogin) && (listener1).equals(toUser))) {
+                                if (((listener1.equals(myLogin)) && (listener2.equals(toUser.getUid())))
+                                        || ((listener2).equals(myLogin) && (listener1).equals(toUser.getUid()))) {
                                     myRef = myRef.child(data.getKey()).child("content");
                                     dialogFound = true;
                                 }
@@ -169,7 +135,7 @@ public class Chat extends AppCompatActivity {
                             if (!dialogFound) {
                                 myRef = myRef.push();
                                 myRef.child("listener1").setValue(UserList.myAcc.getUid());
-                                myRef.child("listener2").setValue(toUser);
+                                myRef.child("listener2").setValue(toUser.getUid());
                                 myRef = myRef.child("content");
                             }
                         }
@@ -223,29 +189,6 @@ public class Chat extends AppCompatActivity {
                     }
                 });
 
-        /*etMessage.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
-            }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-                if (String.valueOf(etMessage.getText()).trim().length() > 0) {
-                    btnAffixFile.setVisibility(View.GONE);
-                    btnSend.setVisibility(View.VISIBLE);
-                } else {
-                    btnAffixFile.setVisibility(View.VISIBLE);
-                    btnSend.setVisibility(View.GONE);
-                }
-            }
-        });*/
-
         btnAffixFile.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -266,7 +209,7 @@ public class Chat extends AppCompatActivity {
                     }
                     if (!(String.valueOf(etMessage.getText()).trim()).equals("")) {
                     Message newMsg = new Message(String.valueOf(etMessage.getText()), null,
-                            new Date(), mAuth.getUid(), toUser, null);
+                            new Date(), mAuth.getUid(), toUser.getUid(), null);
                     parseMessageContent(newMsg);
                 }
             }
@@ -299,23 +242,6 @@ public class Chat extends AppCompatActivity {
 //        super.onResume();
 //    }
 
-
-    //фокус в конец диалога при открытии клавиатуры
- /*   public void setListenerForScrollWhenKeyboarOpened() {
-        final View activityRootView = getWindow().getDecorView().findViewById(android.R.id.content);
-        activityRootView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
-            @Override
-            public void onGlobalLayout() {
-                int heightDiff = activityRootView.getRootView().getHeight() - activityRootView.getHeight();
-                if (heightDiff > 200 && !keyboardListenerLocker) { // 99% of the time the height diff will be due to a keyboard.
-                    lvMessages.setSelection(adapter.getCount() - 1);
-                    keyboardListenerLocker = true;
-                } else if (heightDiff < 200 && keyboardListenerLocker) {
-                    keyboardListenerLocker = false;
-                }
-            }
-        });
-    }*/
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.dialog_menu, menu);
@@ -327,7 +253,7 @@ public class Chat extends AppCompatActivity {
         switch(item.getItemId()) {
             case R.id.mCall: {
                 Intent intent = new Intent(getApplicationContext(), VoiceCalling.class);
-                ClientToClient ctc = new ClientToClient(mAuth.getUid(), toUser);
+                ClientToClient ctc = new ClientToClient(mAuth.getUid(), toUser.getUid());
                 intent.putExtra("dialog", ctc);
                 intent.putExtra("action", "call");
                 startActivity(intent);
@@ -371,7 +297,7 @@ public class Chat extends AppCompatActivity {
                     @Override
                     public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                         Message newMsg = new Message(String.valueOf(etMessage.getText()), taskSnapshot.getDownloadUrl().toString(),
-                                new Date(), mAuth.getUid(), toUser, fileType);
+                                new Date(), mAuth.getUid(), toUser.getUid(), fileType);
                         parseMessageContent(newMsg);
                     }
                 });
@@ -391,6 +317,45 @@ public class Chat extends AppCompatActivity {
 //        Cursor cursor = getApplicationContext().getContentResolver().query(uri, {MediaStore.Images.Media.DATA}, null, null, null);
 //    }
 
+    public void setActionBar() {
+        Query getUser = database.getReference("Users").orderByChild("uid").equalTo(toUser.getUid());
+        getUser.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                for(DataSnapshot data : dataSnapshot.getChildren()) {
+                    User user = data.getValue(User.class);
+                    ((TextView)findViewById(R.id.tvStatus)).setText(user.getStatus());
+                }
+            }
+            @Override
+            public void onCancelled(DatabaseError databaseError) {}
+        });
+
+        final ViewGroup actionBarLayout = (ViewGroup) getLayoutInflater().inflate(
+                R.layout.chat_action_bar,
+                null);
+        final ActionBar actionBar = getSupportActionBar();
+        actionBar.setDisplayShowHomeEnabled(false);
+        actionBar.setDisplayShowTitleEnabled(false);
+        actionBar.setDisplayShowCustomEnabled(true);
+        actionBar.setCustomView(actionBarLayout);
+        ((TextView)findViewById(R.id.tvAlienLogin)).setText(toUser.getLogin());
+        ((TextView)findViewById(R.id.tvStatus)).setText(toUser.getStatus());
+
+        ImageView alienAvatar = findViewById(R.id.alienAvatar);
+        if(toUser.getAvatarUrl() != null) {
+            DownloadAvatarByUrl downloadTask = new DownloadAvatarByUrl(alienAvatar, toUser);
+            downloadTask.execute(toUser.getAvatarUrl());
+        }
+        alienAvatar.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(getApplicationContext(), AlienPage.class);
+                intent.putExtra("to", toUser);
+                startActivity(intent);
+            }
+        });
+    }
     public void showPopupWindow(View v) {
 
         LayoutInflater layoutInflater

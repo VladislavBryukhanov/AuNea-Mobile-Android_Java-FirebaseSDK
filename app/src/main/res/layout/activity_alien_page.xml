@@ -3,13 +3,17 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="match_parent"
+    android:background="#121617"
     android:orientation="vertical"
     tools:context="com.example.nameless.autoupdating.Settings">
 
     <LinearLayout
+        android:paddingTop="30dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:paddingBottom="10dp"
+        android:background="#232728"
         android:orientation="horizontal">
 
         <de.hdodenhof.circleimageview.CircleImageView
@@ -25,13 +29,14 @@
             android:layout_margin="8dp"
             android:orientation="vertical">
 
+
             <TextView
                 android:id="@+id/tvLogin"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
                 android:ems="10"
-                android:textSize="30sp"
+                android:textColor="#ffffff"
+                android:textSize="24sp"
                 android:textStyle="bold" />
 
             <TextView
@@ -39,7 +44,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center_vertical"
-                android:text="Offline" />
+                android:text="Offline"
+                android:textColor="#626262"
+                android:textSize="14sp" />
 
         </LinearLayout>
 
@@ -48,19 +55,22 @@
     <TextView
         android:id="@+id/tvNickname"
         android:layout_width="match_parent"
-        android:layout_height="55dp"
-        android:layout_margin="10dp"
-        android:layout_weight="1"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="34dp"
+        android:layout_marginLeft="34dp"
         android:ems="10"
         android:inputType="textPersonName"
+        android:textColor="#ffffff"
         android:textSize="18sp" />
 
     <TextView
         android:id="@+id/tvBio"
         android:layout_width="match_parent"
-        android:layout_height="55dp"
-        android:layout_margin="10dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="34dp"
+        android:layout_marginLeft="34dp"
         android:ems="10"
+        android:textColor="#ffffff"
         android:textSize="18sp" />
 
 </LinearLayout>
