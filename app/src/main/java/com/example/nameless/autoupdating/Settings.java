@@ -155,7 +155,7 @@ public class Settings extends AppCompatActivity {
             case R.id.mSave: {
                 Pattern pattern = Pattern.compile("[!@#$%^&*()_]");
                 Matcher matcher = pattern.matcher(etNickname.getText().toString());
-                if(matcher.find() || etNickname.getText().toString().length() < 3) {
+                if(matcher.find()) {
                     Toast.makeText(this, "Sorry, this nickname is invalid", Toast.LENGTH_SHORT).show();
                     break;
                 }

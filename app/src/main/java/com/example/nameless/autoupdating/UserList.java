@@ -266,18 +266,20 @@ public class UserList extends GlobalMenu {
                         }
                     });
                     loadAvatarThread.start();*/
-                    FirebaseStorage storage = FirebaseStorage.getInstance();
-                    StorageReference fileReference = storage.getReferenceFromUrl(myAcc.getAvatarUrl());
-                    File path = new File(Environment.getExternalStorageDirectory()
-                            + "/AUMessanger/Users/");
-                    if(!path.exists()) {
-                        path.mkdir();
+                    if(myAcc.getAvatarUrl() != null) {
+                        FirebaseStorage storage = FirebaseStorage.getInstance();
+                        StorageReference fileReference = storage.getReferenceFromUrl(myAcc.getAvatarUrl());
+                        File path = new File(Environment.getExternalStorageDirectory()
+                                + "/AUMessanger/Users/");
+                        if (!path.exists()) {
+                            path.mkdir();
+                        }
+                        File imgFile = new File(path, fileReference.getName());
+                        if (!imgFile.exists()) {
+                            fileReference.getFile(imgFile);
+                        }
+                        myAcc.setAvatar(imgFile.getPath());
                     }
-                    File imgFile = new File(path, fileReference.getName());
-                    if (!imgFile.exists()) {
-                        fileReference.getFile(imgFile);
-                    }
-                    myAcc.setAvatar(imgFile.getPath());
                     setStatus();
                     initialiseData();
                 }

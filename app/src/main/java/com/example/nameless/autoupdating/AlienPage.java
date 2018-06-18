@@ -47,7 +47,7 @@ public class AlienPage extends AppCompatActivity {
         tvBio = findViewById(R.id.tvBio);
 
         tvLogin.setText(user.getLogin());
-        if(user.getNickname() != null) {
+        if(user.getNickname() != null && user.getNickname().length() > 0) {
             tvNickname.setText('@'+user.getNickname());
         }
         tvStatus.setText(user.getStatus());
