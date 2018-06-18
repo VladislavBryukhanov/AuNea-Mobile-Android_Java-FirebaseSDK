@@ -8,7 +8,6 @@
     tools:context="com.example.nameless.autoupdating.Settings">
 
     <LinearLayout
-        android:paddingTop="30dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingBottom="10dp"
