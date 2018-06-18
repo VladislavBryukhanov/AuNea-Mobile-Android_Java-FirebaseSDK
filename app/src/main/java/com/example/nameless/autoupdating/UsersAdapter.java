@@ -75,12 +75,23 @@ public class UsersAdapter extends ArrayAdapter<User>  implements Filterable{
                 FilterResults result = new FilterResults();
                 ArrayList<User> filteredList  = new ArrayList<>();
                 constraint = constraint.toString().toLowerCase();
-                for(int i = 0; i < users.size(); i++) {
-                    if((users.get(i).getLogin()).toLowerCase()
-                            .contains(constraint.toString())) {
-                        filteredList.add(users.get(i));
+                if( constraint.length() > 0 && constraint.toString().substring(0,1).equals("@")) {
+                    constraint = constraint.subSequence(1, constraint.length());
+                    for(int i = 0; i < users.size(); i++) {
+                        if((users.get(i).getNickname()).toLowerCase()
+                                .contains(constraint.toString())) {
+                            filteredList.add(users.get(i));
+                        }
+                    }
+                } else {
+                    for(int i = 0; i < users.size(); i++) {
+                        if((users.get(i).getLogin()).toLowerCase()
+                                .contains(constraint.toString())) {
+                            filteredList.add(users.get(i));
+                        }
                     }
                 }
+
                 result.count = filteredList.size();
                 result.values = filteredList;
                 return result;

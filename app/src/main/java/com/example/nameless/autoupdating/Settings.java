@@ -56,6 +56,7 @@ public class Settings extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
+        setTitle("");
 
         avatar = findViewById(R.id.profile_image);
         etLogin = findViewById(R.id.etLogin);
