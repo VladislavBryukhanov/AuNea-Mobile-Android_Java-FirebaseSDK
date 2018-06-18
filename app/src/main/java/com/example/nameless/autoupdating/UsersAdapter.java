@@ -41,7 +41,7 @@ public class UsersAdapter extends ArrayAdapter<User>  implements Filterable{
             LayoutInflater li = (LayoutInflater)ma.getSystemService( Context.LAYOUT_INFLATER_SERVICE );
             convertView = li.inflate(R.layout.user_item, parent, false);
             ((TextView)convertView.findViewById(R.id.tvLogin)).setText(filteredUserList.get(position).getLogin());
-            if(filteredUserList.get(position).getNickname().length() > 0) {
+            if(filteredUserList.get(position).getNickname() != null) {
                 ((TextView)convertView.findViewById(R.id.tvNickname)).setText('@'+filteredUserList.get(position).getNickname());
             }
             if(filteredUserList.get(position).getAvatarUrl() != null) {
