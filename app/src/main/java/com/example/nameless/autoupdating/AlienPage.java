@@ -26,7 +26,7 @@ import java.util.concurrent.ExecutionException;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
-public class AlienPage extends AppCompatActivity {
+public class AlienPage extends AppCompatActivityWithInternetStatusListener {
 
     private TextView tvLogin, tvNickname, tvStatus, tvBio;
     private CircleImageView avatar;

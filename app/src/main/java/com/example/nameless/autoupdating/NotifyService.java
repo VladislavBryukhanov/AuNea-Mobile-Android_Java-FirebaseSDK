@@ -1,11 +1,13 @@
 package com.example.nameless.autoupdating;
 
+import android.app.AlarmManager;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
@@ -32,7 +34,7 @@ import java.util.Map;
  * Created by nameless on 11.04.18.
  */
 
-public class NotifyService extends Service {
+public class NotifyService extends Service implements NetworkStateReceiver.NetworkStateReceiverListener {
 
     private FirebaseDatabase database;
     private DatabaseReference myRef;
@@ -44,6 +46,8 @@ public class NotifyService extends Service {
     private HashMap<Query, ChildEventListener> refToListeners;
     private FirebaseAuth mAuth;
 
+    private NetworkStateReceiver networkStateReceiver;
+    private boolean isDisconnected;
 
     @Nullable
     @Override
@@ -61,6 +65,10 @@ public class NotifyService extends Service {
         timeOut = new HashMap<>();
         isServiceStoped = false;
 
+        isDisconnected = false;
+        networkStateReceiver = new NetworkStateReceiver();
+        networkStateReceiver.addListener(this);
+        this.registerReceiver(networkStateReceiver, new IntentFilter(android.net.ConnectivityManager.CONNECTIVITY_ACTION));
         createListeners();
     }
 
@@ -137,6 +145,8 @@ public class NotifyService extends Service {
     @Override
     public void onDestroy() {
         isServiceStoped = true;
+        networkStateReceiver.removeListener(this);
+        this.unregisterReceiver(networkStateReceiver);
         for(Map.Entry<Query, ChildEventListener> entry : refToListeners.entrySet()) {
             (entry.getKey()).removeEventListener(entry.getValue());
         }
@@ -195,5 +205,18 @@ public class NotifyService extends Service {
         notification.flags |= Notification.FLAG_AUTO_CANCEL;
 
         notificationManager.notify(1, notification);
+    }
+
+    @Override
+    public void networkAvailable() {
+        if(isDisconnected) {
+            isDisconnected = false;
+            stopSelf();
+        }
+    }
+
+    @Override
+    public void networkUnavailable() {
+        isDisconnected = true;
     }
 }

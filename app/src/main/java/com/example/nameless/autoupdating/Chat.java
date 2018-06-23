@@ -51,7 +51,7 @@ import java.util.Iterator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class Chat extends AppCompatActivity {
+public class Chat extends AppCompatActivityWithInternetStatusListener {
 
 //    private static final int REQUEST_GALLERY = 100;
     public static final int PICKFILE_RESULT_CODE = 200;
@@ -224,15 +224,15 @@ public class Chat extends AppCompatActivity {
 
     @Override
     protected void onStop() {
-        if (!UserList.isMyServiceRunning(NotifyService.class, getApplicationContext())) {
-            startService(new Intent(getApplicationContext(), NotifyService.class));
+        if (!UserList.isMyServiceRunning(NotifyService.class, this)) {
+            startService(new Intent(this, NotifyService.class));
         }
         super.onStop();
     }
 
     @Override
     protected void onStart() {
-        stopService(new Intent(getApplicationContext(), NotifyService.class));
+        stopService(new Intent(this, NotifyService.class));
         super.onStart();
     }
 
@@ -323,8 +323,8 @@ public class Chat extends AppCompatActivity {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 for(DataSnapshot data : dataSnapshot.getChildren()) {
-                    User user = data.getValue(User.class);
-                    ((TextView)findViewById(R.id.tvStatus)).setText(user.getStatus());
+                    toUser = data.getValue(User.class);
+                    ((TextView)findViewById(R.id.tvStatus)).setText(toUser.getStatus());
                 }
             }
             @Override

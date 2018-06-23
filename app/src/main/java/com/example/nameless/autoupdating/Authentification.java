@@ -163,6 +163,8 @@ public class Authentification extends GlobalMenu {
         getMenuInflater().inflate(R.menu.main_menu, menu);
         MenuItem hideItem = menu.findItem(R.id.mLogOut);
         hideItem.setVisible(false);
+        hideItem = menu.findItem(R.id.mSettings);
+        hideItem.setVisible(false);
         return super.onCreateOptionsMenu(menu);
     }
 
@@ -183,7 +185,7 @@ public class Authentification extends GlobalMenu {
 
    @Override
     protected void onStart() {
-        stopService(new Intent(getApplicationContext(), NotifyService.class));
+        stopService(new Intent(this, NotifyService.class));
         super.onStart();
     }
 

@@ -33,7 +33,7 @@ import com.google.firebase.database.ValueEventListener;
  * Created by nameless on 29.04.18.
  */
 
-public class GlobalMenu extends AppCompatActivity {
+public class GlobalMenu extends AppCompatActivityWithInternetStatusListener {
 
     private FirebaseDatabase database;
     private DatabaseReference myRef;
@@ -127,7 +127,7 @@ public class GlobalMenu extends AppCompatActivity {
                         .build();
                 GoogleSignInClient mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
 
-                stopService(new Intent(getApplicationContext(), NotifyService.class));
+                stopService(new Intent(this, NotifyService.class));
                 mAuth.signOut();
                 mGoogleSignInClient.signOut();
 
@@ -137,5 +137,4 @@ public class GlobalMenu extends AppCompatActivity {
         }
         return super.onOptionsItemSelected(item);
     }
-
 }

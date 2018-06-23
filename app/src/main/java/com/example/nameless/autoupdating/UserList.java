@@ -2,6 +2,8 @@ package com.example.nameless.autoupdating;
 
 import android.app.Activity;
 import android.app.ActivityManager;
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -195,8 +197,8 @@ public class UserList extends GlobalMenu {
         database = FirebaseDatabase.getInstance();
         myRef = database.getReference("Users");
 
-        if (!isMyServiceRunning(NotifyService.class, getApplicationContext())) {
-            startService(new Intent(getApplicationContext(), NotifyService.class));
+        if (!isMyServiceRunning(NotifyService.class, this)) {
+            startService(new Intent(this, NotifyService.class));
         }
 
         myRef.addListenerForSingleValueEvent(new ValueEventListener() {
