@@ -25,8 +25,10 @@ import android.widget.Filterable;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
+import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
@@ -123,21 +125,29 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
                 }*/
             }
 
-            if(filteredMessageList.get(position).getFileUrl() != null) {
+            String fileUrl = filteredMessageList.get(position).getFileUrl();
+            if(fileUrl != null) {
 
-                (convertView.findViewById(R.id.ivImage)).setVisibility(View.VISIBLE);
+                ImageView image = convertView.findViewById(R.id.ivImage);
+                ProgressBar loading = convertView.findViewById(R.id.pbLoading);
+                loading.setVisibility(View.VISIBLE);
+
+                if(imageCollection.get(fileUrl) == null) {
+                    DownloadMediaFIle downloadTask = new DownloadMediaFIle(
+                            image, loading, getContext(), imageCollection);
+                    downloadTask.execute(fileUrl);
+                } else {
+                    loading.setVisibility(View.GONE);
+                    image.setImageBitmap(imageCollection.get(fileUrl));
+                    image.setVisibility(View.VISIBLE);
+
+                    DownloadMediaFIle downloadTask = new DownloadMediaFIle(
+                            image, loading, getContext(), imageCollection);
+                    downloadTask.execute(fileUrl);
+                }
 
 
-//                ((ImageView)convertView.findViewById(R.id.ivImage))
-//                        .setImageBitmap(BitmapFactory.decodeResource(getContext().getResources(),
-//                                R.drawable.loading));
-
-                ((ImageView)convertView.findViewById(R.id.ivImage))
-                        .setImageBitmap(downloadFileByUrl(filteredMessageList
-                                .get(position).getFileUrl(),
-                                (ImageView)convertView.findViewById(R.id.ivImage)));
-
-                ((ImageView)convertView.findViewById(R.id.ivImage)).setAdjustViewBounds(true);
+                image.setAdjustViewBounds(true);
 
             }
 
@@ -190,96 +200,6 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
         };
         return filter;
     }
-
-    public Bitmap downloadFileByUrl(final String url, final ImageView iv) {
-        if (imageCollection.get(url) != null) {
-            iv.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-/*                    Intent intent = new Intent();
-                    intent.setAction(Intent.ACTION_VIEW);
-                    intent.setDataAndType(uriForIntentCollection.get(url), "image*//*");
-                    ma.startActivity(intent);*/
-                    Intent intent = new Intent(ma, ImageViewer.class);
-                    intent.putExtra("bitmap", uriForIntentCollection.get(url));
-                    ma.startActivity(intent);
-                }
-            });
-            return imageCollection.get(url);
-        }
-
-        FirebaseStorage storage = FirebaseStorage.getInstance();
-        StorageReference fileReference = storage.getReferenceFromUrl(url);
-
-//        File file = null;
-//        try {
-    //.createTempFile("images", "jpg");
-
-//            file = File.createTempFile(fileReference.getName(), null,
-//                    getContext().getCacheDir());
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//        fileReference.getFile(file);
-
-        File path = new File(Environment.getExternalStorageDirectory()
-                + "/AUMessanger/");
-        if(!path.exists()) {
-            path.mkdir();
-        }
-
-        File imgFile = new File(path, fileReference.getName());
-        if (!imgFile.exists()) {
-            fileReference.getFile(imgFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
-                @Override
-                public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
-                            iv.setImageBitmap(downloadFileByUrl(url, iv));
-                }
-            });
-        }
-
-        //getting screen size & and calculating optimal scale for image
-        Bitmap image = BitmapFactory.decodeFile(imgFile.getPath());
-        if (image == null) {
-            return BitmapFactory.decodeResource(getContext().getResources(), R.drawable.loading);
-        }
-
-        WindowManager wm = (WindowManager) getContext().getSystemService(
-                Context.WINDOW_SERVICE);
-        Point size = new Point();
-        wm.getDefaultDisplay().getSize(size);
-
-
-        size.x *= 0.5;
-        int imageWidth = image.getWidth();
-        int imageHeight = image.getHeight();
-        double scale = (double) imageWidth / size.x ;
-        if(imageWidth > size.x) {
-            imageWidth = size.x;
-            imageHeight /= scale;
-        }
-        imageCollection.put(url, Bitmap.createScaledBitmap(image, imageWidth,
-                imageHeight, true));
-
-        uriForIntentCollection.put(url, Uri.parse(imgFile.getPath()));
-        iv.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-//                Intent intent = new Intent();
-//                intent.setAction(Intent.ACTION_VIEW);
-//                intent.setDataAndType(uriForIntentCollection.get(url), "image/*");
-//                ma.startActivity(intent);
-                Intent intent = new Intent(ma, ImageViewer.class);
-                intent.putExtra("bitmap", uriForIntentCollection.get(url));
-                ma.startActivity(intent);
-            }
-        });
-        return imageCollection.get(url);
-
-//        String path = getContext().getCacheDir().getAbsolutePath() + file.getName();
-//        return BitmapFactory.decodeFile(imgFile.getPath());
-    }
-
 
     public void parseMessageContent(final Message message, View convertView) {
         String msg = message.getContent();

@@ -19,43 +19,39 @@
             android:id="@+id/btnCamera"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-
             android:textAllCaps="false"
             android:textSize="16dp"
             android:layout_margin="0dip"
             android:background="@android:drawable/menuitem_background"
             android:gravity="left|center_horizontal"
             android:padding="18dip"
-
             android:text="Use camera" />
-
-        <Button
-            android:id="@+id/btnDevice"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-
-            android:textAllCaps="false"
-            android:textSize="16dp"
-            android:layout_margin="0dip"
-            android:background="@android:drawable/menuitem_background"
-            android:gravity="left|center_horizontal"
-            android:padding="18dip"
-
-            android:text="Load from device" />
 
         <Button
             android:id="@+id/btnGallery"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_margin="0dip"
+            android:background="@android:drawable/menuitem_background"
+            android:gravity="left|center_horizontal"
+            android:padding="18dip"
+            android:text="Load from gallery"
+            android:textAllCaps="false"
+            android:textSize="16dp" />
 
+        <Button
+            android:id="@+id/btnDevice"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
             android:textAllCaps="false"
             android:textSize="16dp"
             android:layout_margin="0dip"
             android:background="@android:drawable/menuitem_background"
             android:gravity="left|center_horizontal"
             android:padding="18dip"
+            android:text="Load from device" />
 
-            android:text="Load from gallery" />
+
     </LinearLayout>
 
 

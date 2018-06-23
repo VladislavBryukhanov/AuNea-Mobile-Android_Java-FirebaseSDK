@@ -60,7 +60,7 @@ public class DownloadAvatarByUrl extends AsyncTask<String, Void, Bitmap> {
         File path = new File(Environment.getExternalStorageDirectory()
                 + "/AUMessanger/Users/");
         if(!path.exists()) {
-            path.mkdir();
+            path.mkdirs();
         }
 
         final File imgFile = new File(path, fileReference.getName());

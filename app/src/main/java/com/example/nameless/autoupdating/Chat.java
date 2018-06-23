@@ -1,6 +1,7 @@
 package com.example.nameless.autoupdating;
 
 import android.app.Activity;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -73,7 +74,7 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
     private boolean keyboardListenerLocker = false;
     private boolean dialogFound = false;
     private FirebaseAuth mAuth;
-
+    private Uri imgUri;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -273,14 +274,7 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
                         "gs://messager-d15a0.appspot.com/");
                 Uri file;
                 if(requestCode == CAMERA_REQUEST) {
-//                    file = data.getData();
-//                    ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-//                    ((Bitmap)data.getExtras().get("data")).compress(Bitmap.CompressFormat.PNG,
-//                            100, bytes);
-                    String path = MediaStore.Images.Media.insertImage(getApplicationContext()
-                            .getContentResolver(), (Bitmap)data.getExtras().get("data"),
-                            "Title", null);
-                    file = Uri.parse(path);
+                    file = imgUri;
                 } else {
                     file = data.getData();
                 }
@@ -323,8 +317,16 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 for(DataSnapshot data : dataSnapshot.getChildren()) {
-                    toUser = data.getValue(User.class);
+                    User user = data.getValue(User.class);
+
+                    ImageView alienAvatar = findViewById(R.id.alienAvatar);
+                    if(user.getAvatarUrl() != null && !user.getAvatarUrl().equals(toUser.getAvatarUrl())) {
+                        DownloadAvatarByUrl downloadTask = new DownloadAvatarByUrl(alienAvatar, toUser);
+                        downloadTask.execute(toUser.getAvatarUrl());
+                    }
+                    toUser = user;
                     ((TextView)findViewById(R.id.tvStatus)).setText(toUser.getStatus());
+                    ((TextView)findViewById(R.id.tvAlienLogin)).setText(toUser.getLogin());
                 }
             }
             @Override
@@ -375,27 +377,21 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
         Button btnCamera = popupView.findViewById(R.id.btnCamera);
         Button btnGallery = popupView.findViewById(R.id.btnGallery);
         Button btnDevice = popupView.findViewById(R.id.btnDevice);
+
         btnCamera.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
             Intent i = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-           /* String fileName = "IMG" +
-                    new SimpleDateFormat("yyyMMdd_HHmmss").format(new Date());
-            File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
-
-            File photoFile = null;
-            try {
-                photoFile = File.createTempFile(fileName, ".png", storageDir);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            Uri photoUri = FileProvider.getUriForFile(getApplicationContext(),
-                    getPackageName(), photoFile);
-            i.putExtra(MediaStore.EXTRA_OUTPUT, photoUri); // Uri.fromFile(out)*/
+            ContentValues values = new ContentValues();
+            values.put(MediaStore.Images.Media.TITLE, "New Picture");
+            values.put(MediaStore.Images.Media.DESCRIPTION, "From camera");
+            imgUri = getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+            i.putExtra(MediaStore.EXTRA_OUTPUT, imgUri);
             startActivityForResult(i, CAMERA_REQUEST);
             popupWindow.dismiss();
             }
         });
+
         btnGallery.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -411,6 +407,7 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
             popupWindow.dismiss();
             }
         });
+
         btnDevice.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

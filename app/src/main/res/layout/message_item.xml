@@ -21,12 +21,21 @@
             android:textColor="#ffffff"
             android:textSize="16sp" />
 
+        <ProgressBar
+            android:id="@+id/pbLoading"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:indeterminate="true"
+            android:visibility="gone"
+            android:indeterminateTint="#6B9BC2"/>
+
         <ImageView
             android:id="@+id/ivImage"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:scaleType="fitCenter"
             android:visibility="gone"/>
+
     </LinearLayout>
 
     <TextView
