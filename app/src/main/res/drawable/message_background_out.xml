@@ -1,19 +1,51 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-<item
-    android:bottom="4dp"
-    android:left="6dp"
-    android:right="8dp"
-    android:top="10dp">
-    <shape xmlns:android="http://schemas.android.com/apk/res/android">
-        <solid android:color="#3772AB" />
-        <corners android:radius="7dp"/>
-        <padding android:left="16dp"
-            android:top="15dp"
-            android:right="16dp"
-            android:bottom="10dp" />
-    </shape>
+    <!--<item-->
+        <!--android:gravity="right"-->
+        <!--android:top="14dp"-->
+        <!--android:width="12dp"-->
+        <!--android:height="12dp">-->
+        <!--<rotate-->
+            <!--android:fromDegrees="45"-->
+            <!--android:pivotX="100%"-->
+            <!--android:pivotY="0%"-->
+            <!--android:toDegrees="0" >-->
+            <!--<shape android:shape="rectangle" >-->
+                <!--<solid android:color="#3772AB" />-->
+                <!--<padding android:top="-8dp"/>-->
+            <!--</shape>-->
+        <!--</rotate>-->
+    <!--</item>-->
+    <item
+        android:gravity="right"
+        android:width="18dp"
+        android:height="18dp">
+        <rotate
+            android:fromDegrees="30"
+            android:pivotX="100%"
+            android:pivotY="0%"
+            android:toDegrees="0" >
+            <shape android:shape="rectangle" >
+                <solid android:color="#3772AB" />
+                <padding android:top="-8dp"/>
+            </shape>
+        </rotate>
+    </item>
 
-</item>
+    <item
+        android:bottom="2dp"
+        android:left="8dp"
+        android:right="8dp"
+        android:top="8dp">
+        <shape xmlns:android="http://schemas.android.com/apk/res/android">
+            <solid android:color="#3772AB" />
+            <corners android:radius="7dp"/>
+            <padding android:left="16dp"
+                android:top="14dp"
+                android:right="16dp"
+                android:bottom="9dp" />
+        </shape>
+    </item>
+
 </layer-list>

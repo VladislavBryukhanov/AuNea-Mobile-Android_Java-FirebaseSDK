@@ -31,12 +31,14 @@ public class DownloadMediaFIle extends AsyncTask<String, Void, Bitmap> {
     private ProgressBar pbLoading;
     private Context parentContext;
     private Map<String, Bitmap> imageCollection;
+    private String fileType;
 
-    public DownloadMediaFIle(ImageView bmImage, ProgressBar pbLoading, Context parentContext, Map<String, Bitmap> imageCollection) {
+    public DownloadMediaFIle(ImageView bmImage, ProgressBar pbLoading, Context parentContext, Map<String, Bitmap> imageCollection, String fileType) {
         this.bmImage = bmImage;
         this.parentContext = parentContext;
         this.imageCollection  = imageCollection;
         this.pbLoading = pbLoading;
+        this.fileType = fileType;
     }
 
     @Override
@@ -109,7 +111,7 @@ public class DownloadMediaFIle extends AsyncTask<String, Void, Bitmap> {
                 @Override
                 public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
                     DownloadMediaFIle downloadTask = new DownloadMediaFIle(
-                            bmImage, pbLoading, parentContext, imageCollection);
+                            bmImage, pbLoading, parentContext, imageCollection, fileType);
                     downloadTask.execute(url);
 //                    Bitmap bmp = setImageProperties(imgFile.getPath(), url);
 //                    onPostExecute(bmp);
@@ -129,11 +131,10 @@ public class DownloadMediaFIle extends AsyncTask<String, Void, Bitmap> {
 
         Bitmap image = BitmapFactory.decodeFile(path);
         if(path == null) {
-//            return BitmapFactory.decodeResource(parentContext.getResources(), R.drawable.loading);
             return null;
         } else if (image == null) {
-            return null;
-//            return BitmapFactory.decodeResource(parentContext.getResources(), R.drawable.file);
+            return Bitmap.createScaledBitmap(BitmapFactory.decodeResource(parentContext.getResources(),
+                    R.drawable.file), 160, 160, true);
         }
 
         WindowManager wm = (WindowManager) parentContext.getSystemService(

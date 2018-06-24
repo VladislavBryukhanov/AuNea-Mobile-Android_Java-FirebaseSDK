@@ -132,19 +132,16 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
                 ProgressBar loading = convertView.findViewById(R.id.pbLoading);
                 loading.setVisibility(View.VISIBLE);
 
-                if(imageCollection.get(fileUrl) == null) {
-                    DownloadMediaFIle downloadTask = new DownloadMediaFIle(
-                            image, loading, getContext(), imageCollection);
-                    downloadTask.execute(fileUrl);
-                } else {
+                if(imageCollection.get(fileUrl) != null) {
                     loading.setVisibility(View.GONE);
                     image.setImageBitmap(imageCollection.get(fileUrl));
                     image.setVisibility(View.VISIBLE);
-
-                    DownloadMediaFIle downloadTask = new DownloadMediaFIle(
-                            image, loading, getContext(), imageCollection);
-                    downloadTask.execute(fileUrl);
                 }
+
+                DownloadMediaFIle downloadTask = new DownloadMediaFIle(
+                        image, loading, getContext(), imageCollection,
+                        filteredMessageList.get(position).getFileType());
+                downloadTask.execute(fileUrl);
 
 
                 image.setAdjustViewBounds(true);

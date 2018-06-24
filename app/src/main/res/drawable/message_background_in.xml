@@ -1,19 +1,50 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-<item
-    android:bottom="4dp"
-    android:left="6dp"
-    android:right="8dp"
-    android:top="10dp">
-    <shape xmlns:android="http://schemas.android.com/apk/res/android">
-        <solid android:color="#243443" />
-        <corners android:radius="7dp"/>
-        <padding android:left="16dp"
-            android:top="15dp"
-            android:right="16dp"
-            android:bottom="10dp" />
-    </shape>
+    <!--<item
+        android:top="14dp"
+        android:width="12dp"
+        android:height="12dp">
+        <rotate
+            android:fromDegrees="-45"
+            android:pivotX="0%"
+            android:pivotY="0%"
+            android:toDegrees="0" >
+            <shape android:shape="rectangle" >
+                <padding android:top="-8dp"
+                         android:right="16dp"/>
+                <solid android:color="#243443" />
+            </shape>
+        </rotate>
+    </item>-->
+    <item
+        android:width="18dp"
+        android:height="18dp">
+        <rotate
+            android:fromDegrees="-30"
+            android:pivotX="0%"
+            android:pivotY="0%"
+            android:toDegrees="0" >
+            <shape android:shape="rectangle" >
+                <padding android:top="-8dp"
+                    android:right="16dp"/>
+                <solid android:color="#243443" />
+            </shape>
+        </rotate>
+    </item>
 
-</item>
+    <item
+        android:bottom="2dp"
+        android:left="8dp"
+        android:right="8dp"
+        android:top="8dp">
+        <shape xmlns:android="http://schemas.android.com/apk/res/android">
+            <solid android:color="#243443" />
+            <corners android:radius="7dp"/>
+            <padding android:left="16dp"
+                android:top="14dp"
+                android:right="16dp"
+                android:bottom="9dp" />
+        </shape>
+    </item>
 </layer-list>
