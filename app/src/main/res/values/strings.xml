@@ -6,4 +6,6 @@
     <string name="dummy_content">DUMMY\nCONTENT</string>
     <string name="title_activity_voice_calling">VoiceCalling</string>
     <string name="title_activity_settings">Settings</string>
+
+    <string name="title_activity_test">test</string>
 </resources>

@@ -53,11 +53,13 @@
             android:label="@string/title_activity_voice_calling"
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme.NoActionBar" />
-        <activity android:name=".Settings"
-            android:theme="@style/AppTheme.NoActionBar"/>
-        <activity android:name=".AlienPage"
-            android:theme="@style/AppTheme.NoActionBar"/>
-        <activity android:name=".DialogList"></activity>
+        <activity
+            android:name=".Settings"
+            android:theme="@style/BlackActionBar" />
+        <activity
+            android:name=".AlienPage"
+            android:theme="@style/AppTheme.NoActionBar" />
+        <activity android:name=".VideoPlayer" />
     </application>
 
 </manifest>

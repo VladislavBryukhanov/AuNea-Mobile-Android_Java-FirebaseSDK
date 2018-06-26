@@ -11,19 +11,23 @@ public class Message {
     private String uid;
     private String content;
     private String fileUrl;
+    private String fileType;
+    private String fileMediaSides;
     private Date dateOfSend;
     private String who;
     private String to;
-    private String fileType;
 
     public Message(){}
-    public Message(String content, String fileUrl, Date dateOfSend, String who, String to, String fileType) {
+
+    public Message(String content, String fileUrl, Date dateOfSend, String who, String to, String fileType, String fileMediaSides) {
+        this.uid = uid;
         this.content = content;
         this.fileUrl = fileUrl;
+        this.fileType = fileType;
+        this.fileMediaSides = fileMediaSides;
         this.dateOfSend = dateOfSend;
         this.who = who;
         this.to = to;
-        this.fileType = fileType;
     }
 
     public Message(String uid, Message msg) {
@@ -34,6 +38,15 @@ public class Message {
         this.who = msg.who;
         this.to = msg.to;
         this.fileType = msg.fileType;
+        this.fileMediaSides = msg.fileMediaSides;
+    }
+
+    public String getFileMediaSides() {
+        return fileMediaSides;
+    }
+
+    public void setFileMediaSides(String fileMediaSides) {
+        this.fileMediaSides = fileMediaSides;
     }
 
     public String getUid() {

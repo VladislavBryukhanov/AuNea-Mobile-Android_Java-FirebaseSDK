@@ -5,13 +5,20 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Point;
+import android.media.MediaMetadataRetriever;
+import android.media.MediaPlayer;
+import android.media.ThumbnailUtils;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Environment;
+import android.provider.MediaStore;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageView;
+import android.widget.MediaController;
 import android.widget.ProgressBar;
+import android.widget.VideoView;
 
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.storage.FileDownloadTask;
@@ -19,6 +26,8 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -43,7 +52,7 @@ public class DownloadMediaFIle extends AsyncTask<String, Void, Bitmap> {
 
     @Override
     protected Bitmap doInBackground(String... strings) {
-        return downloadFileByUrl(strings[0]);
+        return setFileProperties(strings[0]);
     }
 
     @Override
@@ -53,23 +62,49 @@ public class DownloadMediaFIle extends AsyncTask<String, Void, Bitmap> {
             bmImage.setImageBitmap(bmp);
             bmImage.setVisibility(View.VISIBLE);
         }
+//        if(fileType.equals("video")) {
+//            pbLoading.setVisibility(View.GONE);
+//            bmVideo.setVisibility(View.VISIBLE);
+//
+//            bmVideo.setVideoURI(Uri.parse(url));
+//            bmVideo.setMediaController(new MediaController(parentContext));
+//            bmVideo.requestFocus(0);
+//        }
+    }
+
+    private Bitmap setFileProperties(String url) {
+        switch (fileType) {
+            case "image": {
+                return  downloadFileByUrl(url);
+            }
+            case "video": {
+                return setVideoFile(url);
+            }
+            case "audio": {
+                return setAudioFile(url);
+            }
+            default: {
+                return Bitmap.createScaledBitmap(BitmapFactory.decodeResource(parentContext.getResources(),
+                    R.drawable.file), 160, 160, true);
+            }
+        }
     }
 
     private Bitmap downloadFileByUrl(final String url) {
-/*        if (imageCollection.get(url) != null) {
+/*        if (imageCollection.get(audioFile.png) != null) {
             iv.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
 *//*                    Intent intent = new Intent();
                     intent.setAction(Intent.ACTION_VIEW);
-                    intent.setDataAndType(uriForIntentCollection.get(url), "image*//**//*");
+                    intent.setDataAndType(uriForIntentCollection.get(audioFile.png), "image*//**//*");
                     ma.startActivity(intent);*//*
                     Intent intent = new Intent(ma, ImageViewer.class);
-                    intent.putExtra("bitmap", uriForIntentCollection.get(url));
+                    intent.putExtra("bitmap", uriForIntentCollection.get(audioFile.png));
                     ma.startActivity(intent);
                 }
             });
-            return imageCollection.get(url);
+            return imageCollection.get(audioFile.png);
         }*/
 
         FirebaseStorage storage = FirebaseStorage.getInstance();
@@ -95,15 +130,7 @@ public class DownloadMediaFIle extends AsyncTask<String, Void, Bitmap> {
         final File imgFile = new File(path, fileReference.getName());
 
         if(imageCollection.containsKey(url)) {
-            bmImage.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Intent intent = new Intent(parentContext, ImageViewer.class);
-                    intent.putExtra("bitmap", Uri.parse(imgFile.getPath()));
-                    parentContext.startActivity(intent);
-                }
-            });
-            return imageCollection.get(url);
+            return  setImageOnClickListener(imgFile.getPath(), url);
         }
 
         if (!imgFile.exists()) {
@@ -113,8 +140,6 @@ public class DownloadMediaFIle extends AsyncTask<String, Void, Bitmap> {
                     DownloadMediaFIle downloadTask = new DownloadMediaFIle(
                             bmImage, pbLoading, parentContext, imageCollection, fileType);
                     downloadTask.execute(url);
-//                    Bitmap bmp = setImageProperties(imgFile.getPath(), url);
-//                    onPostExecute(bmp);
                 }
             });
             return null;
@@ -132,12 +157,9 @@ public class DownloadMediaFIle extends AsyncTask<String, Void, Bitmap> {
         Bitmap image = BitmapFactory.decodeFile(path);
         if(path == null) {
             return null;
-        } else if (image == null) {
-            return Bitmap.createScaledBitmap(BitmapFactory.decodeResource(parentContext.getResources(),
-                    R.drawable.file), 160, 160, true);
         }
 
-        WindowManager wm = (WindowManager) parentContext.getSystemService(
+        /*WindowManager wm = (WindowManager) parentContext.getSystemService(
                 Context.WINDOW_SERVICE);
         Point size = new Point();
         wm.getDefaultDisplay().getSize(size);
@@ -151,9 +173,14 @@ public class DownloadMediaFIle extends AsyncTask<String, Void, Bitmap> {
             imageWidth = size.x;
             imageHeight /= scale;
         }
-        image = Bitmap.createScaledBitmap(image, imageWidth, imageHeight, true);
+        image = Bitmap.createScaledBitmap(image, imageWidth, imageHeight, true);*/
 
         imageCollection.put(url, image);
+        setImageOnClickListener(path, url);
+        return image;
+    }
+
+    private Bitmap setImageOnClickListener(final String path, String url) {
         bmImage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -162,6 +189,45 @@ public class DownloadMediaFIle extends AsyncTask<String, Void, Bitmap> {
                 parentContext.startActivity(intent);
             }
         });
-        return image;
+        return imageCollection.get(url);
     }
+
+    private Bitmap setAudioFile(final String url) {
+        bmImage.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                try {
+                    MediaPlayer mp = new MediaPlayer();
+                    mp.setDataSource(url);
+                    mp.prepare();
+                    if(!mp.isPlaying()) {
+                        mp.start();
+                    } else {
+                        mp.stop();
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+        return Bitmap.createScaledBitmap(BitmapFactory.decodeResource(parentContext.getResources(),
+                    R.drawable.file_audio), 160, 160, true);
+    }
+
+    private Bitmap setVideoFile(final String url) {
+        bmImage.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(parentContext, VideoPlayer.class);
+                intent.putExtra("videoUrl", url);
+                parentContext.startActivity(intent);
+            }
+        });
+//        Bitmap img = ThumbnailUtils.createVideoThumbnail(url, MediaStore.Video.Thumbnails.MINI_KIND);
+
+        return Bitmap.createScaledBitmap(BitmapFactory.decodeResource(parentContext.getResources(),
+                R.drawable.file), 160, 160, true);
+    }
+
+
 }

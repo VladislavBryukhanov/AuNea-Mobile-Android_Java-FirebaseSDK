@@ -24,11 +24,13 @@ import android.widget.Filter;
 import android.widget.Filterable;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.MediaController;
 import android.widget.PopupWindow;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.VideoView;
 
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
@@ -55,6 +57,7 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
     private Context ma;
     private EditText etMessage;
 
+    private Point screenSize;
     private DatabaseReference myRef;
     private ArrayList<Message> messages;
     private ArrayList<Message> filteredMessageList;
@@ -72,6 +75,12 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
         uriForIntentCollection = new HashMap<>();
         this.myRef = myRef;
         mAuth = FirebaseAuth.getInstance();
+
+        WindowManager wm = (WindowManager) ma.getSystemService(
+        Context.WINDOW_SERVICE);
+        screenSize = new Point();
+        wm.getDefaultDisplay().getSize(screenSize);
+        screenSize.x *= 0.5;
     }
 
     @NonNull
@@ -95,13 +104,6 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
                 layoutParams = (RelativeLayout.LayoutParams) convertView.findViewById(
                                 R.id.tvDate).getLayoutParams();
                 layoutParams.addRule(RelativeLayout.LEFT_OF, R.id.content);
-
-                /*if(filteredMessageList.get(position).getFileUrl() != null) {
-                    layoutParams = (RelativeLayout.LayoutParams) convertView.findViewById(
-                                    R.id.ivImage).getLayoutParams();
-                    layoutParams.addRule(RelativeLayout.ALIGN_PARENT_LEFT, 0);
-                    layoutParams.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
-                }*/
             } else {
                 (convertView.findViewById(R.id.content))
                         .setBackgroundResource(R.drawable.message_background_in);
@@ -116,13 +118,6 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
                 layoutParams = (RelativeLayout.LayoutParams) convertView.findViewById(
                         R.id.tvDate).getLayoutParams();
                 layoutParams.addRule(RelativeLayout.RIGHT_OF, R.id.content);
-
-    /*            if(filteredMessageList.get(position).getFileUrl() != null) {
-                    layoutParams = (RelativeLayout.LayoutParams) convertView.findViewById(
-                            R.id.ivImage).getLayoutParams();
-                    layoutParams.addRule(RelativeLayout.ALIGN_PARENT_RIGHT, 0);
-                    layoutParams.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
-                }*/
             }
 
             String fileUrl = filteredMessageList.get(position).getFileUrl();
@@ -130,34 +125,48 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
 
                 ImageView image = convertView.findViewById(R.id.ivImage);
                 ProgressBar loading = convertView.findViewById(R.id.pbLoading);
+
+                String fileMediaSides = filteredMessageList.get(position).getFileMediaSides();
+                if(fileMediaSides != null) {
+                    setMediaItemSize(fileMediaSides, loading, image);
+                }
+
                 loading.setVisibility(View.VISIBLE);
 
-                if(imageCollection.get(fileUrl) != null) {
+/*                if(imageCollection.get(fileUrl) != null) {
                     loading.setVisibility(View.GONE);
                     image.setImageBitmap(imageCollection.get(fileUrl));
                     image.setVisibility(View.VISIBLE);
-                }
-
+                }*/
                 DownloadMediaFIle downloadTask = new DownloadMediaFIle(
                         image, loading, getContext(), imageCollection,
                         filteredMessageList.get(position).getFileType());
                 downloadTask.execute(fileUrl);
 
-
                 image.setAdjustViewBounds(true);
-
             }
 
             parseMessageContent(filteredMessageList.get(position), convertView);
-
-//            ((TextView)convertView.findViewById(R.id.tvContent))
-//                .setText(filteredMessageList.get(position).getContent());
 
             DateFormat dateFormat = (new SimpleDateFormat("HH:mm:ss \n dd MMM"));
             ((TextView)convertView.findViewById(R.id.tvDate)).setText(dateFormat
                     .format(filteredMessageList.get(position).getDateOfSend()));
         }
         return convertView;
+    }
+
+    private void setMediaItemSize(String resolution, ProgressBar loading, ImageView img) {
+        int imageWidth = Integer.parseInt(resolution.split("x")[0]);
+        int imageHeight = Integer.parseInt(resolution.split("x")[1]);
+        double scale = (double) imageWidth / screenSize.x;
+        if(imageWidth > screenSize.x) {
+            imageWidth = screenSize.x;
+            imageHeight /= scale;
+        }
+
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(imageWidth, imageHeight);
+        loading.setLayoutParams(params);
+        img.setLayoutParams(params);
     }
 
     @Override
@@ -245,8 +254,6 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
                 ((LinearLayout)convertView.findViewById(R.id.content)).addView(urlPart);
                 msg = msg.replace(findUrl, "");
             }
-
-
         }
 
         (convertView.findViewById(R.id.msgItem)).setOnClickListener(new View.OnClickListener() {
@@ -265,43 +272,6 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
     }
 
     public void showPopupMenu(final View view, final Message msg) {
-   /*     PopupMenu popupMenu = new PopupMenu(ma, v);
-        popupMenu.inflate(R.menu.message_context_menu);
-        popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {
-                switch(item.getItemId()) {
-                    case R.id.mCpy: {
-                        ClipboardManager clipboard = (ClipboardManager)ma.getSystemService(Context.CLIPBOARD_SERVICE);
-                        ClipData clip = ClipData.newPlainText("buff", ((TextView)v.findViewById(R.id.tvContent)).getText());
-                        clipboard.setPrimaryClip(clip);
-                        break;
-                    }
-                    case R.id.mEdit: {
-                        FirebaseStorage storage = FirebaseStorage.getInstance();
-                        StorageReference delRef = storage.getReferenceFromUrl(msg.getFileUrl());
-
-//                        FirebaseStorage storage = FirebaseStorage.getInstance();
-//                        StorageReference delRef = storage.getReferenceFromUrl()
-                        break;
-                    }
-                    case R.id.mDelete: {
-                        if(msg.getFileUrl() != null ) {
-                            FirebaseStorage storage = FirebaseStorage.getInstance();
-                            StorageReference delRef = storage.getReferenceFromUrl(msg.getFileUrl());
-                            delRef.delete();
-                            //Мб можно еще и с устройства удалить, но лень
-                        }
-                        myRef.child(msg.getUid()).removeValue();
-                        messages.remove(msg);
-                        notifyDataSetChanged();
-                        break;
-                    }
-                }
-                return true;
-            }
-        });
-        popupMenu.show();*/
 
         LayoutInflater layoutInflater
                 = (LayoutInflater)ma.getApplicationContext()
@@ -320,6 +290,7 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
         Button btnCopy = popupView.findViewById(R.id.btnCopy);
         Button btnEdit= popupView.findViewById(R.id.btnEdit);
         Button btnDelete= popupView.findViewById(R.id.btnDelete);
+
         btnCopy.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -354,6 +325,5 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
                 popupWindow.dismiss();
             }
         });
-//        popupWindow.showAsDropDown(v);
     }
 }

@@ -20,9 +20,11 @@
     <item
         android:gravity="right"
         android:width="18dp"
-        android:height="18dp">
+        android:height="18dp"
+        android:left="-1dp"
+        android:right="-1dp">
         <rotate
-            android:fromDegrees="30"
+            android:fromDegrees="37"
             android:pivotX="100%"
             android:pivotY="0%"
             android:toDegrees="0" >

@@ -5,7 +5,9 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.Point;
 import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.provider.MediaStore;
@@ -19,6 +21,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -142,6 +145,8 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
                         }
 
                         adapter = new MessagesAdapter(getApplicationContext(), etMessage, messages, myRef);
+//                        int first = lvMessages.getFirstVisiblePosition();
+//                        lvMessages.setDrawingCacheEnabled(true);
                         lvMessages.setAdapter(adapter);
 
                         myRef.addChildEventListener(new ChildEventListener() {
@@ -210,7 +215,7 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
                     }
                     if (!(String.valueOf(etMessage.getText()).trim()).equals("")) {
                     Message newMsg = new Message(String.valueOf(etMessage.getText()), null,
-                            new Date(), mAuth.getUid(), toUser.getUid(), null);
+                            new Date(), mAuth.getUid(), toUser.getUid(), null, null);
                     parseMessageContent(newMsg);
                 }
             }
@@ -282,7 +287,14 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
 
                 final String fileType = extension.split("/")[0];
                 extension = "." + extension.split("/")[1];
-                Toast.makeText(this, fileType, Toast.LENGTH_SHORT).show();
+                String fMS = null;
+                if(fileType.equals("image") || fileType.equals("video")) {
+                    fMS = getImageSides(file);
+                }
+                final String fileMediaSides = fMS;
+//                Toast.makeText(this, fileType, Toast.LENGTH_SHORT).show();
+
+
                 StorageReference riversRef = gsReference.child(UserList.myAcc
                         .getUid() + "/" + java.util.UUID.randomUUID() + extension); //file.getLastPathSegment()
                 UploadTask uploadTask = riversRef.putFile(file);
@@ -291,7 +303,7 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
                     @Override
                     public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                         Message newMsg = new Message(String.valueOf(etMessage.getText()), taskSnapshot.getDownloadUrl().toString(),
-                                new Date(), mAuth.getUid(), toUser.getUid(), fileType);
+                                new Date(), mAuth.getUid(), toUser.getUid(), fileType, fileMediaSides);
                         parseMessageContent(newMsg);
                     }
                 });
@@ -305,6 +317,16 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
             }
         }
 
+    }
+
+    public String getImageSides(Uri uri) {
+        Bitmap image = null;
+        try {
+            image = MediaStore.Images.Media.getBitmap(this.getContentResolver(), uri);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return image.getWidth() + "x" + image.getHeight();
     }
 
 //    public String getRealPathFromURI (Uri uri) {
