@@ -1,4 +1,4 @@
-package com.example.nameless.autoupdating;
+package com.example.nameless.autoupdating.voip;
 
 import java.io.IOException;
 import java.net.DatagramPacket;

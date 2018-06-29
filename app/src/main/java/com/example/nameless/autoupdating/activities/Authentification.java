@@ -1,6 +1,5 @@
-package com.example.nameless.autoupdating;
+package com.example.nameless.autoupdating.activities;
 
-import android.*;
 import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
@@ -15,6 +14,10 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.example.nameless.autoupdating.generalModules.GlobalMenu;
+import com.example.nameless.autoupdating.services.NotifyService;
+import com.example.nameless.autoupdating.R;
+import com.example.nameless.autoupdating.models.User;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;

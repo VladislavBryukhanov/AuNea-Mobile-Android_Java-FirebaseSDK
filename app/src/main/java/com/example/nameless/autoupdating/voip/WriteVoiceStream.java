@@ -1,34 +1,23 @@
-package com.example.nameless.autoupdating;
+package com.example.nameless.autoupdating.voip;
 
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioRecord;
 import android.media.AudioTrack;
-import android.media.MediaCodec;
-import android.media.MediaCodecInfo;
-import android.media.MediaExtractor;
-import android.media.MediaFormat;
 import android.media.MediaRecorder;
-import android.net.LocalServerSocket;
-import android.net.LocalSocket;
-import android.net.LocalSocketAddress;
 import android.os.Environment;
-import android.os.ParcelFileDescriptor;
-import android.util.Log;
-import android.view.Surface;
+
+import com.example.nameless.autoupdating.activities.UserList;
 
 import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
-import java.nio.ByteBuffer;
 
 /**
  * Created by nameless on 21.05.18.

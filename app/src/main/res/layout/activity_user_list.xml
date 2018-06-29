@@ -7,7 +7,7 @@
     android:descendantFocusability="beforeDescendants"
     android:focusableInTouchMode="true"
     android:orientation="vertical"
-    tools:context="com.example.nameless.autoupdating.UserList">
+    tools:context="com.example.nameless.autoupdating.activities.UserList">
 
     <EditText
         android:id="@+id/etSearch"

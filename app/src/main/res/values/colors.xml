@@ -7,4 +7,6 @@
 
     <color name="black_overlay">#66000000</color>
     <color name="dialogBack">#c8000000</color>
+
+    <color name="lightBlue">#6B9BC2</color>
 </resources>

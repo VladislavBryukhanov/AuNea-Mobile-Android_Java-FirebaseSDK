@@ -1,17 +1,18 @@
-package com.example.nameless.autoupdating;
+package com.example.nameless.autoupdating.adapters;
 
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Point;
+import android.media.MediaPlayer;
 import android.net.Uri;
-import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.content.res.ResourcesCompat;
+import android.util.Pair;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -24,22 +25,21 @@ import android.widget.Filter;
 import android.widget.Filterable;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.MediaController;
 import android.widget.PopupWindow;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.Toast;
-import android.widget.VideoView;
 
-import com.google.android.gms.tasks.OnSuccessListener;
+import com.example.nameless.autoupdating.activities.Chat;
+import com.example.nameless.autoupdating.asyncTasks.DownloadMediaFIle;
+import com.example.nameless.autoupdating.R;
+import com.example.nameless.autoupdating.models.Message;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.storage.FileDownloadTask;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
-import java.io.File;
+import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -59,11 +59,14 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
 
     private Point screenSize;
     private DatabaseReference myRef;
+    private FirebaseAuth mAuth;
     private ArrayList<Message> messages;
     private ArrayList<Message> filteredMessageList;
     private Map<String, Bitmap> imageCollection;
     private Map<String, Uri> uriForIntentCollection;
-    private FirebaseAuth mAuth;
+
+    private Pair<String, ImageView> runningAudio;
+    private MediaPlayer mediaPlayer;
 
     public MessagesAdapter(Context ma, EditText etMessage, ArrayList<Message> messages, DatabaseReference myRef) {
         super(ma, 0, messages);
@@ -71,10 +74,11 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
         this.ma = ma;
         this.messages = messages;
         this.filteredMessageList = messages;
-        imageCollection = new HashMap<>();
-        uriForIntentCollection = new HashMap<>();
+        this.imageCollection = new HashMap<>();
         this.myRef = myRef;
+        uriForIntentCollection = new HashMap<>();
         mAuth = FirebaseAuth.getInstance();
+        mediaPlayer = new MediaPlayer();
 
         WindowManager wm = (WindowManager) ma.getSystemService(
         Context.WINDOW_SERVICE);
@@ -120,10 +124,10 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
                 layoutParams.addRule(RelativeLayout.RIGHT_OF, R.id.content);
             }
 
-            String fileUrl = filteredMessageList.get(position).getFileUrl();
+            final String fileUrl = filteredMessageList.get(position).getFileUrl();
             if(fileUrl != null) {
 
-                ImageView image = convertView.findViewById(R.id.ivImage);
+                final ImageView image = convertView.findViewById(R.id.ivImage);
                 ProgressBar loading = convertView.findViewById(R.id.pbLoading);
 
                 String fileMediaSides = filteredMessageList.get(position).getFileMediaSides();
@@ -138,11 +142,49 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
                     image.setImageBitmap(imageCollection.get(fileUrl));
                     image.setVisibility(View.VISIBLE);
                 }*/
-                DownloadMediaFIle downloadTask = new DownloadMediaFIle(
-                        image, loading, getContext(), imageCollection,
-                        filteredMessageList.get(position).getFileType());
-                downloadTask.execute(fileUrl);
 
+                if(filteredMessageList.get(position).getFileType().equals("audio")) {
+                    if(fileUrl.equals(runningAudio)) {
+                        image.setImageDrawable(ResourcesCompat.getDrawable(ma.getResources(), R.drawable.audio_pause_button, null));
+                    } else {
+                        image.setImageDrawable(ResourcesCompat.getDrawable(ma.getResources(), R.drawable.audio_play_button, null));
+                    }
+                    loading.setVisibility(View.GONE);
+                    image.setVisibility(View.VISIBLE);
+
+                    image.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            try {
+                                if(mediaPlayer.isPlaying() && fileUrl.equals(runningAudio.first)) {
+//                                    stopTrack(image);
+                                    mediaPlayer.pause();
+                                    image.setImageDrawable(ResourcesCompat.getDrawable(ma.getResources(), R.drawable.audio_play_button, null));
+                                } else {
+                                    stopTrack();
+                                    mediaPlayer.setDataSource(fileUrl);
+                                    mediaPlayer.prepare();
+                                    mediaPlayer.start();
+                                    mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                                        @Override
+                                        public void onCompletion(MediaPlayer mp) {
+                                            stopTrack();
+                                        }
+                                    });
+                                    runningAudio = new Pair<>(fileUrl, image);
+                                    image.setImageDrawable(ResourcesCompat.getDrawable(ma.getResources(), R.drawable.audio_pause_button, null));
+                                }
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    });
+                } else {
+                    DownloadMediaFIle downloadTask = new DownloadMediaFIle(
+                            image, loading, getContext(), imageCollection,
+                            filteredMessageList.get(position).getFileType());
+                    downloadTask.execute(fileUrl);
+                }
                 image.setAdjustViewBounds(true);
             }
 
@@ -153,6 +195,17 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
                     .format(filteredMessageList.get(position).getDateOfSend()));
         }
         return convertView;
+    }
+
+    private void stopTrack() {
+        if(runningAudio != null) {
+            mediaPlayer.stop();
+            mediaPlayer.release();
+            mediaPlayer = new MediaPlayer();
+            runningAudio.second.setImageDrawable(ResourcesCompat.getDrawable(ma.getResources(), R.drawable.audio_play_button, null));
+            runningAudio = null;
+        }
+
     }
 
     private void setMediaItemSize(String resolution, ProgressBar loading, ImageView img) {

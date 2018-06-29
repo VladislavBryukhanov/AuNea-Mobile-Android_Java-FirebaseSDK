@@ -1,4 +1,4 @@
-package com.example.nameless.autoupdating;
+package com.example.nameless.autoupdating.models;
 
 import java.util.Date;
 

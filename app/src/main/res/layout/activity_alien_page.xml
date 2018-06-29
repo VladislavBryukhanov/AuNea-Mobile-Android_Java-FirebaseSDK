@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:background="#121617"
     android:orientation="vertical"
-    tools:context="com.example.nameless.autoupdating.Settings">
+    tools:context="com.example.nameless.autoupdating.activities.Settings">
 
     <LinearLayout
         android:paddingTop="30dp"

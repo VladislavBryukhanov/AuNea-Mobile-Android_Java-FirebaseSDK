@@ -1,4 +1,4 @@
-package com.example.nameless.autoupdating;
+package com.example.nameless.autoupdating.activities;
 
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
@@ -6,6 +6,8 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.MediaController;
 import android.widget.VideoView;
+
+import com.example.nameless.autoupdating.R;
 
 public class VideoPlayer extends AppCompatActivity {
 

@@ -10,7 +10,7 @@
     android:layout_height="match_parent"
     android:background="#121617"
     android:orientation="vertical"
-    tools:context="com.example.nameless.autoupdating.Chat">
+    tools:context="com.example.nameless.autoupdating.activities.Chat">
     <!--android:background="@color/darkTheme"-->
     <!--android:background="#17181a"-->
     <!--android:background="#121617"-->
@@ -90,7 +90,33 @@
             android:background="@android:color/transparent"
             android:gravity="center"
             android:scaleType="fitCenter"
-            app:srcCompat="@drawable/send" />
+            app:srcCompat="@drawable/send"
+            android:visibility="gone"/>
+
+        <ImageButton
+            android:id="@+id/btnStartRec"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_marginBottom="6dp"
+            android:layout_marginRight="17dp"
+            android:layout_marginTop="6dp"
+            android:background="@android:color/transparent"
+            android:gravity="center"
+            android:scaleType="fitCenter"
+            app:srcCompat="@android:drawable/ic_btn_speak_now" />
+
+        <ImageButton
+            android:id="@+id/btnStopRec"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_marginBottom="6dp"
+            android:layout_marginRight="17dp"
+            android:layout_marginTop="6dp"
+            android:background="@android:color/transparent"
+            android:gravity="center"
+            android:scaleType="fitCenter"
+            app:srcCompat="@android:drawable/presence_audio_busy"
+            android:visibility="gone"/>
 
         <!--<ImageButton-->
         <!--android:id="@+id/btnSend"-->

@@ -1,4 +1,4 @@
-package com.example.nameless.autoupdating;
+package com.example.nameless.autoupdating.generalModules;
 
 import android.content.Context;
 import android.content.Intent;
@@ -9,6 +9,7 @@ import android.support.annotation.NonNull;
 import android.support.v4.content.FileProvider;
 import android.widget.Toast;
 
+import com.example.nameless.autoupdating.BuildConfig;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.storage.FileDownloadTask;

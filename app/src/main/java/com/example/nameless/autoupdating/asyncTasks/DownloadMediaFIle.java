@@ -1,25 +1,20 @@
-package com.example.nameless.autoupdating;
+package com.example.nameless.autoupdating.asyncTasks;
 
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Point;
-import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
-import android.media.ThumbnailUtils;
 import android.net.Uri;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Environment;
-import android.provider.MediaStore;
 import android.view.View;
-import android.view.WindowManager;
 import android.widget.ImageView;
-import android.widget.MediaController;
 import android.widget.ProgressBar;
-import android.widget.VideoView;
 
+import com.example.nameless.autoupdating.R;
+import com.example.nameless.autoupdating.activities.ImageViewer;
+import com.example.nameless.autoupdating.activities.VideoPlayer;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.storage.FileDownloadTask;
 import com.google.firebase.storage.FirebaseStorage;
@@ -27,7 +22,6 @@ import com.google.firebase.storage.StorageReference;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -80,9 +74,9 @@ public class DownloadMediaFIle extends AsyncTask<String, Void, Bitmap> {
             case "video": {
                 return setVideoFile(url);
             }
-            case "audio": {
-                return setAudioFile(url);
-            }
+//            case "audio": {
+//                return setAudioFile(url);
+//            }
             default: {
                 return Bitmap.createScaledBitmap(BitmapFactory.decodeResource(parentContext.getResources(),
                     R.drawable.file), 160, 160, true);
@@ -192,27 +186,29 @@ public class DownloadMediaFIle extends AsyncTask<String, Void, Bitmap> {
         return imageCollection.get(url);
     }
 
-    private Bitmap setAudioFile(final String url) {
-        bmImage.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                try {
-                    MediaPlayer mp = new MediaPlayer();
-                    mp.setDataSource(url);
-                    mp.prepare();
-                    if(!mp.isPlaying()) {
-                        mp.start();
-                    } else {
-                        mp.stop();
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-        return Bitmap.createScaledBitmap(BitmapFactory.decodeResource(parentContext.getResources(),
-                    R.drawable.file_audio), 160, 160, true);
-    }
+/*    private Bitmap setAudioFile(final String url) {
+//        bmImage.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                try {
+//                    MediaPlayer mp = new MediaPlayer();
+//                    mp.setDataSource(url);
+//                    mp.prepare();
+//                    if(!mp.isPlaying()) {
+//                        mp.start();
+//                    } else {
+//                        mp.stop();
+//                    }
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                }
+//            }
+//        });
+//        return Bitmap.createScaledBitmap(BitmapFactory.decodeResource(parentContext.getResources(),
+//                    R.drawable.audio_play_button), 100, 100, true);
+        return BitmapFactory.decodeResource(parentContext.getResources(),
+                R.drawable.audio_play_button);
+     }*/
 
     private Bitmap setVideoFile(final String url) {
         bmImage.setOnClickListener(new View.OnClickListener() {
@@ -226,7 +222,7 @@ public class DownloadMediaFIle extends AsyncTask<String, Void, Bitmap> {
 //        Bitmap img = ThumbnailUtils.createVideoThumbnail(url, MediaStore.Video.Thumbnails.MINI_KIND);
 
         return Bitmap.createScaledBitmap(BitmapFactory.decodeResource(parentContext.getResources(),
-                R.drawable.file), 160, 160, true);
+                R.drawable.file), 100, 100, true);
     }
 
 

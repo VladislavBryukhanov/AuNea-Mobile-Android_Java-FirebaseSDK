@@ -1,9 +1,10 @@
-package com.example.nameless.autoupdating;
+package com.example.nameless.autoupdating.services;
 
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.net.Uri;
 
+import com.example.nameless.autoupdating.R;
 import com.google.firebase.messaging.RemoteMessage;
 
 /**

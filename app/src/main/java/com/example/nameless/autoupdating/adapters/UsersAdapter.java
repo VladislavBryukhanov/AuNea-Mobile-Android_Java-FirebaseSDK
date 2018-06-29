@@ -1,4 +1,4 @@
-package com.example.nameless.autoupdating;
+package com.example.nameless.autoupdating.adapters;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
@@ -11,7 +11,10 @@ import android.widget.Filter;
 import android.widget.Filterable;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
+
+import com.example.nameless.autoupdating.asyncTasks.DownloadAvatarByUrl;
+import com.example.nameless.autoupdating.R;
+import com.example.nameless.autoupdating.models.User;
 
 import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;

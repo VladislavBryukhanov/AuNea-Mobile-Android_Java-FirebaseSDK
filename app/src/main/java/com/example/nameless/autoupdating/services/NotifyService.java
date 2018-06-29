@@ -1,6 +1,5 @@
-package com.example.nameless.autoupdating;
+package com.example.nameless.autoupdating.services;
 
-import android.app.AlarmManager;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -9,14 +8,16 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.IBinder;
-import android.renderscript.Sampler;
 import android.support.annotation.Nullable;
-import android.util.Log;
-import android.widget.Toast;
 
+import com.example.nameless.autoupdating.generalModules.NetworkStateReceiver;
+import com.example.nameless.autoupdating.R;
+import com.example.nameless.autoupdating.activities.Chat;
+import com.example.nameless.autoupdating.activities.Settings;
+import com.example.nameless.autoupdating.models.Message;
+import com.example.nameless.autoupdating.models.User;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
@@ -26,7 +27,6 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 

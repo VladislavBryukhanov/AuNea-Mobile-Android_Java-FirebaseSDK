@@ -1,4 +1,4 @@
-package com.example.nameless.autoupdating;
+package com.example.nameless.autoupdating.voip;
 
 import android.media.AudioFormat;
 import android.media.AudioManager;
@@ -18,7 +18,7 @@ public class ListenVoiceStream {
     private boolean status = true;
     private UDPClient client;
 
-    protected ListenVoiceStream(UDPClient client) {
+    public ListenVoiceStream(UDPClient client) {
         this.client = client;
     }
 

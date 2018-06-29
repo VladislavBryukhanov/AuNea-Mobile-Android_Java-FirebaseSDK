@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:background="@drawable/back"
     android:orientation="vertical"
-    tools:context="com.example.nameless.autoupdating.Authentification">
+    tools:context="com.example.nameless.autoupdating.activities.Authentification">
 
     <LinearLayout
         android:layout_width="match_parent"

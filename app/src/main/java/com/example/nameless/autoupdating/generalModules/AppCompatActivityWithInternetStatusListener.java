@@ -1,10 +1,8 @@
-package com.example.nameless.autoupdating;
+package com.example.nameless.autoupdating.generalModules;
 
-import android.content.Context;
 import android.content.IntentFilter;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.widget.Toast;
 
 /**
  * Created by nameless on 23.06.18.

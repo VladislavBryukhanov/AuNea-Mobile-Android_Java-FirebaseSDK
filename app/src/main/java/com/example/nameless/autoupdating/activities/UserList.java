@@ -1,17 +1,11 @@
-package com.example.nameless.autoupdating;
+package com.example.nameless.autoupdating.activities;
 
 import android.app.Activity;
 import android.app.ActivityManager;
-import android.app.AlarmManager;
-import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
-import android.speech.tts.Voice;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.Menu;
@@ -19,8 +13,13 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.ListView;
-import android.widget.Toast;
 
+import com.example.nameless.autoupdating.generalModules.GlobalMenu;
+import com.example.nameless.autoupdating.services.NotifyService;
+import com.example.nameless.autoupdating.R;
+import com.example.nameless.autoupdating.adapters.UsersAdapter;
+import com.example.nameless.autoupdating.models.ClientToClient;
+import com.example.nameless.autoupdating.models.User;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.ChildEventListener;
@@ -34,8 +33,6 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.text.DateFormat;

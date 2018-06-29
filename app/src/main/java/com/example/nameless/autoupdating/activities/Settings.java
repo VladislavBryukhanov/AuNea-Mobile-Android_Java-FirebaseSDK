@@ -1,23 +1,22 @@
-package com.example.nameless.autoupdating;
+package com.example.nameless.autoupdating.activities;
 
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
-import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.Switch;
 import android.widget.Toast;
 
+import com.example.nameless.autoupdating.asyncTasks.DownloadAvatarByUrl;
+import com.example.nameless.autoupdating.R;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -29,10 +28,6 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-import java.util.Date;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 

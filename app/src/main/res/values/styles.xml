@@ -34,7 +34,7 @@
         <!-- Customize your theme here. -->
         <item name="colorPrimary">#232728</item>
         <item name="colorPrimaryDark">#232728</item>
-        <item name="colorAccent">#6B9BC2</item>
+        <item name="colorAccent">@color/lightBlue</item>
     </style>
 
 </resources>

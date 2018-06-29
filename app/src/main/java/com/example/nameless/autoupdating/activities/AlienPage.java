@@ -1,27 +1,16 @@
-package com.example.nameless.autoupdating;
+package com.example.nameless.autoupdating.activities;
 
-import android.content.Context;
 import android.content.Intent;
-import android.graphics.BitmapFactory;
 import android.net.Uri;
-import android.provider.MediaStore;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.Query;
-import com.google.firebase.database.ValueEventListener;
+import com.example.nameless.autoupdating.generalModules.AppCompatActivityWithInternetStatusListener;
+import com.example.nameless.autoupdating.asyncTasks.DownloadAvatarByUrl;
+import com.example.nameless.autoupdating.R;
+import com.example.nameless.autoupdating.models.User;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.concurrent.ExecutionException;
 
 import de.hdodenhof.circleimageview.CircleImageView;

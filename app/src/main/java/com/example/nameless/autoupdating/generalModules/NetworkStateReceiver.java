@@ -1,4 +1,4 @@
-package com.example.nameless.autoupdating;
+package com.example.nameless.autoupdating.generalModules;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;

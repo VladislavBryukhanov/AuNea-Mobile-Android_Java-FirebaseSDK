@@ -1,21 +1,18 @@
-package com.example.nameless.autoupdating;
+package com.example.nameless.autoupdating.asyncTasks;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Environment;
-import android.provider.MediaStore;
 import android.widget.ImageView;
 
+import com.example.nameless.autoupdating.models.User;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.storage.FileDownloadTask;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
 
 /**
  * Created by nameless on 13.06.18.

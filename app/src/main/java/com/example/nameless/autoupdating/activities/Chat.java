@@ -1,27 +1,25 @@
-package com.example.nameless.autoupdating;
+package com.example.nameless.autoupdating.activities;
 
 import android.app.Activity;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Color;
-import android.graphics.Point;
-import android.graphics.drawable.ColorDrawable;
+import android.media.MediaRecorder;
 import android.net.Uri;
+import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.v7.app.ActionBar;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -31,8 +29,15 @@ import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
 //import android.widget.Toolbar;
-import android.support.v7.widget.Toolbar;
 
+import com.example.nameless.autoupdating.generalModules.AppCompatActivityWithInternetStatusListener;
+import com.example.nameless.autoupdating.asyncTasks.DownloadAvatarByUrl;
+import com.example.nameless.autoupdating.services.NotifyService;
+import com.example.nameless.autoupdating.R;
+import com.example.nameless.autoupdating.adapters.MessagesAdapter;
+import com.example.nameless.autoupdating.models.ClientToClient;
+import com.example.nameless.autoupdating.models.Message;
+import com.example.nameless.autoupdating.models.User;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
@@ -46,8 +51,8 @@ import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
-import com.google.gson.Gson;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -61,7 +66,7 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
     public static final int PICKFILE_RESULT_CODE = 200;
     public static final int CAMERA_REQUEST = 10;
 
-    private ImageButton btnSend, btnAffixFile;
+    private ImageButton btnSend, btnAffixFile, btnStartRec, btnStopRec;
     private static EditText etMessage;
     private ListView lvMessages;
     private static ImageView ivEdit;
@@ -78,6 +83,7 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
     private boolean dialogFound = false;
     private FirebaseAuth mAuth;
     private Uri imgUri;
+    private MediaRecorder mediaRecorder;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -85,6 +91,8 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
         setContentView(R.layout.activity_chat);
 
         btnSend = findViewById(R.id.btnSend);
+        btnStartRec = findViewById(R.id.btnStartRec);
+        btnStopRec = findViewById(R.id.btnStopRec);
         btnAffixFile = findViewById(R.id.btnAffixFile);
         etMessage = findViewById(R.id.etMessage);
         lvMessages = findViewById(R.id.lvMessages);
@@ -120,80 +128,77 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
 
-                        if (dataSnapshot.getChildrenCount() == 0) {
-                            myRef = myRef.push();
-                            myRef.child("listener1").setValue(UserList.myAcc.getUid());
-                            myRef.child("listener2").setValue(toUser.getUid());
-                            myRef = myRef.child("content");
-                        } else {
-                            String myLogin = mAuth.getUid();
-                            for(DataSnapshot data : dataSnapshot.getChildren()) {
-                                String listener1 = (String)data.child("listener1").getValue();
-                                String listener2 = (String)data.child("listener2").getValue();
-                                if (((listener1.equals(myLogin)) && (listener2.equals(toUser.getUid())))
-                                        || ((listener2).equals(myLogin) && (listener1).equals(toUser.getUid()))) {
-                                    myRef = myRef.child(data.getKey()).child("content");
-                                    dialogFound = true;
-                                }
-                            }
-                            if (!dialogFound) {
-                                myRef = myRef.push();
-                                myRef.child("listener1").setValue(UserList.myAcc.getUid());
-                                myRef.child("listener2").setValue(toUser.getUid());
-                                myRef = myRef.child("content");
-                            }
+                if (dataSnapshot.getChildrenCount() == 0) {
+                    myRef = myRef.push();
+                    myRef.child("listener1").setValue(UserList.myAcc.getUid());
+                    myRef.child("listener2").setValue(toUser.getUid());
+                    myRef = myRef.child("content");
+                } else {
+                    String myLogin = mAuth.getUid();
+                    for(DataSnapshot data : dataSnapshot.getChildren()) {
+                        String listener1 = (String)data.child("listener1").getValue();
+                        String listener2 = (String)data.child("listener2").getValue();
+                        if (((listener1.equals(myLogin)) && (listener2.equals(toUser.getUid())))
+                                || ((listener2).equals(myLogin) && (listener1).equals(toUser.getUid()))) {
+                            myRef = myRef.child(data.getKey()).child("content");
+                            dialogFound = true;
                         }
+                    }
+                    if (!dialogFound) {
+                        myRef = myRef.push();
+                        myRef.child("listener1").setValue(UserList.myAcc.getUid());
+                        myRef.child("listener2").setValue(toUser.getUid());
+                        myRef = myRef.child("content");
+                    }
+                }
 
-                        adapter = new MessagesAdapter(getApplicationContext(), etMessage, messages, myRef);
-//                        int first = lvMessages.getFirstVisiblePosition();
-//                        lvMessages.setDrawingCacheEnabled(true);
-                        lvMessages.setAdapter(adapter);
+                adapter = new MessagesAdapter(getApplicationContext(), etMessage, messages, myRef);
+                lvMessages.setAdapter(adapter);
 
-                        myRef.addChildEventListener(new ChildEventListener() {
-                            @Override
-                            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-                                messages.add(new Message(dataSnapshot.getKey(), dataSnapshot.getValue(Message.class)));
+                myRef.addChildEventListener(new ChildEventListener() {
+                    @Override
+                    public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+                        messages.add(new Message(dataSnapshot.getKey(), dataSnapshot.getValue(Message.class)));
+                        adapter.notifyDataSetChanged();
+                    }
+
+                    @Override
+                    public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+                        for (int i=0; i<messages.size(); i++) {
+                            if(((messages.get(i)).getUid()).equals(dataSnapshot.getKey())) {
+                                messages.set(i, new Message(dataSnapshot.getKey(), dataSnapshot.getValue(Message.class)));
                                 adapter.notifyDataSetChanged();
                             }
+                        }
+                    }
 
-                            @Override
-                            public void onChildChanged(DataSnapshot dataSnapshot, String s) {
-                                for (int i=0; i<messages.size(); i++) {
-                                    if(((messages.get(i)).getUid()).equals(dataSnapshot.getKey())) {
-                                        messages.set(i, new Message(dataSnapshot.getKey(), dataSnapshot.getValue(Message.class)));
-                                        adapter.notifyDataSetChanged();
-                                    }
-                                }
+                    @Override
+                    public void onChildRemoved(DataSnapshot dataSnapshot) {
+                        Iterator<Message> itr = messages.iterator();
+                        while(itr.hasNext()) {
+                            Message message = itr.next();
+                            if(message.getUid().equals(dataSnapshot.getKey())) {
+                                itr.remove();
+                                adapter.notifyDataSetChanged();
                             }
+                        }
+                    }
 
-                            @Override
-                            public void onChildRemoved(DataSnapshot dataSnapshot) {
-                                Iterator<Message> itr = messages.iterator();
-                                while(itr.hasNext()) {
-                                    Message message = itr.next();
-                                    if(message.getUid().equals(dataSnapshot.getKey())) {
-                                        itr.remove();
-                                        adapter.notifyDataSetChanged();
-                                    }
-                                }
-                            }
-
-                            @Override
-                            public void onChildMoved(DataSnapshot dataSnapshot, String s) {
-                            }
-
-                            @Override
-                            public void onCancelled(DatabaseError databaseError) {
-                            }
-                        });
-
+                    @Override
+                    public void onChildMoved(DataSnapshot dataSnapshot, String s) {
                     }
 
                     @Override
                     public void onCancelled(DatabaseError databaseError) {
-
                     }
                 });
+            }
+
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+
+                }
+            });
 
         btnAffixFile.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -202,22 +207,60 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
             }
         });
 
+        etMessage.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (!(String.valueOf(etMessage.getText()).trim()).equals("")) {
+                    btnSend.setVisibility(View.VISIBLE);
+                    btnStartRec.setVisibility(View.GONE);
+                } else {
+                    btnSend.setVisibility(View.GONE);
+                    btnStartRec.setVisibility(View.VISIBLE);
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
+
         btnSend.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                    if(messageForEditing != null) {
-                        messageForEditing.setContent(String.valueOf(etMessage.getText()));
-                        parseMessageContent(messageForEditing);
-                        messageForEditing = null;
-                        etMessage.setText("");
-                        ivEdit.setVisibility(View.GONE);
-                        return;
-                    }
-                    if (!(String.valueOf(etMessage.getText()).trim()).equals("")) {
-                    Message newMsg = new Message(String.valueOf(etMessage.getText()), null,
-                            new Date(), mAuth.getUid(), toUser.getUid(), null, null);
-                    parseMessageContent(newMsg);
+                if(messageForEditing != null) {
+                    messageForEditing.setContent(String.valueOf(etMessage.getText()));
+                    parseMessageContent(messageForEditing);
+                    messageForEditing = null;
+                    etMessage.setText("");
+                    ivEdit.setVisibility(View.GONE);
+                    return;
                 }
+//                if (!(String.valueOf(etMessage.getText()).trim()).equals("")) {
+                Message newMsg = new Message(String.valueOf(etMessage.getText()), null,
+                        new Date(), mAuth.getUid(), toUser.getUid(), null, null);
+                parseMessageContent(newMsg);
+//                }
+            }
+        });
+
+        btnStartRec.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startRecord();
+                etMessage.setEnabled(false);
+                btnStartRec.setVisibility(View.GONE);
+                btnStopRec.setVisibility(View.VISIBLE);
+            }
+        });
+        btnStopRec.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                stopRecord();
+                etMessage.setEnabled(true);
+                btnStartRec.setVisibility(View.VISIBLE);
+                btnStopRec.setVisibility(View.GONE);
             }
         });
     }
@@ -317,6 +360,66 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
             }
         }
 
+    }
+
+    public void startRecord() {
+        mediaRecorder = new MediaRecorder();
+        mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+        mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
+        mediaRecorder.setOutputFile(Environment.getExternalStorageDirectory()
+                + "/AUMessanger/AudioCache.3gp");
+        mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
+
+        try {
+            mediaRecorder.prepare();
+        } catch (IllegalStateException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        mediaRecorder.start();
+    }
+
+    public void stopRecord() {
+        mediaRecorder.stop();
+        mediaRecorder.release();
+        mediaRecorder = null;
+
+        FirebaseStorage storage = FirebaseStorage.getInstance();
+        StorageReference gsReference = storage.getReferenceFromUrl(
+                "gs://messager-d15a0.appspot.com/");
+
+        final Uri file = Uri.fromFile(new File(Environment.getExternalStorageDirectory()
+                + "/AUMessanger/AudioCache.3gp"));
+
+//        String extension = getContentResolver().getType(file);
+//        final String fileType = extension.split("/")[0];
+//        extension = "." + extension.split("/")[1];
+
+        StorageReference riversRef = gsReference.child(UserList.myAcc
+                .getUid() + "/" + java.util.UUID.randomUUID() + ".3gp");
+        UploadTask uploadTask = riversRef.putFile(file);
+
+        uploadTask.addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+            @Override
+            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                Message newMsg = new Message(String.valueOf(etMessage.getText()), taskSnapshot.getDownloadUrl().toString(),
+                        new Date(), mAuth.getUid(), toUser.getUid(), "audio", null);
+                parseMessageContent(newMsg);
+
+                File fdelete = new File(file.getPath());
+                if (fdelete.exists()) {
+                    fdelete.delete();
+                }
+            }
+        });
+
+        uploadTask.addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                Toast.makeText(Chat.this, ":c", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     public String getImageSides(Uri uri) {

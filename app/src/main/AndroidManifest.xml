@@ -16,12 +16,12 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <service android:name=".FirebaseMessagingService">
+        <service android:name=".services.FirebaseMessagingService">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
-        <service android:name=".NotifyService" />
+        <service android:name=".services.NotifyService" />
 
         <provider
             android:name="android.support.v4.content.FileProvider"
@@ -33,10 +33,10 @@
                 android:resource="@xml/provider_paths" />
         </provider>
 
-        <activity android:name=".GlobalMenu" />
-        <activity android:name=".Authentification" />
+        <activity android:name=".generalModules.GlobalMenu" />
+        <activity android:name=".activities.Authentification" />
         <activity
-            android:name=".UserList"
+            android:name=".activities.UserList"
             android:label="List of users">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -45,21 +45,21 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".Chat"
+            android:name=".activities.Chat"
             android:theme="@style/BlackActionBar" />
-        <activity android:name=".ImageViewer" />
+        <activity android:name=".activities.ImageViewer" />
         <activity
-            android:name=".VoiceCalling"
+            android:name=".activities.VoiceCalling"
             android:label="@string/title_activity_voice_calling"
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme.NoActionBar" />
         <activity
-            android:name=".Settings"
+            android:name=".activities.Settings"
             android:theme="@style/BlackActionBar" />
         <activity
-            android:name=".AlienPage"
+            android:name=".activities.AlienPage"
             android:theme="@style/AppTheme.NoActionBar" />
-        <activity android:name=".VideoPlayer" />
+        <activity android:name=".activities.VideoPlayer" />
     </application>
 
 </manifest>
