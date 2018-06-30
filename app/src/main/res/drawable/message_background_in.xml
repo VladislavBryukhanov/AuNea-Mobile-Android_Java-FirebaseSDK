@@ -28,8 +28,7 @@
             android:pivotY="0%"
             android:toDegrees="0" >
             <shape android:shape="rectangle" >
-                <padding android:top="-8dp"
-                    android:right="16dp"/>
+                <padding android:top="-8dp"/>
                 <solid android:color="#243443" />
             </shape>
         </rotate>

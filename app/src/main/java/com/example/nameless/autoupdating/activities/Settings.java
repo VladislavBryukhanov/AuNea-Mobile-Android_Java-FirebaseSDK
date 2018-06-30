@@ -28,6 +28,7 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
+import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -130,7 +131,13 @@ public class Settings extends AppCompatActivity {
                 myRef.child(data.getKey()).child("avatarUrl").setValue(UserList.myAcc.getAvatarUrl());
 
                 DownloadAvatarByUrl downloadTask = new DownloadAvatarByUrl(avatar, UserList.myAcc);
-                downloadTask.execute(UserList.myAcc.getAvatarUrl());
+                try {
+                    downloadTask.execute(UserList.myAcc.getAvatarUrl()).get();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                } catch (ExecutionException e) {
+                    e.printStackTrace();
+                }
                 Settings.this.finish();
             }
         });

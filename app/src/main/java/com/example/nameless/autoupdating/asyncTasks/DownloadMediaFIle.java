@@ -4,10 +4,14 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Environment;
+import android.support.v4.content.res.ResourcesCompat;
+import android.util.Pair;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
@@ -15,6 +19,7 @@ import android.widget.ProgressBar;
 import com.example.nameless.autoupdating.R;
 import com.example.nameless.autoupdating.activities.ImageViewer;
 import com.example.nameless.autoupdating.activities.VideoPlayer;
+import com.example.nameless.autoupdating.adapters.MessagesAdapter;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.storage.FileDownloadTask;
 import com.google.firebase.storage.FirebaseStorage;
@@ -30,16 +35,18 @@ import java.util.Map;
 
 public class DownloadMediaFIle extends AsyncTask<String, Void, Bitmap> {
 
+    public static final String MUSIC_TYPE = "audio";
+    public static final String IMAGE_TYPE = "image";
+    public static final String VIDEO_TYPE = "video";
+
     private ImageView bmImage;
     private ProgressBar pbLoading;
     private Context parentContext;
-    private Map<String, Bitmap> imageCollection;
     private String fileType;
 
-    public DownloadMediaFIle(ImageView bmImage, ProgressBar pbLoading, Context parentContext, Map<String, Bitmap> imageCollection, String fileType) {
+    public DownloadMediaFIle(ImageView bmImage, ProgressBar pbLoading, Context parentContext, String fileType) {
         this.bmImage = bmImage;
         this.parentContext = parentContext;
-        this.imageCollection  = imageCollection;
         this.pbLoading = pbLoading;
         this.fileType = fileType;
     }
@@ -52,31 +59,24 @@ public class DownloadMediaFIle extends AsyncTask<String, Void, Bitmap> {
     @Override
     protected void onPostExecute(Bitmap bmp) {
         if(bmp != null) {
-            pbLoading.setVisibility(View.GONE);
             bmImage.setImageBitmap(bmp);
+            pbLoading.setVisibility(View.GONE);
             bmImage.setVisibility(View.VISIBLE);
         }
-//        if(fileType.equals("video")) {
-//            pbLoading.setVisibility(View.GONE);
-//            bmVideo.setVisibility(View.VISIBLE);
-//
-//            bmVideo.setVideoURI(Uri.parse(url));
-//            bmVideo.setMediaController(new MediaController(parentContext));
-//            bmVideo.requestFocus(0);
-//        }
     }
 
     private Bitmap setFileProperties(String url) {
         switch (fileType) {
-            case "image": {
-                return  downloadFileByUrl(url);
+            case IMAGE_TYPE: {
+                return  downloadFileByUrl(url, IMAGE_TYPE);
             }
-            case "video": {
+            case MUSIC_TYPE: {
+                return  downloadFileByUrl(url, MUSIC_TYPE);
+//                return setAudioFile(url);
+            }
+            case VIDEO_TYPE: {
                 return setVideoFile(url);
             }
-//            case "audio": {
-//                return setAudioFile(url);
-//            }
             default: {
                 return Bitmap.createScaledBitmap(BitmapFactory.decodeResource(parentContext.getResources(),
                     R.drawable.file), 160, 160, true);
@@ -84,7 +84,7 @@ public class DownloadMediaFIle extends AsyncTask<String, Void, Bitmap> {
         }
     }
 
-    private Bitmap downloadFileByUrl(final String url) {
+    private Bitmap downloadFileByUrl(final String url, String type) {
 /*        if (imageCollection.get(audioFile.png) != null) {
             iv.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -114,6 +114,7 @@ public class DownloadMediaFIle extends AsyncTask<String, Void, Bitmap> {
 //            e.printStackTrace();
 //        }
 //        fileReference.getFile(file);
+//        String path = getContext().getCacheDir().getAbsolutePath() + file.getName();
 
         final File path = new File(Environment.getExternalStorageDirectory()
                 + "/AUMessanger/");
@@ -121,60 +122,44 @@ public class DownloadMediaFIle extends AsyncTask<String, Void, Bitmap> {
             path.mkdir();
         }
 
-        final File imgFile = new File(path, fileReference.getName());
+        final File file = new File(path, fileReference.getName());
 
-        if(imageCollection.containsKey(url)) {
-            return  setImageOnClickListener(imgFile.getPath(), url);
-        }
+//        if(imageCollection.containsKey(url)) {
+//            return  setImageOnClickListener(file.getPath(), url);
+//        }
 
-        if (!imgFile.exists()) {
-            fileReference.getFile(imgFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
+        if (!file.exists()) {
+            fileReference.getFile(file).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
                 @Override
                 public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
                     DownloadMediaFIle downloadTask = new DownloadMediaFIle(
-                            bmImage, pbLoading, parentContext, imageCollection, fileType);
+                            bmImage, pbLoading, parentContext, fileType);
                     downloadTask.execute(url);
                 }
             });
             return null;
         } else {
-            return setImageProperties(imgFile.getPath(), url);
+            if(type.equals(IMAGE_TYPE)) {
+                return setImageProperties(file.getPath());
+            } else {
+                return setAudioProperties(file.getPath(), url);
+            }
         }
-
-//        String path = getContext().getCacheDir().getAbsolutePath() + file.getName();
-//        return BitmapFactory.decodeFile(imgFile.getPath());
     }
 
-    private Bitmap setImageProperties(final String path, String url) {
-        //getting screen size & and calculating optimal scale for image
+    private Bitmap setImageProperties(final String path) {
 
         Bitmap image = BitmapFactory.decodeFile(path);
         if(path == null) {
             return null;
         }
 
-        /*WindowManager wm = (WindowManager) parentContext.getSystemService(
-                Context.WINDOW_SERVICE);
-        Point size = new Point();
-        wm.getDefaultDisplay().getSize(size);
-
-
-        size.x *= 0.5;
-        int imageWidth = image.getWidth();
-        int imageHeight = image.getHeight();
-        double scale = (double) imageWidth / size.x ;
-        if(imageWidth > size.x) {
-            imageWidth = size.x;
-            imageHeight /= scale;
-        }
-        image = Bitmap.createScaledBitmap(image, imageWidth, imageHeight, true);*/
-
-        imageCollection.put(url, image);
-        setImageOnClickListener(path, url);
+//        imageCollection.put(url, image);
+        setImageOnClickListener(path);
         return image;
     }
 
-    private Bitmap setImageOnClickListener(final String path, String url) {
+    private void setImageOnClickListener(final String path) {
         bmImage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -183,32 +168,54 @@ public class DownloadMediaFIle extends AsyncTask<String, Void, Bitmap> {
                 parentContext.startActivity(intent);
             }
         });
-        return imageCollection.get(url);
     }
 
-/*    private Bitmap setAudioFile(final String url) {
-//        bmImage.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                try {
-//                    MediaPlayer mp = new MediaPlayer();
-//                    mp.setDataSource(url);
-//                    mp.prepare();
-//                    if(!mp.isPlaying()) {
-//                        mp.start();
-//                    } else {
-//                        mp.stop();
-//                    }
-//                } catch (IOException e) {
-//                    e.printStackTrace();
-//                }
-//            }
-//        });
-//        return Bitmap.createScaledBitmap(BitmapFactory.decodeResource(parentContext.getResources(),
-//                    R.drawable.audio_play_button), 100, 100, true);
-        return BitmapFactory.decodeResource(parentContext.getResources(),
-                R.drawable.audio_play_button);
-     }*/
+    private Bitmap setAudioProperties(final String path, final String url) {
+        bmImage.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                try {
+                    if(MessagesAdapter.mediaPlayer.isPlaying() && url.equals(MessagesAdapter.runningAudio.first)) {
+//                        MessagesAdapter.mediaPlayer.pause();
+                        stopTrack();
+                        bmImage.setImageDrawable(ResourcesCompat.getDrawable(parentContext.getResources(), R.drawable.audio_play_button, null));
+                    } else {
+                        stopTrack();
+                        MessagesAdapter.mediaPlayer.setDataSource(path);
+                        MessagesAdapter.mediaPlayer.prepare();
+                        MessagesAdapter.mediaPlayer.start();
+                        MessagesAdapter.mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                            @Override
+                            public void onCompletion(MediaPlayer mp) {
+                                stopTrack();
+                                bmImage.setImageDrawable(ResourcesCompat.getDrawable(parentContext.getResources(), R.drawable.audio_play_button, null));
+                            }
+                        });
+                        MessagesAdapter.runningAudio = new Pair<>(url, bmImage);
+                        bmImage.setImageDrawable(ResourcesCompat.getDrawable(parentContext.getResources(), R.drawable.audio_pause_button, null));
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+        if(MessagesAdapter.runningAudio != null && url.equals(MessagesAdapter.runningAudio.first)) {
+            return drawableItemToBitmap(R.drawable.audio_pause_button);
+        } else {
+            return drawableItemToBitmap(R.drawable.audio_play_button);
+        }
+     }
+
+    private void stopTrack() {
+        if(MessagesAdapter.runningAudio != null) {
+            MessagesAdapter.mediaPlayer.stop();
+            MessagesAdapter.mediaPlayer.release();
+            MessagesAdapter.mediaPlayer = new MediaPlayer();
+            MessagesAdapter.runningAudio.second.setImageDrawable(ResourcesCompat.getDrawable(parentContext.getResources(), R.drawable.audio_play_button, null));
+            MessagesAdapter.runningAudio = null;
+        }
+    }
+
 
     private Bitmap setVideoFile(final String url) {
         bmImage.setOnClickListener(new View.OnClickListener() {
@@ -225,5 +232,14 @@ public class DownloadMediaFIle extends AsyncTask<String, Void, Bitmap> {
                 R.drawable.file), 100, 100, true);
     }
 
+    private Bitmap drawableItemToBitmap(int img) {
+        Drawable drawable = ResourcesCompat.getDrawable(parentContext.getResources(), img, null);
+        Canvas canvas = new Canvas();
+        Bitmap bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
+        canvas.setBitmap(bitmap);
+        drawable.setBounds(0, 0, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
+        drawable.draw(canvas);
+        return bitmap;
+    }
 
 }
