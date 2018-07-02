@@ -10,9 +10,9 @@ import android.graphics.Paint;
 import android.graphics.Point;
 import android.media.MediaPlayer;
 import android.net.Uri;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.v4.content.res.ResourcesCompat;
 import android.util.Pair;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -31,6 +31,7 @@ import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import com.example.nameless.autoupdating.activities.AudioTrackUI;
 import com.example.nameless.autoupdating.activities.Chat;
 import com.example.nameless.autoupdating.asyncTasks.DownloadMediaFIle;
 import com.example.nameless.autoupdating.R;
@@ -40,7 +41,6 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
-import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -65,8 +65,9 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
     private ArrayList<Message> filteredMessageList;
     public static  Map<String, Bitmap> imageCollection;
 
-    public static Pair<String, ImageView> runningAudio;
+    public static Pair<String, LinearLayout> runningAudio;
     public static MediaPlayer mediaPlayer;
+    public static Handler trackDurationHandler;
 
     public MessagesAdapter(Context ma, EditText etMessage, ArrayList<Message> messages, DatabaseReference myRef) {
         super(ma, 0, messages);
@@ -78,6 +79,7 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
         this.myRef = myRef;
         mAuth = FirebaseAuth.getInstance();
         mediaPlayer = new MediaPlayer();
+        trackDurationHandler = new Handler();
 
         WindowManager wm = (WindowManager) ma.getSystemService(
         Context.WINDOW_SERVICE);
@@ -126,8 +128,9 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
             final String fileUrl = filteredMessageList.get(position).getFileUrl();
             if(fileUrl != null) {
 
-                final ImageView image = convertView.findViewById(R.id.ivImage);
+                ImageView image = convertView.findViewById(R.id.ivImage);
                 ProgressBar loading = convertView.findViewById(R.id.pbLoading);
+                LinearLayout audioUI = convertView.findViewById(R.id.audioUI);
 
                 String fileMediaSides = filteredMessageList.get(position).getFileMediaSides();
                 if(fileMediaSides != null) {
@@ -142,11 +145,11 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
                     image.setVisibility(View.VISIBLE);
                 }*/
 
-                    DownloadMediaFIle downloadTask = new DownloadMediaFIle(
-                            image, loading, getContext(),
-                            filteredMessageList.get(position).getFileType());
-                    downloadTask.execute(fileUrl);
-//                }
+                DownloadMediaFIle downloadTask = new DownloadMediaFIle(
+                        image, loading, audioUI, getContext(),
+                        filteredMessageList.get(position).getFileType());
+                downloadTask.execute(fileUrl);
+
                 image.setAdjustViewBounds(true);
             }
 
@@ -232,7 +235,7 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
                 final TextView urlPart = new TextView(ma);
                 urlPart.setText(findUrl);
                 urlPart.setLayoutParams(lparam);
-                urlPart.setTextColor(Color.rgb(198, 40, 40));
+                urlPart.setTextColor(Color.rgb(0, 172, 162));
                 urlPart.setPaintFlags(Paint.UNDERLINE_TEXT_FLAG);
                 float dpi = getContext().getResources().getDisplayMetrics().density;
                 urlPart.setMaxWidth((int)(240 * dpi));

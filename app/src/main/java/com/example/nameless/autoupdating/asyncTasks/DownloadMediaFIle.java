@@ -6,18 +6,24 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
+import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Environment;
+import android.os.Handler;
 import android.support.v4.content.res.ResourcesCompat;
 import android.util.Pair;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.SeekBar;
+import android.widget.TextView;
 
 import com.example.nameless.autoupdating.R;
 import com.example.nameless.autoupdating.activities.ImageViewer;
+import com.example.nameless.autoupdating.activities.UserList;
 import com.example.nameless.autoupdating.activities.VideoPlayer;
 import com.example.nameless.autoupdating.adapters.MessagesAdapter;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -27,7 +33,13 @@ import com.google.firebase.storage.StorageReference;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.Locale;
 import java.util.Map;
+import java.util.TimeZone;
 
 /**
  * Created by nameless on 13.06.18.
@@ -41,14 +53,28 @@ public class DownloadMediaFIle extends AsyncTask<String, Void, Bitmap> {
 
     private ImageView bmImage;
     private ProgressBar pbLoading;
+    private LinearLayout audioUI;
     private Context parentContext;
     private String fileType;
 
-    public DownloadMediaFIle(ImageView bmImage, ProgressBar pbLoading, Context parentContext, String fileType) {
+
+    private int trackDuration;
+    private ImageView audioButton;
+    private SeekBar trackSeekBar;
+    private Boolean isTrackPlaying = false;
+
+    public DownloadMediaFIle(ImageView bmImage,
+                             ProgressBar pbLoading,
+                             LinearLayout audioUI,
+                             Context parentContext,
+                             String fileType) {
         this.bmImage = bmImage;
-        this.parentContext = parentContext;
         this.pbLoading = pbLoading;
+        this.audioUI = audioUI;
+        this.parentContext = parentContext;
         this.fileType = fileType;
+        audioButton = audioUI.findViewById(R.id.audioButton);
+        trackSeekBar = audioUI.findViewById(R.id.seekBar);
     }
 
     @Override
@@ -59,10 +85,30 @@ public class DownloadMediaFIle extends AsyncTask<String, Void, Bitmap> {
     @Override
     protected void onPostExecute(Bitmap bmp) {
         if(bmp != null) {
-            bmImage.setImageBitmap(bmp);
-            pbLoading.setVisibility(View.GONE);
-            bmImage.setVisibility(View.VISIBLE);
+            if (fileType.equals(MUSIC_TYPE)) {
+                ImageView audioButton = audioUI.findViewById(R.id.audioButton);
+                TextView timeDuration = audioUI.findViewById(R.id.tvTime);
+
+                DateFormat formatter = new SimpleDateFormat("HH:mm:ss", Locale.US);
+                formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
+                String time = formatter.format(new Date(trackDuration));
+
+                timeDuration.setText(time);
+                audioButton.setImageBitmap(bmp);
+                pbLoading.setVisibility(View.GONE);
+                audioUI.setVisibility(View.VISIBLE);
+
+                if(isTrackPlaying) {
+                    setDurationSeek();
+                }
+
+            } else {
+                bmImage.setImageBitmap(bmp);
+                pbLoading.setVisibility(View.GONE);
+                bmImage.setVisibility(View.VISIBLE);
+            }
         }
+
     }
 
     private Bitmap setFileProperties(String url) {
@@ -78,8 +124,9 @@ public class DownloadMediaFIle extends AsyncTask<String, Void, Bitmap> {
                 return setVideoFile(url);
             }
             default: {
-                return Bitmap.createScaledBitmap(BitmapFactory.decodeResource(parentContext.getResources(),
-                    R.drawable.file), 160, 160, true);
+                return Bitmap.createScaledBitmap(BitmapFactory.decodeResource(
+                        parentContext.getResources(),
+                        R.drawable.file), 160, 160, true);
             }
         }
     }
@@ -133,7 +180,7 @@ public class DownloadMediaFIle extends AsyncTask<String, Void, Bitmap> {
                 @Override
                 public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
                     DownloadMediaFIle downloadTask = new DownloadMediaFIle(
-                            bmImage, pbLoading, parentContext, fileType);
+                            bmImage, pbLoading, audioUI, parentContext, fileType);
                     downloadTask.execute(url);
                 }
             });
@@ -171,14 +218,24 @@ public class DownloadMediaFIle extends AsyncTask<String, Void, Bitmap> {
     }
 
     private Bitmap setAudioProperties(final String path, final String url) {
-        bmImage.setOnClickListener(new View.OnClickListener() {
+        MediaMetadataRetriever mmr = new MediaMetadataRetriever();
+        mmr.setDataSource(parentContext.getApplicationContext(), Uri.parse(path));
+        String durationStr = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
+        trackDuration = Integer.parseInt(durationStr);
+
+        trackSeekBar.setMax(trackDuration);
+        audioButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 try {
-                    if(MessagesAdapter.mediaPlayer.isPlaying() && url.equals(MessagesAdapter.runningAudio.first)) {
+                    if(MessagesAdapter.mediaPlayer.isPlaying() && url.equals(
+                            MessagesAdapter.runningAudio.first)) {
 //                        MessagesAdapter.mediaPlayer.pause();
                         stopTrack();
-                        bmImage.setImageDrawable(ResourcesCompat.getDrawable(parentContext.getResources(), R.drawable.audio_play_button, null));
+                        audioButton.setImageDrawable(ResourcesCompat.getDrawable(
+                                parentContext.getResources(),
+                                R.drawable.audio_play_button,
+                                null));
                     } else {
                         stopTrack();
                         MessagesAdapter.mediaPlayer.setDataSource(path);
@@ -188,11 +245,14 @@ public class DownloadMediaFIle extends AsyncTask<String, Void, Bitmap> {
                             @Override
                             public void onCompletion(MediaPlayer mp) {
                                 stopTrack();
-                                bmImage.setImageDrawable(ResourcesCompat.getDrawable(parentContext.getResources(), R.drawable.audio_play_button, null));
                             }
                         });
-                        MessagesAdapter.runningAudio = new Pair<>(url, bmImage);
-                        bmImage.setImageDrawable(ResourcesCompat.getDrawable(parentContext.getResources(), R.drawable.audio_pause_button, null));
+                        setDurationSeek();
+                        audioButton.setImageDrawable(ResourcesCompat.getDrawable(
+                                parentContext.getResources(),
+                                R.drawable.audio_pause_button, null));
+                        MessagesAdapter.runningAudio = new Pair<>(url, audioUI);
+
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -200,18 +260,73 @@ public class DownloadMediaFIle extends AsyncTask<String, Void, Bitmap> {
             }
         });
         if(MessagesAdapter.runningAudio != null && url.equals(MessagesAdapter.runningAudio.first)) {
+            isTrackPlaying = true;
+            MessagesAdapter.mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                @Override
+                public void onCompletion(MediaPlayer mp) {
+                    stopTrack();
+                }
+            });
             return drawableItemToBitmap(R.drawable.audio_pause_button);
         } else {
+            isTrackPlaying = false;
             return drawableItemToBitmap(R.drawable.audio_play_button);
         }
      }
 
+    private void setDurationSeek() {
+        MessagesAdapter.trackDurationHandler = new Handler();
+        Thread th = new Thread(new Runnable() {
+             @Override
+             public void run() {
+                 if(MessagesAdapter.mediaPlayer != null){
+                     int mCurrentPosition = MessagesAdapter.mediaPlayer.getCurrentPosition();
+                     trackSeekBar.setProgress(mCurrentPosition);
+                     MessagesAdapter.trackDurationHandler.postDelayed(this, 100);
+                 }
+             }
+         });
+         th.start();
+        trackSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if(fromUser) {
+                    MessagesAdapter.mediaPlayer.seekTo(progress);
+                }
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+                MessagesAdapter.mediaPlayer.pause();
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                MessagesAdapter.mediaPlayer.start();
+            }
+        });
+    }
+
     private void stopTrack() {
         if(MessagesAdapter.runningAudio != null) {
+            MessagesAdapter.trackDurationHandler.removeCallbacksAndMessages(null);
             MessagesAdapter.mediaPlayer.stop();
             MessagesAdapter.mediaPlayer.release();
             MessagesAdapter.mediaPlayer = new MediaPlayer();
-            MessagesAdapter.runningAudio.second.setImageDrawable(ResourcesCompat.getDrawable(parentContext.getResources(), R.drawable.audio_play_button, null));
+
+            audioButton.setImageDrawable(ResourcesCompat.getDrawable(
+                    parentContext.getResources(),
+                    R.drawable.audio_play_button,
+                    null));
+            trackSeekBar.setProgress(0);
+//            ((SeekBar)MessagesAdapter.runningAudio.second.findViewById(R.id.seekBar)).setProgress(0);
+//            ((ImageView)MessagesAdapter.runningAudio.second.findViewById(R.id.audioButton))
+//                    .setImageDrawable(ResourcesCompat.getDrawable(
+//                            parentContext.getResources(),
+//                            R.drawable.audio_play_button,
+//                            null));
+
+//            MessagesAdapter.runningAudio.second.setImageDrawable(ResourcesCompat.getDrawable(parentContext.getResources(), R.drawable.audio_play_button, null));
             MessagesAdapter.runningAudio = null;
         }
     }
@@ -235,7 +350,9 @@ public class DownloadMediaFIle extends AsyncTask<String, Void, Bitmap> {
     private Bitmap drawableItemToBitmap(int img) {
         Drawable drawable = ResourcesCompat.getDrawable(parentContext.getResources(), img, null);
         Canvas canvas = new Canvas();
-        Bitmap bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
+        Bitmap bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(),
+                drawable.getIntrinsicHeight(),
+                Bitmap.Config.ARGB_8888);
         canvas.setBitmap(bitmap);
         drawable.setBounds(0, 0, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
         drawable.draw(canvas);
