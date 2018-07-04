@@ -46,14 +46,7 @@ public class UserList extends GlobalMenu {
     public static User myAcc;
     public static InetAddress voiceStreamServerIpAddress;
     public static int voiceStreamServerPort = 2891;
-    static {
-        try {
-//            voiceStreamServerIpAddress = InetAddress.getByName("192.168.0.102");
-            voiceStreamServerIpAddress = InetAddress.getByName("134.249.226.227");
-        } catch (UnknownHostException e) {
-            e.printStackTrace();
-        }
-    }
+
 
     private EditText etSearch;
     private ListView lvUsers;
@@ -192,6 +185,24 @@ public class UserList extends GlobalMenu {
     private void initialiseData() {
 
         database = FirebaseDatabase.getInstance();
+        myRef = database.getReference("Server");
+        myRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                for (DataSnapshot user : dataSnapshot.getChildren()) {
+                    try {
+                        voiceStreamServerIpAddress = InetAddress.getByName(
+                                user.getValue().toString());
+                    } catch (UnknownHostException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {}
+        });
+
         myRef = database.getReference("Users");
 
         if (!isMyServiceRunning(NotifyService.class, this)) {
