@@ -132,6 +132,7 @@ public class DownloadMediaFIle extends AsyncTask<String, Void, Bitmap> {
     }
 
     private Bitmap downloadFileByUrl(final String url, String type) {
+
 /*        if (imageCollection.get(audioFile.png) != null) {
             iv.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -171,9 +172,11 @@ public class DownloadMediaFIle extends AsyncTask<String, Void, Bitmap> {
 
         final File file = new File(path, fileReference.getName());
 
-//        if(imageCollection.containsKey(url)) {
-//            return  setImageOnClickListener(file.getPath(), url);
-//        }
+        Bitmap bitmap = MessagesAdapter.mMemoryCache.get(url);
+        if(bitmap != null) {
+            setImageOnClickListener(file.getPath());
+            return bitmap;
+        }
 
         if (!file.exists()) {
             fileReference.getFile(file).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
@@ -187,21 +190,21 @@ public class DownloadMediaFIle extends AsyncTask<String, Void, Bitmap> {
             return null;
         } else {
             if(type.equals(IMAGE_TYPE)) {
-                return setImageProperties(file.getPath());
+                return setImageProperties(file.getPath(), url);
             } else {
                 return setAudioProperties(file.getPath(), url);
             }
         }
     }
 
-    private Bitmap setImageProperties(final String path) {
+    private Bitmap setImageProperties(final String path, String url) {
 
         Bitmap image = BitmapFactory.decodeFile(path);
         if(path == null) {
             return null;
         }
+        MessagesAdapter.mMemoryCache.put(url, image);
 
-//        imageCollection.put(url, image);
         setImageOnClickListener(path);
         return image;
     }

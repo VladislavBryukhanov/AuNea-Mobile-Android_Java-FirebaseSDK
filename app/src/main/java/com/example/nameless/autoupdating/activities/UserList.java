@@ -185,6 +185,7 @@ public class UserList extends GlobalMenu {
     private void initialiseData() {
 
         database = FirebaseDatabase.getInstance();
+
         myRef = database.getReference("Server");
         myRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override

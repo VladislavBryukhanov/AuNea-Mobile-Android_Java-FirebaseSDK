@@ -13,6 +13,7 @@ import android.net.Uri;
 import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.util.LruCache;
 import android.util.Pair;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -40,6 +41,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
+import com.squareup.picasso.Picasso;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -63,19 +65,28 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
     private FirebaseAuth mAuth;
     private ArrayList<Message> messages;
     private ArrayList<Message> filteredMessageList;
-    public static  Map<String, Bitmap> imageCollection;
 
     public static Pair<String, LinearLayout> runningAudio;
     public static MediaPlayer mediaPlayer;
     public static Handler trackDurationHandler;
+    public static LruCache<String, Bitmap> mMemoryCache;
+
+    public static Picasso mPicasso;
 
     public MessagesAdapter(Context ma, EditText etMessage, ArrayList<Message> messages, DatabaseReference myRef) {
         super(ma, 0, messages);
+        mPicasso = Picasso.with(ma);
         this.etMessage = etMessage;
         this.ma = ma;
         this.messages = messages;
         this.filteredMessageList = messages;
-        this.imageCollection = new HashMap<>();
+        mMemoryCache = new LruCache<String, Bitmap>(40) {
+            @Override
+            protected int sizeOf(String key, Bitmap bitmap) {
+                return 1;
+            }
+        };
+
         this.myRef = myRef;
         mAuth = FirebaseAuth.getInstance();
         mediaPlayer = new MediaPlayer();
@@ -137,18 +148,37 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
                     setMediaItemSize(fileMediaSides, loading, image);
                 }
 
+//                Bitmap bitmap = MessagesAdapter.mMemoryCache.get(filteredMessageList.get(position).getFileUrl());
+//                if(bitmap != null) {
+//                    image.setImageBitmap(bitmap);
+//                    image.setVisibility(View.VISIBLE);
+//                } else {
+//                    loading.setVisibility(View.VISIBLE);
+//                }
                 loading.setVisibility(View.VISIBLE);
 
-/*                if(imageCollection.get(fileUrl) != null) {
-                    loading.setVisibility(View.GONE);
-                    image.setImageBitmap(imageCollection.get(fileUrl));
-                    image.setVisibility(View.VISIBLE);
-                }*/
 
-                DownloadMediaFIle downloadTask = new DownloadMediaFIle(
-                        image, loading, audioUI, getContext(),
-                        filteredMessageList.get(position).getFileType());
-                downloadTask.execute(fileUrl);
+//                if((filteredMessageList.get(position).getFileType()).equals("image")) {
+//                    mPicasso.load(fileUrl)
+//                            .resize(200, 200)
+//                            . centerInside()
+//                            .into(image);
+//                    loading.setVisibility(View.GONE);
+//                    image.setVisibility(View.VISIBLE);
+//                } else {
+                    Bitmap bitmap = MessagesAdapter.mMemoryCache.get(fileUrl);
+                    if(bitmap != null) {
+                        loading.setVisibility(View.GONE);
+                        image.setVisibility(View.VISIBLE);
+                        image.setImageBitmap(bitmap);
+                    }
+
+                    DownloadMediaFIle downloadTask = new DownloadMediaFIle(
+                            image, loading, audioUI, getContext(),
+                            filteredMessageList.get(position).getFileType());
+                    downloadTask.execute(fileUrl);
+//                }
+
 
                 image.setAdjustViewBounds(true);
             }

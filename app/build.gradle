@@ -41,6 +41,7 @@ dependencies {
     implementation 'com.google.code.gson:gson:2.8.1'
     implementation 'de.hdodenhof:circleimageview:2.1.0'
 
+    implementation 'com.squareup.picasso:picasso:2.5.1'
 //    compile 'top.oply.opuslib:opuslib:1.0.2'
 
     implementation 'com.crashlytics.sdk.android:crashlytics:2.9.2'
