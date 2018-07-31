@@ -36,10 +36,12 @@
         </provider>
 
         <activity android:name=".generalModules.GlobalMenu" />
-        <activity android:name=".activities.Authentification" />
+        <activity android:name=".activities.Authentification"
+            android:theme="@style/BlackActionBar" />
         <activity
             android:name=".activities.UserList"
-            android:label="@string/app_name">
+            android:label="@string/app_name"
+            android:theme="@style/BlackActionBar">
             <!--android:label="List of users">-->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -61,7 +63,7 @@
             android:theme="@style/BlackActionBar" />
         <activity
             android:name=".activities.AlienPage"
-            android:theme="@style/AppTheme.NoActionBar" />
+            android:theme="@style/BlackActionBar" />
         <activity android:name=".activities.VideoPlayer" />
     </application>
 

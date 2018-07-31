@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/back"
+    android:background="@drawable/auth_gradient"
     android:orientation="vertical"
     tools:context="com.example.nameless.autoupdating.activities.Authentification">
 
@@ -24,39 +24,42 @@
             android:layout_marginBottom="25dp"
             android:backgroundTint="@android:color/darker_gray"
             android:ems="10"
-            android:hint="Login"
+            android:hint="Nickname"
             android:padding="15dp"
             android:singleLine="true"
             android:textColor="#14aba8"
             android:textColorHint="@android:color/darker_gray"
             android:textColorLink="#00726a"
             android:textSize="20sp"
-            android:textStyle="bold"
+            android:textStyle="bold|italic"
             tools:layout_editor_absoluteY="233dp" />
 
         <!--<EditText-->
-            <!--android:id="@+id/etPassword"-->
-            <!--android:layout_width="match_parent"-->
-            <!--android:layout_height="wrap_content"-->
-            <!--android:layout_marginBottom="25dp"-->
-            <!--android:backgroundTint="@android:color/darker_gray"-->
-            <!--android:ems="10"-->
-            <!--android:hint="Password"-->
-            <!--android:padding="15dp"-->
-            <!--android:singleLine="true"-->
-            <!--android:textColor="#14aba8"-->
-            <!--android:textColorHint="@android:color/darker_gray"-->
-            <!--android:textColorLink="#00726a"-->
-            <!--android:textSize="20sp"-->
-            <!--android:textStyle="bold"-->
-            <!--tools:layout_editor_absoluteY="233dp" />-->
+        <!--android:id="@+id/etPassword"-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:layout_marginBottom="25dp"-->
+        <!--android:backgroundTint="@android:color/darker_gray"-->
+        <!--android:ems="10"-->
+        <!--android:hint="Password"-->
+        <!--android:padding="15dp"-->
+        <!--android:singleLine="true"-->
+        <!--android:textColor="#14aba8"-->
+        <!--android:textColorHint="@android:color/darker_gray"-->
+        <!--android:textColorLink="#00726a"-->
+        <!--android:textSize="20sp"-->
+        <!--android:textStyle="bold"-->
+        <!--tools:layout_editor_absoluteY="233dp" />-->
 
         <Button
             android:id="@+id/btnSignIn"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="#5098e4"
-            android:text="Sign in" />
+            android:background="#a43931"
+            android:text="Sign in"
+            android:textColor="@color/common_google_signin_btn_text_dark_pressed"
+            android:textSize="18sp"
+            android:textStyle="italic" />
 
     </LinearLayout>
 

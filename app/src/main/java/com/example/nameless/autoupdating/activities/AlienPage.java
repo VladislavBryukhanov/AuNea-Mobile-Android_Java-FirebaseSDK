@@ -3,19 +3,21 @@ package com.example.nameless.autoupdating.activities;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.view.Menu;
 import android.view.View;
 import android.widget.TextView;
 
 import com.example.nameless.autoupdating.generalModules.AppCompatActivityWithInternetStatusListener;
 import com.example.nameless.autoupdating.asyncTasks.DownloadAvatarByUrl;
 import com.example.nameless.autoupdating.R;
+import com.example.nameless.autoupdating.generalModules.GlobalMenu;
 import com.example.nameless.autoupdating.models.User;
 
 import java.util.concurrent.ExecutionException;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
-public class AlienPage extends AppCompatActivityWithInternetStatusListener {
+public class AlienPage extends GlobalMenu {
 
     private TextView tvLogin, tvNickname, tvStatus, tvBio;
     private CircleImageView avatar;
@@ -25,6 +27,7 @@ public class AlienPage extends AppCompatActivityWithInternetStatusListener {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_alien_page);
+        setTitle("");
 
         Intent intent = getIntent();
         final User user = (User)intent.getSerializableExtra("to");
@@ -62,8 +65,11 @@ public class AlienPage extends AppCompatActivityWithInternetStatusListener {
                 e.printStackTrace();
             }
         }
+    }
 
-
-
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.main_menu, menu);
+        return super.onCreateOptionsMenu(menu);
     }
 }
