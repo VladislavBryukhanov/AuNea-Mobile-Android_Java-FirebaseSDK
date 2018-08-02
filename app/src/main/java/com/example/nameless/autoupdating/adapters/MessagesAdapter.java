@@ -31,9 +31,11 @@ import android.widget.PopupWindow;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.nameless.autoupdating.activities.AudioTrackUI;
 import com.example.nameless.autoupdating.activities.Chat;
+import com.example.nameless.autoupdating.activities.UserList;
 import com.example.nameless.autoupdating.asyncTasks.DownloadMediaFIle;
 import com.example.nameless.autoupdating.R;
 import com.example.nameless.autoupdating.models.Message;
@@ -306,6 +308,16 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
             tvContent.setText(msg);
         } else {
             tvContent.setVisibility(View.GONE);
+        }
+
+        if(!message.isRead()) {
+            if(message.getTo().equals(UserList.myAcc.getUid())) {
+                message.setRead(true);
+                myRef.child(message.getUid()).setValue(message);
+                notifyDataSetChanged();
+            } else {
+                (convertView.findViewById(R.id.content)).setBackgroundResource(R.drawable.message_background_not_readed);
+            }
         }
     }
 

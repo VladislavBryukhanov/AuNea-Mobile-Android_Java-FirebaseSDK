@@ -16,10 +16,11 @@ public class Message {
     private Date dateOfSend;
     private String who;
     private String to;
+    private boolean read;
 
     public Message(){}
 
-    public Message(String content, String fileUrl, Date dateOfSend, String who, String to, String fileType, String fileMediaSides) {
+    public Message(String content, String fileUrl, Date dateOfSend, String who, String to, String fileType, String fileMediaSides, boolean read) {
         this.uid = uid;
         this.content = content;
         this.fileUrl = fileUrl;
@@ -28,6 +29,7 @@ public class Message {
         this.dateOfSend = dateOfSend;
         this.who = who;
         this.to = to;
+        this.read = read;
     }
 
     public Message(String uid, Message msg) {
@@ -39,6 +41,15 @@ public class Message {
         this.to = msg.to;
         this.fileType = msg.fileType;
         this.fileMediaSides = msg.fileMediaSides;
+        this.read = msg.read;
+    }
+
+    public boolean isRead() {
+        return read;
+    }
+
+    public void setRead(boolean read) {
+        this.read = read;
     }
 
     public String getFileMediaSides() {

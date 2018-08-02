@@ -192,8 +192,8 @@ public class NotifyService extends Service implements NetworkStateReceiver.Netwo
                 .setContentTitle(to.getLogin())
                 .setContentText(msg.getContent())
                 .setContentIntent(intent)
+                .setVibrate(new long[] { 400, 400 })
                 .setSmallIcon(R.drawable.send2);
-
 
         SharedPreferences settings = getSharedPreferences(Settings.APP_PREFERENCES, Context.MODE_PRIVATE);
         if(settings.getBoolean(Settings.IS_NOTIFY_ENABLED, false)) {

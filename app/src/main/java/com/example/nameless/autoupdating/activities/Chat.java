@@ -239,7 +239,7 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
                 }
 //                if (!(String.valueOf(etMessage.getText()).trim()).equals("")) {
                 Message newMsg = new Message(String.valueOf(etMessage.getText()), null,
-                        new Date(), mAuth.getUid(), toUser.getUid(), null, null);
+                        new Date(), mAuth.getUid(), toUser.getUid(), null, null, false);
                 parseMessageContent(newMsg);
 //                }
             }
@@ -346,7 +346,7 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
                     @Override
                     public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                         Message newMsg = new Message(String.valueOf(etMessage.getText()), taskSnapshot.getDownloadUrl().toString(),
-                                new Date(), mAuth.getUid(), toUser.getUid(), fileType, fileMediaSides);
+                                new Date(), mAuth.getUid(), toUser.getUid(), fileType, fileMediaSides, false);
                         parseMessageContent(newMsg);
                     }
                 });
@@ -404,7 +404,7 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
             @Override
             public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                 Message newMsg = new Message(String.valueOf(etMessage.getText()), taskSnapshot.getDownloadUrl().toString(),
-                        new Date(), mAuth.getUid(), toUser.getUid(), "audio", null);
+                        new Date(), mAuth.getUid(), toUser.getUid(), "audio", null, false);
                 parseMessageContent(newMsg);
 
                 File fdelete = new File(file.getPath());
