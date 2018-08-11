@@ -13,8 +13,10 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import com.example.nameless.autoupdating.generalModules.GlobalMenu;
+import com.example.nameless.autoupdating.services.CallService;
 import com.example.nameless.autoupdating.services.NotifyService;
 import com.example.nameless.autoupdating.R;
 import com.example.nameless.autoupdating.adapters.UsersAdapter;
@@ -156,7 +158,7 @@ public class UserList extends GlobalMenu {
         });
     }
 
-    private void voiceNotifyListening(String key) {
+/*    private void voiceNotifyListening(String key) {
         myRef.child(key).addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(DataSnapshot dataSnapshot, String s) {
@@ -180,7 +182,7 @@ public class UserList extends GlobalMenu {
             @Override
             public void onCancelled(DatabaseError databaseError) {}
         });
-    }
+    }*/
 
     private void initialiseData() {
 
@@ -218,7 +220,13 @@ public class UserList extends GlobalMenu {
                     if (!newUserItem.getUid().equals(myAcc.getUid())) {
                         users.add(newUserItem);
                     } else {
-                        voiceNotifyListening(user.getKey());
+//                        voiceNotifyListening(user.getKey());
+                        if (!isMyServiceRunning(CallService.class, getApplicationContext())) {
+                          /*  Intent intent = new Intent(getApplicationContext(), CallService.class);
+                            intent.putExtra("Key", user.getKey());
+                            startService(intent);*/
+                            startService(new Intent(getApplicationContext(), CallService.class));
+                        }
                     }
                 }
                 adapter.notifyDataSetChanged();

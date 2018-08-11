@@ -64,6 +64,7 @@ public class Authentification extends GlobalMenu {
                     new String[]{android.Manifest.permission.INTERNET,
                             android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
                             android.Manifest.permission.RECORD_AUDIO,
+                            android.Manifest.permission.RECEIVE_BOOT_COMPLETED,
                             Manifest.permission.CAPTURE_AUDIO_OUTPUT}, 1);
         }
 

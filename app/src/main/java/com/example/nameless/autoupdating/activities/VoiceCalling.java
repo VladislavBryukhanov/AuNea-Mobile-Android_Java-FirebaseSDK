@@ -20,6 +20,7 @@ import com.example.nameless.autoupdating.voip.WriteVoiceStream;
 import com.example.nameless.autoupdating.models.ClientToClient;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -50,10 +51,14 @@ public class VoiceCalling extends AppCompatActivity {
     private MediaPlayer beep;
     private Thread streamThread;
 
+    private FirebaseAuth mAuth;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_voice_calling);
+
+        mAuth = FirebaseAuth.getInstance();
 
         btnAccept = findViewById(R.id.btnAccept);
         btnReject = findViewById(R.id.btnReject);
@@ -67,7 +72,7 @@ public class VoiceCalling extends AppCompatActivity {
         Query getUser = FirebaseDatabase.getInstance()
                 .getReference("Users")
                 .orderByChild("uid")
-                .equalTo(UserList.myAcc.getUid());
+                .equalTo(mAuth.getUid());
         getUser.addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(DataSnapshot dataSnapshot, String s) {
@@ -142,7 +147,7 @@ public class VoiceCalling extends AppCompatActivity {
                             .child(data.getKey())
                             .child("voiceCall");
                     if(action.equals("call")) {
-                        toRef.setValue(UserList.myAcc.getUid());
+                        toRef.setValue(mAuth.getUid());
 
                         toRef.addValueEventListener(connectionListener = new ValueEventListener() {
                             @Override
