@@ -287,6 +287,7 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
 //        stopService(new Intent(this, NotifyService.class));
         Intent i = new Intent(this, NotifyService.class);
         i.putExtra("dialog", toUser.getUid());
+        startService(i);
         super.onStart();
     }
 

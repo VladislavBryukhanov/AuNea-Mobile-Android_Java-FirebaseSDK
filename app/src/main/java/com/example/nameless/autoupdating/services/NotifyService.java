@@ -108,14 +108,15 @@ public class NotifyService extends Service implements NetworkStateReceiver.Netwo
 
                         final String foreignListenerTmp = foreignListener;
 
-                        if(!foreignListenerTmp.equals(interlocutor)) {
+//                        if(!foreignListenerTmp.equals(interlocutor)) {
                             refToListener = myRef.child(dlg.getKey()).child("content").limitToLast(1);
                             refToListener.addChildEventListener(newMsgListener = new ChildEventListener() {
                                 @Override
                                 public void onChildAdded(DataSnapshot dataSnapshot, String s) {
 
                                     Message newMsg = dataSnapshot.getValue(Message.class);
-                                    if ((newMsg.getTo()).equals((mAuth.getUid()))) {
+                                    if (!(newMsg.getWho()).equals(interlocutor)
+                                            && (newMsg.getTo()).equals(mAuth.getUid())) {
                                         if(!timeOut.get(foreignListenerTmp)) {
                                             timeOut.put(foreignListenerTmp, true);
                                         } else {
@@ -134,7 +135,7 @@ public class NotifyService extends Service implements NetworkStateReceiver.Netwo
                             });
                             refToListeners.put(refToListener, newMsgListener);
                             timeOut.put(foreignListener, false);
-                        }
+//                        }
                     }
                 }
             }
@@ -214,9 +215,10 @@ public class NotifyService extends Service implements NetworkStateReceiver.Netwo
                 notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
         final NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        Notification.Builder builder = new Notification.Builder(getApplicationContext());
+        final Notification.Builder builder = new Notification.Builder(getApplicationContext());
         builder .setContentTitle(to.getLogin())
                 .setContentText(msg.getContent())
+                .setContentIntent(intent)
                 .setVibrate(new long[] { 400, 400 })
                 .setAutoCancel(true)
                 .setLargeIcon(largeIconBitmap)
@@ -232,24 +234,14 @@ public class NotifyService extends Service implements NetworkStateReceiver.Netwo
                     .getPackageName() + "/" + R.raw.notify));
         }
 
-        Notification notification = builder.build();
-        notificationManager.notify(1, notification);
-
         Notification.Builder fullScreenNotify = builder;
-        fullScreenNotify.setFullScreenIntent(intent, true);
+//        fullScreenNotify.setFullScreenIntent(intent, true);
+        fullScreenNotify.setPriority(Notification.PRIORITY_HIGH);
 
-        notification = fullScreenNotify.build();
+        Notification notification = fullScreenNotify.build();
 //        notification.flags = Notification.FLAG_ONGOING_EVENT | Notification.FLAG_SHOW_LIGHTS | Notification.FLAG_INSISTENT;
 //        notification.flags |= Notification.FLAG_AUTO_CANCEL;
-        notificationManager.notify(2, notification);
-
-        Handler handler = new Handler();
-        handler.postDelayed(new Runnable() {
-            public void run() {
-                notificationManager.cancel(2);
-            }
-        }, 3000);
-
+        notificationManager.notify(1, notification);
     }
 
     @Override

@@ -47,7 +47,7 @@ public class CallService extends Service implements NetworkStateReceiver.Network
         networkStateReceiver.addListener(this);
         this.registerReceiver(networkStateReceiver, new IntentFilter(android.net.ConnectivityManager.CONNECTIVITY_ACTION));
 
-//        voiceNotifyListening();
+        voiceNotifyListening();
     }
 
     private void voiceNotifyListening() {
