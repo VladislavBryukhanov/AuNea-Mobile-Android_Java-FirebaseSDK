@@ -273,15 +273,20 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
 
     @Override
     protected void onStop() {
-        if (!UserList.isMyServiceRunning(NotifyService.class, this)) {
-            startService(new Intent(this, NotifyService.class));
-        }
+//        if (!UserList.isMyServiceRunning(NotifyService.class, this)) {
+//            startService(new Intent(this, NotifyService.class));
+//        }
+        Intent i = new Intent(this, NotifyService.class);
+        i.putExtra("dialog", "");
+        startService(i);
         super.onStop();
     }
 
     @Override
     protected void onStart() {
-        stopService(new Intent(this, NotifyService.class));
+//        stopService(new Intent(this, NotifyService.class));
+        Intent i = new Intent(this, NotifyService.class);
+        i.putExtra("dialog", toUser.getUid());
         super.onStart();
     }
 

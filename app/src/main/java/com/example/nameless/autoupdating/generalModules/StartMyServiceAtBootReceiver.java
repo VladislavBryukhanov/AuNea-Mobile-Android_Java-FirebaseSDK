@@ -6,6 +6,7 @@ import android.content.Intent;
 
 import com.example.nameless.autoupdating.services.CallService;
 import com.example.nameless.autoupdating.services.NotifyService;
+import com.google.firebase.auth.FirebaseAuth;
 
 /**
  * Created by nameless on 09.08.18.
@@ -13,9 +14,12 @@ import com.example.nameless.autoupdating.services.NotifyService;
 
 public class StartMyServiceAtBootReceiver extends BroadcastReceiver {
 
+    private FirebaseAuth mAuth;
+
     @Override
     public void onReceive(Context context, Intent intent) {
-        if (Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction())) {
+        mAuth = FirebaseAuth.getInstance();
+        if (Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction()) && mAuth.getUid() != null) {
             context.startService(new Intent(context, NotifyService.class));
             context.startService(new Intent(context, CallService.class));
         }

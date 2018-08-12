@@ -15,6 +15,7 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import com.example.nameless.autoupdating.generalModules.GlobalMenu;
+import com.example.nameless.autoupdating.services.CallService;
 import com.example.nameless.autoupdating.services.NotifyService;
 import com.example.nameless.autoupdating.R;
 import com.example.nameless.autoupdating.models.User;
@@ -89,7 +90,7 @@ public class Authentification extends GlobalMenu {
         });
     }
 
-    public static String getMacAddr() {
+/*    public static String getMacAddr() {
         try {
             List<NetworkInterface> all = Collections.list(NetworkInterface.getNetworkInterfaces());
             for (NetworkInterface nif : all) {
@@ -114,22 +115,22 @@ public class Authentification extends GlobalMenu {
 
         }
         return "02:00:00:00:00:00";
-    }
+    }*/
 
     private void firebaseAuthWithGoogle(GoogleSignInAccount acct) {
         AuthCredential credential = GoogleAuthProvider.getCredential(acct.getIdToken(), null);
         mAuth.signInWithCredential(credential)
-                .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
-                    @Override
-                    public void onComplete(@NonNull Task<AuthResult> task) {
-                        if (task.isSuccessful()) {
-                            UserList.myAcc = new User(mAuth.getUid(), String.valueOf(etLogin.getText()));
-                            signUp();
-                        } else {
-                            Toast.makeText(Authentification.this, ":(9(9((", Toast.LENGTH_SHORT).show();
-                        }
-                    }
-                });
+            .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
+                @Override
+                public void onComplete(@NonNull Task<AuthResult> task) {
+                if (task.isSuccessful()) {
+                    UserList.myAcc = new User(mAuth.getUid(), String.valueOf(etLogin.getText()));
+                    signUp();
+                } else {
+                    Toast.makeText(Authentification.this, ":(9(9((", Toast.LENGTH_SHORT).show();
+                }
+                }
+            });
     }
 
     public void signUp() {
@@ -190,6 +191,7 @@ public class Authentification extends GlobalMenu {
    @Override
     protected void onStart() {
         stopService(new Intent(this, NotifyService.class));
+        stopService(new Intent(this, CallService.class));
         super.onStart();
     }
 

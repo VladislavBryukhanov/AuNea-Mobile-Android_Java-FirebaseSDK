@@ -158,32 +158,6 @@ public class UserList extends GlobalMenu {
         });
     }
 
-/*    private void voiceNotifyListening(String key) {
-        myRef.child(key).addChildEventListener(new ChildEventListener() {
-            @Override
-            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-                if(dataSnapshot.getKey().equals("voiceCall")) {
-                    String dialogChannel = (String)dataSnapshot.getValue();
-                    if(!dialogChannel.equals(VoiceCalling.CALLING_STATE)) {
-                        Intent intent = new Intent(getApplicationContext(), VoiceCalling.class);
-                        ClientToClient ctc = new ClientToClient((String)dataSnapshot.getValue(), mAuth.getUid());
-                        intent.putExtra("dialog", ctc);
-                        intent.putExtra("action", dataSnapshot.getKey());
-                        startActivity(intent);
-                    }
-                }
-            }
-            @Override
-            public void onChildChanged(DataSnapshot dataSnapshot, String s) {}
-            @Override
-            public void onChildRemoved(DataSnapshot dataSnapshot) {}
-            @Override
-            public void onChildMoved(DataSnapshot dataSnapshot, String s) {}
-            @Override
-            public void onCancelled(DatabaseError databaseError) {}
-        });
-    }*/
-
     private void initialiseData() {
 
         database = FirebaseDatabase.getInstance();
@@ -195,7 +169,7 @@ public class UserList extends GlobalMenu {
                 for (DataSnapshot user : dataSnapshot.getChildren()) {
                     try {
                         voiceStreamServerIpAddress = InetAddress.getByName(
-                                user.getValue().toString());
+                            user.getValue().toString());
                     } catch (UnknownHostException e) {
                         e.printStackTrace();
                     }
@@ -211,6 +185,9 @@ public class UserList extends GlobalMenu {
         if (!isMyServiceRunning(NotifyService.class, this)) {
             startService(new Intent(this, NotifyService.class));
         }
+        if (!isMyServiceRunning(CallService.class, getApplicationContext())) {
+            startService(new Intent(getApplicationContext(), CallService.class));
+        }
 
         myRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
@@ -219,14 +196,6 @@ public class UserList extends GlobalMenu {
                     User newUserItem = user.getValue(User.class);
                     if (!newUserItem.getUid().equals(myAcc.getUid())) {
                         users.add(newUserItem);
-                    } else {
-//                        voiceNotifyListening(user.getKey());
-                        if (!isMyServiceRunning(CallService.class, getApplicationContext())) {
-                          /*  Intent intent = new Intent(getApplicationContext(), CallService.class);
-                            intent.putExtra("Key", user.getKey());
-                            startService(intent);*/
-                            startService(new Intent(getApplicationContext(), CallService.class));
-                        }
                     }
                 }
                 adapter.notifyDataSetChanged();
