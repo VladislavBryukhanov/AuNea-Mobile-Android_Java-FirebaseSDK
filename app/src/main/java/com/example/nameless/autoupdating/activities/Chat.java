@@ -130,7 +130,7 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
 
                 if (dataSnapshot.getChildrenCount() == 0) {
                     myRef = myRef.push();
-                    myRef.child("listener1").setValue(UserList.myAcc.getUid());
+                    myRef.child("listener1").setValue(mAuth.getUid());
                     myRef.child("listener2").setValue(toUser.getUid());
                     myRef = myRef.child("content");
                 } else {
@@ -146,7 +146,7 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
                     }
                     if (!dialogFound) {
                         myRef = myRef.push();
-                        myRef.child("listener1").setValue(UserList.myAcc.getUid());
+                        myRef.child("listener1").setValue(mAuth.getUid());
                         myRef.child("listener2").setValue(toUser.getUid());
                         myRef = myRef.child("content");
                     }

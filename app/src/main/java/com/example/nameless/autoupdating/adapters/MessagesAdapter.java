@@ -311,7 +311,7 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
         }
 
         if(!message.isRead()) {
-            if(message.getTo().equals(UserList.myAcc.getUid())) {
+            if(message.getTo().equals(mAuth.getUid())) {
                 message.setRead(true);
                 myRef.child(message.getUid()).setValue(message);
                 notifyDataSetChanged();

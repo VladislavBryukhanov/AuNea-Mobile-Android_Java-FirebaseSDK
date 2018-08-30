@@ -199,9 +199,11 @@ public class DownloadMediaFIle extends AsyncTask<String, Void, Bitmap> {
 
     private Bitmap setImageProperties(final String path, String url) {
 
+        //TODO если файл поврежден - перекачать (файл с одинаковым именем но разным размером
         Bitmap image = BitmapFactory.decodeFile(path);
-        if(path == null) {
-            return null;
+//        if(path == null) {
+        if(image == null) {
+                return null;
         }
         MessagesAdapter.mMemoryCache.put(url, image);
 

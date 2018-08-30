@@ -126,7 +126,7 @@ public class UserList extends GlobalMenu {
                         .getInstance()
                         .getReference("Users")
                         .orderByChild("uid")
-                        .equalTo(UserList.myAcc.getUid());
+                        .equalTo(mAuth.getUid());
                 getUser.addListenerForSingleValueEvent(new ValueEventListener() {
 
                     @Override

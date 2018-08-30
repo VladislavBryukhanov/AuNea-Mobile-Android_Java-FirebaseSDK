@@ -12,12 +12,16 @@ import android.widget.Filterable;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.RequestOptions;
 import com.example.nameless.autoupdating.asyncTasks.DownloadAvatarByUrl;
 import com.example.nameless.autoupdating.R;
 import com.example.nameless.autoupdating.models.User;
 
 import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
+
+import de.hdodenhof.circleimageview.CircleImageView;
 
 /**
  * Created by nameless on 07.04.18.
@@ -48,7 +52,7 @@ public class UsersAdapter extends ArrayAdapter<User>  implements Filterable{
                 ((TextView)convertView.findViewById(R.id.tvNickname)).setText('@'+filteredUserList.get(position).getNickname());
             }
             if(filteredUserList.get(position).getAvatarUrl() != null) {
-                DownloadAvatarByUrl downloadTask = new DownloadAvatarByUrl((ImageView)convertView.findViewById(R.id.profile_image), filteredUserList.get(position));
+/*                DownloadAvatarByUrl downloadTask = new DownloadAvatarByUrl((ImageView)convertView.findViewById(R.id.profile_image), filteredUserList.get(position));
 //                downloadTask.execute(filteredUserList.get(position).getAvatarUrl());
 
                 try {
@@ -57,7 +61,13 @@ public class UsersAdapter extends ArrayAdapter<User>  implements Filterable{
                     e.printStackTrace();
                 } catch (ExecutionException e) {
                     e.printStackTrace();
-                }
+                }*/
+                CircleImageView avatar = convertView.findViewById(R.id.profile_image);
+                Glide.with(getContext())
+                        .load(filteredUserList.get(position).getAvatarUrl())
+                        .apply(new RequestOptions()
+                                .placeholder(R.drawable.avatar))
+                        .into(avatar);
             }
 
         }
