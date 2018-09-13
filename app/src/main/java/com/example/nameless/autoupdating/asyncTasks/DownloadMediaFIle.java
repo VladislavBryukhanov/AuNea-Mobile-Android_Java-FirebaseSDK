@@ -20,6 +20,7 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.nameless.autoupdating.R;
 import com.example.nameless.autoupdating.activities.ImageViewer;
@@ -224,7 +225,8 @@ public class DownloadMediaFIle extends AsyncTask<String, Void, Bitmap> {
 
     private Bitmap setAudioProperties(final String path, final String url) {
         MediaMetadataRetriever mmr = new MediaMetadataRetriever();
-        mmr.setDataSource(parentContext.getApplicationContext(), Uri.parse(path));
+//        mmr.setDataSource(parentContext.getApplicationContext(), Uri.parse(path));
+        mmr.setDataSource(path);
         String durationStr = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
         trackDuration = Integer.parseInt(durationStr);
 
@@ -237,10 +239,7 @@ public class DownloadMediaFIle extends AsyncTask<String, Void, Bitmap> {
                             MessagesAdapter.runningAudio.first)) {
 //                        MessagesAdapter.mediaPlayer.pause();
                         stopTrack();
-                        audioButton.setImageDrawable(ResourcesCompat.getDrawable(
-                                parentContext.getResources(),
-                                R.drawable.audio_play_button,
-                                null));
+
                     } else {
                         stopTrack();
                         MessagesAdapter.mediaPlayer.setDataSource(path);
@@ -319,19 +318,13 @@ public class DownloadMediaFIle extends AsyncTask<String, Void, Bitmap> {
             MessagesAdapter.mediaPlayer.release();
             MessagesAdapter.mediaPlayer = new MediaPlayer();
 
-            audioButton.setImageDrawable(ResourcesCompat.getDrawable(
-                    parentContext.getResources(),
-                    R.drawable.audio_play_button,
-                    null));
-            trackSeekBar.setProgress(0);
-//            ((SeekBar)MessagesAdapter.runningAudio.second.findViewById(R.id.seekBar)).setProgress(0);
-//            ((ImageView)MessagesAdapter.runningAudio.second.findViewById(R.id.audioButton))
-//                    .setImageDrawable(ResourcesCompat.getDrawable(
-//                            parentContext.getResources(),
-//                            R.drawable.audio_play_button,
-//                            null));
+            ((SeekBar)MessagesAdapter.runningAudio.second.findViewById(R.id.seekBar)).setProgress(0);
+            ((ImageView)MessagesAdapter.runningAudio.second.findViewById(R.id.audioButton))
+                    .setImageDrawable(ResourcesCompat.getDrawable(
+                            parentContext.getResources(),
+                            R.drawable.audio_play_button,
+                            null));
 
-//            MessagesAdapter.runningAudio.second.setImageDrawable(ResourcesCompat.getDrawable(parentContext.getResources(), R.drawable.audio_play_button, null));
             MessagesAdapter.runningAudio = null;
         }
     }
