@@ -4,6 +4,7 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -222,12 +223,12 @@ public class NotifyService extends Service implements NetworkStateReceiver.Netwo
                 .setWhen(Calendar.getInstance().getTimeInMillis())
                 .setSmallIcon(R.drawable.send2);
 
-        builder.setDefaults(Notification.DEFAULT_ALL);
-
         SharedPreferences settings = getSharedPreferences(Settings.APP_PREFERENCES, Context.MODE_PRIVATE);
         if(settings.getBoolean(Settings.IS_NOTIFY_ENABLED, false)) {
-            builder.setSound(Uri.parse("android.resource://" + this.getApplicationContext()
+            builder.setSound(Uri.parse(ContentResolver.SCHEME_ANDROID_RESOURCE+ "://" + getApplicationContext()
                     .getPackageName() + File.separator + R.raw.notify));
+        } else {
+            builder.setDefaults(Notification.DEFAULT_ALL);
         }
 
         Notification.Builder fullScreenNotify = builder;

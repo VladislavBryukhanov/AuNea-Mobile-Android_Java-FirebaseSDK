@@ -182,8 +182,8 @@ public class UserList extends GlobalMenu {
 
         myRef = database.getReference("Users");
 
-        if (!isMyServiceRunning(NotifyService.class, this)) {
-            startService(new Intent(this, NotifyService.class));
+        if (!isMyServiceRunning(NotifyService.class, getApplicationContext())) {
+            startService(new Intent(getApplicationContext(), NotifyService.class));
         }
         if (!isMyServiceRunning(CallService.class, getApplicationContext())) {
             startService(new Intent(getApplicationContext(), CallService.class));
