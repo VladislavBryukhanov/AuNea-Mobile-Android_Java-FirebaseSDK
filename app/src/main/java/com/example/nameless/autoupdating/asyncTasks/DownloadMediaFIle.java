@@ -239,17 +239,17 @@ public class DownloadMediaFIle extends AsyncTask<String, Void, Bitmap> {
                     if(MessagesAdapter.mediaPlayer.isPlaying() && url.equals(
                             MessagesAdapter.runningAudio.first)) {
 //                        MessagesAdapter.mediaPlayer.pause();
-                        stopTrack();
+                        stopTrack(true);
 
                     } else {
-                        stopTrack();
+                        stopTrack(false);
                         MessagesAdapter.mediaPlayer.setDataSource(path);
                         MessagesAdapter.mediaPlayer.prepare();
                         MessagesAdapter.mediaPlayer.start();
                         MessagesAdapter.mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
                             @Override
                             public void onCompletion(MediaPlayer mp) {
-                                stopTrack();
+                                stopTrack(true);
                             }
                         });
                         setDurationSeek();
@@ -266,6 +266,12 @@ public class DownloadMediaFIle extends AsyncTask<String, Void, Bitmap> {
         });
         if(MessagesAdapter.runningAudio != null && url.equals(MessagesAdapter.runningAudio.first)) {
             isTrackPlaying = true;
+            MessagesAdapter.mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                @Override
+                public void onCompletion(MediaPlayer mp) {
+                    stopTrack(true);
+                }
+            });
             return drawableItemToBitmap(R.drawable.audio_pause_button);
         } else {
             isTrackPlaying = false;
@@ -306,19 +312,27 @@ public class DownloadMediaFIle extends AsyncTask<String, Void, Bitmap> {
         });
     }
 
-    private void stopTrack() {
+    private void stopTrack(boolean isCurrent) {
         if(MessagesAdapter.runningAudio != null) {
             MessagesAdapter.trackDurationHandler.removeCallbacksAndMessages(null);
             MessagesAdapter.mediaPlayer.stop();
             MessagesAdapter.mediaPlayer.release();
             MessagesAdapter.mediaPlayer = new MediaPlayer();
 
-            ((SeekBar)MessagesAdapter.runningAudio.second.findViewById(R.id.seekBar)).setProgress(0);
-            ((ImageView)MessagesAdapter.runningAudio.second.findViewById(R.id.audioButton))
-                    .setImageDrawable(ResourcesCompat.getDrawable(
-                            parentContext.getResources(),
-                            R.drawable.audio_play_button,
-                            null));
+            if (isCurrent) {
+                audioButton.setImageDrawable(ResourcesCompat.getDrawable(
+                        parentContext.getResources(),
+                        R.drawable.audio_play_button,
+                        null));
+                trackSeekBar.setProgress(0);
+            } else {
+                ((SeekBar)MessagesAdapter.runningAudio.second.findViewById(R.id.seekBar)).setProgress(0);
+                ((ImageView)MessagesAdapter.runningAudio.second.findViewById(R.id.audioButton))
+                        .setImageDrawable(ResourcesCompat.getDrawable(
+                                parentContext.getResources(),
+                                R.drawable.audio_play_button,
+                                null));
+            }
 
             MessagesAdapter.runningAudio = null;
         }

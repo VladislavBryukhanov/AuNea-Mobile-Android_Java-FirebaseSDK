@@ -73,11 +73,11 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
     public static Handler trackDurationHandler;
     public static LruCache<String, Bitmap> mMemoryCache;
 
-    public static Picasso mPicasso;
+//    public static Picasso mPicasso;
 
     public MessagesAdapter(Context ma, EditText etMessage, ArrayList<Message> messages, DatabaseReference myRef) {
         super(ma, 0, messages);
-        mPicasso = Picasso.with(ma);
+//        mPicasso = Picasso.with(ma);
         this.etMessage = etMessage;
         this.ma = ma;
         this.messages = messages;
