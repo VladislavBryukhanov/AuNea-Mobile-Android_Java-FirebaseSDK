@@ -9,17 +9,13 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
-import android.os.Handler;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
-import android.support.v4.app.NotificationCompat;
-import android.widget.Toast;
 
-import com.example.nameless.autoupdating.generalModules.NetworkStateReceiver;
+import com.example.nameless.autoupdating.receivers.NetworkStateReceiver;
 import com.example.nameless.autoupdating.R;
 import com.example.nameless.autoupdating.activities.Chat;
 import com.example.nameless.autoupdating.activities.Settings;
@@ -36,9 +32,7 @@ import com.google.firebase.database.ValueEventListener;
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.Target;
 
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.io.File;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
@@ -166,6 +160,8 @@ public class NotifyService extends Service implements NetworkStateReceiver.Netwo
         for(Map.Entry<Query, ChildEventListener> entry : refToListeners.entrySet()) {
             (entry.getKey()).removeEventListener(entry.getValue());
         }
+        Intent broadcastIntent = new Intent("android.intent.action.RestartNotificationService");
+        sendBroadcast(broadcastIntent);
     }
 
 
@@ -231,7 +227,7 @@ public class NotifyService extends Service implements NetworkStateReceiver.Netwo
         SharedPreferences settings = getSharedPreferences(Settings.APP_PREFERENCES, Context.MODE_PRIVATE);
         if(settings.getBoolean(Settings.IS_NOTIFY_ENABLED, false)) {
             builder.setSound(Uri.parse("android.resource://" + this.getApplicationContext()
-                    .getPackageName() + "/" + R.raw.notify));
+                    .getPackageName() + File.separator + R.raw.notify));
         }
 
         Notification.Builder fullScreenNotify = builder;

@@ -11,27 +11,47 @@
     <application
         android:allowBackup="true"
         android:hardwareAccelerated="false"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@mipmap/logo"
         android:label="@string/app_name"
         android:largeHeap="true"
-        android:roundIcon="@mipmap/ic_launcher_round"
+        android:roundIcon="@mipmap/logo"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
+        <service android:name=".services.NotifyService" />
+        <service android:name=".services.CallService" />
 
         <service android:name=".services.FirebaseMessagingService">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
-        <service android:name=".services.NotifyService" />
-        <service android:name=".services.CallService" />
 
         <receiver
-            android:name=".generalModules.StartMyServiceAtBootReceiver"
+            android:name=".receivers.StartMyServiceAtBootReceiver"
             android:label="StartMyServiceAtBootReceiver">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
+        <receiver
+            android:name=".receivers.StartNotifyServiceReceiver"
+            android:enabled="true"
+            android:exported="true"
+            android:label="RestartServiceWhenStopped">
+            <intent-filter>
+                <action android:name="android.intent.action.RestartNotificationService" />
+            </intent-filter>
+        </receiver>
+
+        <receiver
+            android:name=".receivers.StartCallNotificationServiceReceiver"
+            android:enabled="true"
+            android:exported="true"
+            android:label="RestartServiceWhenStopped">
+            <intent-filter>
+                <action android:name="android.intent.action.RestartCallNotificationService" />
             </intent-filter>
         </receiver>
 

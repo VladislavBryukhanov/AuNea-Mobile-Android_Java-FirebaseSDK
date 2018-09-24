@@ -4,6 +4,8 @@ import android.content.IntentFilter;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 
+import com.example.nameless.autoupdating.receivers.NetworkStateReceiver;
+
 /**
  * Created by nameless on 23.06.18.
  */

@@ -227,6 +227,7 @@ public class DownloadMediaFIle extends AsyncTask<String, Void, Bitmap> {
         MediaMetadataRetriever mmr = new MediaMetadataRetriever();
 //        mmr.setDataSource(parentContext.getApplicationContext(), Uri.parse(path));
         mmr.setDataSource(path);
+        
         String durationStr = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
         trackDuration = Integer.parseInt(durationStr);
 
@@ -265,12 +266,6 @@ public class DownloadMediaFIle extends AsyncTask<String, Void, Bitmap> {
         });
         if(MessagesAdapter.runningAudio != null && url.equals(MessagesAdapter.runningAudio.first)) {
             isTrackPlaying = true;
-            MessagesAdapter.mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-                @Override
-                public void onCompletion(MediaPlayer mp) {
-                    stopTrack();
-                }
-            });
             return drawableItemToBitmap(R.drawable.audio_pause_button);
         } else {
             isTrackPlaying = false;

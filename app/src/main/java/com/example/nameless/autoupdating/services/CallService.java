@@ -6,7 +6,7 @@ import android.content.IntentFilter;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import com.example.nameless.autoupdating.activities.VoiceCalling;
-import com.example.nameless.autoupdating.generalModules.NetworkStateReceiver;
+import com.example.nameless.autoupdating.receivers.NetworkStateReceiver;
 import com.example.nameless.autoupdating.models.ClientToClient;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.ChildEventListener;
@@ -97,6 +97,8 @@ public class CallService extends Service implements NetworkStateReceiver.Network
     public void onDestroy() {
         networkStateReceiver.removeListener(this);
         this.unregisterReceiver(networkStateReceiver);
+        Intent broadcastIntent = new Intent("android.intent.action.RestartCallNotificationService");
+        sendBroadcast(broadcastIntent);
     }
 
     @Override
