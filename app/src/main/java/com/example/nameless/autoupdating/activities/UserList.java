@@ -189,6 +189,9 @@ public class UserList extends GlobalMenu {
             startService(new Intent(getApplicationContext(), CallService.class));
         }
 
+//        Intent broadcastIntent = new Intent("android.intent.action.startServices");
+//        sendBroadcast(broadcastIntent);
+
         myRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {

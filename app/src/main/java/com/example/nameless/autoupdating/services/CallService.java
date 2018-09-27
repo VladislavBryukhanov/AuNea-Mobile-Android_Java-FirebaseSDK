@@ -17,18 +17,21 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Created by nameless on 11.04.18.
  */
 
-public class CallService extends Service implements NetworkStateReceiver.NetworkStateReceiverListener {
+public class CallService extends Service {
 
     private FirebaseDatabase database;
-    private DatabaseReference myRef;
+    private DatabaseReference refToListener;
     private FirebaseAuth mAuth;
 
-    private NetworkStateReceiver networkStateReceiver;
-    private boolean isDisconnected;
+    private HashMap<Query, ChildEventListener> refToListeners;
+    private ChildEventListener newCallListener;
 
     @Nullable
     @Override
@@ -41,11 +44,7 @@ public class CallService extends Service implements NetworkStateReceiver.Network
 
         database = FirebaseDatabase.getInstance();
         mAuth = FirebaseAuth.getInstance();
-
-        isDisconnected = false;
-        networkStateReceiver = new NetworkStateReceiver();
-        networkStateReceiver.addListener(this);
-        this.registerReceiver(networkStateReceiver, new IntentFilter(android.net.ConnectivityManager.CONNECTIVITY_ACTION));
+        refToListeners = new HashMap<>();
 
         voiceNotifyListening();
     }
@@ -56,8 +55,8 @@ public class CallService extends Service implements NetworkStateReceiver.Network
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 for(DataSnapshot data : dataSnapshot.getChildren()) {
-                    myRef = database.getReference("Users");
-                    myRef.child(data.getKey()).addChildEventListener(new ChildEventListener() {
+                    refToListener = database.getReference("Users");
+                    refToListener.child(data.getKey()).addChildEventListener(newCallListener = new ChildEventListener() {
                         @Override
                         public void onChildAdded(DataSnapshot dataSnapshot, String s) {
                             if(dataSnapshot.getKey().equals("voiceCall")) {
@@ -80,6 +79,7 @@ public class CallService extends Service implements NetworkStateReceiver.Network
                         @Override
                         public void onCancelled(DatabaseError databaseError) {}
                     });
+                    refToListeners.put(refToListener, newCallListener);
                 }
             }
             @Override
@@ -95,22 +95,12 @@ public class CallService extends Service implements NetworkStateReceiver.Network
 
     @Override
     public void onDestroy() {
-        networkStateReceiver.removeListener(this);
-        this.unregisterReceiver(networkStateReceiver);
+        for(Map.Entry<Query, ChildEventListener> entry : refToListeners.entrySet()) {
+            (entry.getKey()).removeEventListener(entry.getValue());
+        }
+        // not working
         Intent broadcastIntent = new Intent("android.intent.action.RestartCallNotificationService");
         sendBroadcast(broadcastIntent);
     }
 
-    @Override
-    public void networkAvailable() {
-        if(isDisconnected) {
-            isDisconnected = false;
-            stopSelf();
-        }
-    }
-
-    @Override
-    public void networkUnavailable() {
-        isDisconnected = true;
-    }
 }

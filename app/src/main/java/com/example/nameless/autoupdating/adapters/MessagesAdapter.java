@@ -268,6 +268,7 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
                 urlPart.setText(findUrl);
                 urlPart.setLayoutParams(lparam);
                 urlPart.setTextColor(Color.rgb(0, 172, 162));
+                urlPart.setTextSize(16);
                 urlPart.setPaintFlags(Paint.UNDERLINE_TEXT_FLAG);
                 float dpi = getContext().getResources().getDisplayMetrics().density;
                 urlPart.setMaxWidth((int)(240 * dpi));

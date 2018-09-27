@@ -16,8 +16,7 @@ public class StartMyServiceAtBootReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        FirebaseAuth mAuth = FirebaseAuth.getInstance();
-        if (Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction()) && mAuth.getUid() != null) {
+        if (FirebaseAuth.getInstance().getUid() != null) {
             context.startService(new Intent(context, NotifyService.class));
             context.startService(new Intent(context, CallService.class));
         }

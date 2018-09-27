@@ -32,6 +32,7 @@
             android:label="StartMyServiceAtBootReceiver">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.startServices" />
             </intent-filter>
         </receiver>
 

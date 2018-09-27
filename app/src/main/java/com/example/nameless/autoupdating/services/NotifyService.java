@@ -35,6 +35,7 @@ import com.squareup.picasso.Target;
 
 import java.io.File;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -47,7 +48,6 @@ public class NotifyService extends Service implements NetworkStateReceiver.Netwo
     private FirebaseDatabase database;
     private DatabaseReference myRef;
     private HashMap<String, Boolean> timeOut; //первым childAdded всегда будет последнее отправленное нам сообщение во время диалога, пропускаем его
-    private boolean isServiceStopped; // т к он старт является асинхронным может произойти так, что он отработает после дестроя, тоесть обработчики будут навешаны после попытки их удаления => при дестрое ни 1 обработчик не удалится
 
     private ChildEventListener newMsgListener;
     private Query refToListener;
@@ -57,6 +57,7 @@ public class NotifyService extends Service implements NetworkStateReceiver.Netwo
     private NetworkStateReceiver networkStateReceiver;
     private boolean isDisconnected;
     private String interlocutor; //собеседник
+    private Date disconnectTime;
 
     @Nullable
     @Override
@@ -66,18 +67,17 @@ public class NotifyService extends Service implements NetworkStateReceiver.Netwo
 
     @Override
     public void onCreate() {
-
         database = FirebaseDatabase.getInstance();
         mAuth = FirebaseAuth.getInstance();
         refToListeners = new HashMap<>();
         timeOut = new HashMap<>();
-        isServiceStopped = false;
 
         interlocutor = "";
         isDisconnected = false;
         networkStateReceiver = new NetworkStateReceiver();
         networkStateReceiver.addListener(this);
         this.registerReceiver(networkStateReceiver, new IntentFilter(android.net.ConnectivityManager.CONNECTIVITY_ACTION));
+
         createListeners();
     }
 
@@ -94,8 +94,8 @@ public class NotifyService extends Service implements NetworkStateReceiver.Netwo
                     String myListener = String.valueOf(dlg.child("listener1").getValue());
                     String foreignListener = String.valueOf(dlg.child("listener2").getValue());
 
-                    if (!isServiceStopped && (myListener.equals(mAuth.getUid())
-                            || foreignListener.equals(mAuth.getUid()))) {
+                    if (myListener.equals(mAuth.getUid())
+                            || foreignListener.equals(mAuth.getUid())) {
 
                         if (!myListener.equals(mAuth.getUid()) ) {
                             foreignListener = myListener;
@@ -103,34 +103,32 @@ public class NotifyService extends Service implements NetworkStateReceiver.Netwo
 
                         final String foreignListenerTmp = foreignListener;
 
-//                        if(!foreignListenerTmp.equals(interlocutor)) {
-                            refToListener = myRef.child(dlg.getKey()).child("content").limitToLast(1);
-                            refToListener.addChildEventListener(newMsgListener = new ChildEventListener() {
-                                @Override
-                                public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+                        refToListener = myRef.child(dlg.getKey()).child("content");
+                        refToListener.limitToLast(1).addChildEventListener(newMsgListener = new ChildEventListener() {
+                            @Override
+                            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
 
-                                    Message newMsg = dataSnapshot.getValue(Message.class);
-                                    if (!(newMsg.getWho()).equals(interlocutor)
-                                            && (newMsg.getTo()).equals(mAuth.getUid())) {
-                                        if(!timeOut.get(foreignListenerTmp)) {
-                                            timeOut.put(foreignListenerTmp, true);
-                                        } else {
-                                            sendNotify(newMsg);
-                                        }
+                                Message newMsg = dataSnapshot.getValue(Message.class);
+                                if (!(newMsg.getWho()).equals(interlocutor)
+                                        && (newMsg.getTo()).equals(mAuth.getUid())) {
+                                    if(!timeOut.get(foreignListenerTmp)) {
+                                        timeOut.put(foreignListenerTmp, true);
+                                    } else {
+                                        sendNotify(newMsg);
                                     }
                                 }
-                                @Override
-                                public void onChildChanged(DataSnapshot dataSnapshot, String s) {}
-                                @Override
-                                public void onChildRemoved(DataSnapshot dataSnapshot) {}
-                                @Override
-                                public void onChildMoved(DataSnapshot dataSnapshot, String s) {}
-                                @Override
-                                public void onCancelled(DatabaseError databaseError) {}
-                            });
-                            refToListeners.put(refToListener, newMsgListener);
-                            timeOut.put(foreignListener, false);
-//                        }
+                            }
+                            @Override
+                            public void onChildChanged(DataSnapshot dataSnapshot, String s) {}
+                            @Override
+                            public void onChildRemoved(DataSnapshot dataSnapshot) {}
+                            @Override
+                            public void onChildMoved(DataSnapshot dataSnapshot, String s) {}
+                            @Override
+                            public void onCancelled(DatabaseError databaseError) {}
+                        });
+                        refToListeners.put(refToListener, newMsgListener);
+                        timeOut.put(foreignListener, false);
                     }
                 }
             }
@@ -142,27 +140,51 @@ public class NotifyService extends Service implements NetworkStateReceiver.Netwo
         });
     }
 
+    private void getMissedNotifications() {
+        for(Map.Entry<Query, ChildEventListener> entry : refToListeners.entrySet()) {
+            entry.getKey().orderByChild("read").equalTo(false).limitToLast(1).addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    for (DataSnapshot data : dataSnapshot.getChildren()) {
+                        Message newMsg = data.getValue(Message.class);
+                        if((newMsg.getDateOfSend()).compareTo(disconnectTime) > 0) {
+                            if (!(newMsg.getWho()).equals(interlocutor)
+                                    && (newMsg.getTo()).equals(mAuth.getUid())) {
+                                sendNotify(newMsg);
+                            }
+                        }
+                    }
+                }
+
+                @Override
+                public void onCancelled(DatabaseError databaseError) {}
+            });
+        }
+    }
+
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if(intent != null) {
             interlocutor = intent.getStringExtra("dialog");
         }
-        if(isServiceStopped) {
-            createListeners();
-        }
-        return START_STICKY;
+//        createListeners();
+
+//        getMissedNotifications();
+//        disconnectTime = new Date();
+        return START_REDELIVER_INTENT;
     }
 
     @Override
     public void onDestroy() {
-        isServiceStopped = true;
         networkStateReceiver.removeListener(this);
         this.unregisterReceiver(networkStateReceiver);
         for(Map.Entry<Query, ChildEventListener> entry : refToListeners.entrySet()) {
             (entry.getKey()).removeEventListener(entry.getValue());
         }
-        Intent broadcastIntent = new Intent("android.intent.action.RestartNotificationService");
-        sendBroadcast(broadcastIntent);
+//        disconnectTime = new Date();
+
+//        Intent broadcastIntent = new Intent("android.intent.action.RestartNotificationService");
+//        sendBroadcast(broadcastIntent);
     }
 
 
@@ -194,8 +216,6 @@ public class NotifyService extends Service implements NetworkStateReceiver.Netwo
                         Bitmap largeIconBitmap = bitmapDrawable.getBitmap();
                         buildNotify(user, msg, largeIconBitmap);
                     }
-
-//                        buildNotify(user, msg);
                 }
             }
             @Override
@@ -245,12 +265,14 @@ public class NotifyService extends Service implements NetworkStateReceiver.Netwo
     public void networkAvailable() {
         if(isDisconnected) {
             isDisconnected = false;
-            stopSelf();
+//            stopSelf();
+            getMissedNotifications();
         }
     }
 
     @Override
     public void networkUnavailable() {
         isDisconnected = true;
+        disconnectTime = new Date();
     }
 }
