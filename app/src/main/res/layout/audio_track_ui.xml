@@ -9,8 +9,7 @@
     <ImageView
         android:id="@+id/audioButton"
         android:layout_width="45dp"
-        android:layout_height="45dp"
-        android:src="@drawable/audio" />
+        android:layout_height="45dp" />
 
     <LinearLayout
         android:layout_width="match_parent"

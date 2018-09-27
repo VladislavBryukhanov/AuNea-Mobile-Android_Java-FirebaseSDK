@@ -1,6 +1,7 @@
 package com.example.nameless.autoupdating.adapters;
 
 import android.content.Context;
+import android.graphics.BitmapFactory;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.view.LayoutInflater;
@@ -52,22 +53,24 @@ public class UsersAdapter extends ArrayAdapter<User>  implements Filterable{
                 ((TextView)convertView.findViewById(R.id.tvNickname)).setText('@'+filteredUserList.get(position).getNickname());
             }
             if(filteredUserList.get(position).getAvatarUrl() != null) {
-/*                DownloadAvatarByUrl downloadTask = new DownloadAvatarByUrl((ImageView)convertView.findViewById(R.id.profile_image), filteredUserList.get(position));
-//                downloadTask.execute(filteredUserList.get(position).getAvatarUrl());
-
+                DownloadAvatarByUrl downloadTask = new DownloadAvatarByUrl(
+                        (ImageView)convertView.findViewById(R.id.profile_image),
+                        filteredUserList.get(position),
+                        ma,
+                        BitmapFactory.decodeResource(getContext().getResources(), R.drawable.avatar));
                 try {
                     downloadTask.execute(filteredUserList.get(position).getAvatarUrl()).get();
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 } catch (ExecutionException e) {
                     e.printStackTrace();
-                }*/
-                CircleImageView avatar = convertView.findViewById(R.id.profile_image);
+                }
+/*                CircleImageView avatar = convertView.findViewById(R.id.profile_image);
                 Glide.with(getContext())
                         .load(filteredUserList.get(position).getAvatarUrl())
                         .apply(new RequestOptions()
                                 .placeholder(R.drawable.avatar))
-                        .into(avatar);
+                        .into(avatar);*/
             }
 
         }

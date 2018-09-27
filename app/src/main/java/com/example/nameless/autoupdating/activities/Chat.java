@@ -452,7 +452,7 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
 
                     ImageView alienAvatar = findViewById(R.id.alienAvatar);
                     if(user.getAvatarUrl() != null && !user.getAvatarUrl().equals(toUser.getAvatarUrl())) {
-                        DownloadAvatarByUrl downloadTask = new DownloadAvatarByUrl(alienAvatar, toUser);
+                        DownloadAvatarByUrl downloadTask = new DownloadAvatarByUrl(alienAvatar, toUser, getApplication());
                         downloadTask.execute(toUser.getAvatarUrl());
                     }
                     toUser = user;
@@ -477,7 +477,7 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
 
         ImageView alienAvatar = findViewById(R.id.alienAvatar);
         if(toUser.getAvatarUrl() != null) {
-            DownloadAvatarByUrl downloadTask = new DownloadAvatarByUrl(alienAvatar, toUser);
+            DownloadAvatarByUrl downloadTask = new DownloadAvatarByUrl(alienAvatar, toUser, getApplication());
             downloadTask.execute(toUser.getAvatarUrl());
         }
         alienAvatar.setOnClickListener(new View.OnClickListener() {

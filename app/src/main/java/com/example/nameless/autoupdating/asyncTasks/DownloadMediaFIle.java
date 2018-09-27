@@ -153,25 +153,13 @@ public class DownloadMediaFIle extends AsyncTask<String, Void, Bitmap> {
         FirebaseStorage storage = FirebaseStorage.getInstance();
         StorageReference fileReference = storage.getReferenceFromUrl(url);
 
-//        File file = null;
-//        try {
-        //.createTempFile("images", "jpg");
-
-//            file = File.createTempFile(fileReference.getName(), null,
-//                    getContext().getCacheDir());
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//        fileReference.getFile(file);
-//        String path = getContext().getCacheDir().getAbsolutePath() + file.getName();
-
-        final File path = new File(Environment.getExternalStorageDirectory()
+   /*     final File path = new File(Environment.getExternalStorageDirectory()
                 + "/AUMessanger/");
         if(!path.exists()) {
             path.mkdir();
         }
-
-        final File file = new File(path, fileReference.getName());
+*/
+        final File file = new File(parentContext.getCacheDir(), fileReference.getName());
 
         Bitmap bitmap = MessagesAdapter.mMemoryCache.get(url);
         if(bitmap != null) {

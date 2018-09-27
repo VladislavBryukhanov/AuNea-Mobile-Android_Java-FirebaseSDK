@@ -46,7 +46,8 @@ public class AlienPage extends GlobalMenu {
         tvBio.setText(user.getBio());
 
         if(user.getAvatarUrl() != null) {
-            DownloadAvatarByUrl downloadTask = new DownloadAvatarByUrl(avatar, user);
+
+            DownloadAvatarByUrl downloadTask = new DownloadAvatarByUrl(avatar, user, getApplication());
             try {
                 downloadTask.execute(user.getAvatarUrl()).get();
 

@@ -130,7 +130,7 @@ public class Settings extends AppCompatActivity {
                 UserList.myAcc.setAvatarUrl(taskSnapshot.getDownloadUrl().toString());
                 myRef.child(data.getKey()).child("avatarUrl").setValue(UserList.myAcc.getAvatarUrl());
 
-                DownloadAvatarByUrl downloadTask = new DownloadAvatarByUrl(avatar, UserList.myAcc);
+                DownloadAvatarByUrl downloadTask = new DownloadAvatarByUrl(avatar, UserList.myAcc, getApplication());
                 try {
                     downloadTask.execute(UserList.myAcc.getAvatarUrl()).get();
                 } catch (InterruptedException e) {
@@ -155,7 +155,7 @@ public class Settings extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch(item.getItemId()) {
             case R.id.mSave: {
-                Pattern pattern = Pattern.compile("[!@#$%^&*()_]");
+                Pattern pattern = Pattern.compile("[!@#$%^&*()-]");
                 Matcher matcher = pattern.matcher(etNickname.getText().toString());
                 if(matcher.find()) {
                     Toast.makeText(this, "Sorry, this nickname is invalid", Toast.LENGTH_SHORT).show();
