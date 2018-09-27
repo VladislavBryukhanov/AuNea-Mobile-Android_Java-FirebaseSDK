@@ -89,7 +89,6 @@ public class CallService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        voiceNotifyListening();
         return START_STICKY;
     }
 
@@ -99,8 +98,8 @@ public class CallService extends Service {
             (entry.getKey()).removeEventListener(entry.getValue());
         }
         // not working
-        Intent broadcastIntent = new Intent("android.intent.action.RestartCallNotificationService");
-        sendBroadcast(broadcastIntent);
+//        Intent broadcastIntent = new Intent("android.intent.action.RestartCallNotificationService");
+//        sendBroadcast(broadcastIntent);
     }
 
 }
