@@ -2,16 +2,22 @@ package com.example.nameless.autoupdating.activities;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.ContextThemeWrapper;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.EditText;
+import android.widget.Spinner;
 import android.widget.Switch;
 import android.widget.Toast;
 
@@ -28,6 +34,7 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
+import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -39,6 +46,9 @@ public class Settings extends AppCompatActivity {
     public static final String APP_PREFERENCES = "preferences";
     public static final String IS_NOTIFY_ENABLED = "IS_NOTIFY_ENABLED";
     public static final String IS_LOCATION_ENABLED  = "IS_LOCATION_ENABLED";
+    public static final String STORAGE_MODE  = "STORAGE_MODE";
+    public static final String CACHE_STORAGE  = "Cache storage";
+    public static final String LOCAL_STORAGE  = "Local storage";
     private SharedPreferences settings;
 
     private CircleImageView avatar;
@@ -47,6 +57,9 @@ public class Settings extends AppCompatActivity {
     private MenuItem mSave;
     private boolean isNewAvatar = false;
     private Uri avatarImage;
+
+    private Spinner spStorage;
+    private ArrayList<String> storageModeList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,6 +73,7 @@ public class Settings extends AppCompatActivity {
         etBio = findViewById(R.id.etBio);
         cbLocation = findViewById(R.id.cbLocation);
         cbNotify = findViewById(R.id.cbNotify);
+        spStorage = findViewById(R.id.spStorage);
 
         settings = getSharedPreferences(APP_PREFERENCES, Context.MODE_PRIVATE);
 
@@ -74,6 +88,48 @@ public class Settings extends AppCompatActivity {
         etLogin.setText(UserList.myAcc.getLogin());
         etNickname.setText(UserList.myAcc.getNickname());
         etBio.setText(UserList.myAcc.getBio());
+
+        storageModeList = new ArrayList<>();
+        storageModeList.add(CACHE_STORAGE);
+        storageModeList.add(LOCAL_STORAGE);
+
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                this,
+                R.layout.spinner_options_item,
+                storageModeList);
+        spStorage.setAdapter(adapter);
+
+        String selectedValue = settings.getString(STORAGE_MODE, CACHE_STORAGE);
+        int spinnerPosition = adapter.getPosition(selectedValue);
+        spStorage.setSelection(spinnerPosition);
+
+        spStorage.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                if (!spStorage.getSelectedItem().toString().equals(settings.getString(STORAGE_MODE, CACHE_STORAGE)) &&
+                        spStorage.getSelectedItem().toString().equals(LOCAL_STORAGE)) {
+
+                    AlertDialog.Builder builder = new AlertDialog.Builder(
+                            new ContextThemeWrapper(
+                                    Settings.this,
+                                    R.style.AppTheme));
+                    builder.setTitle("Storage will be changed");
+                    builder.setMessage("Your files will be saved in AUMessanger directory at root of storage");
+                    builder.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            dialogInterface.cancel();
+                        }
+                    });
+                    AlertDialog dialog = builder.create();
+                    dialog.setCancelable(true);
+                    dialog.show();
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {}
+        });
 
         if(UserList.myAcc.getAvatar() != null) {
             avatar.setImageBitmap(BitmapFactory.decodeFile(UserList.myAcc.getAvatar()));
@@ -118,10 +174,12 @@ public class Settings extends AppCompatActivity {
             gsReference.delete(); // Remove old avatar
         }
 
+        String extension = getContentResolver().getType(avatarImage);
+        extension = "." + extension.split("/")[1];
 
         gsReference = storage.getReferenceFromUrl("gs://messager-d15a0.appspot.com/");
         StorageReference riversRef = gsReference.child(UserList.myAcc
-                .getUid() + "/Avatar/" + java.util.UUID.randomUUID());
+                .getEmail() + "/Avatar/" + java.util.UUID.randomUUID() + extension);
         UploadTask uploadTask = riversRef.putFile(avatarImage);
 
         uploadTask.addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
@@ -195,6 +253,7 @@ public class Settings extends AppCompatActivity {
                                         SharedPreferences.Editor prefs = settings.edit();
                                         prefs.putBoolean(IS_NOTIFY_ENABLED, cbNotify.isChecked());
                                         prefs.putBoolean(IS_LOCATION_ENABLED, cbLocation.isChecked());
+                                        prefs.putString(STORAGE_MODE, spStorage.getSelectedItem().toString());
                                         prefs.apply();
 
                                         if(isNewAvatar) {

@@ -2,6 +2,7 @@ package com.example.nameless.autoupdating.asyncTasks;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -13,6 +14,7 @@ import android.os.AsyncTask;
 import android.os.Environment;
 import android.os.Handler;
 import android.support.v4.content.res.ResourcesCompat;
+import android.util.Log;
 import android.util.Pair;
 import android.view.View;
 import android.widget.ImageView;
@@ -24,6 +26,7 @@ import android.widget.Toast;
 
 import com.example.nameless.autoupdating.R;
 import com.example.nameless.autoupdating.activities.ImageViewer;
+import com.example.nameless.autoupdating.activities.Settings;
 import com.example.nameless.autoupdating.activities.UserList;
 import com.example.nameless.autoupdating.activities.VideoPlayer;
 import com.example.nameless.autoupdating.adapters.MessagesAdapter;
@@ -153,13 +156,18 @@ public class DownloadMediaFIle extends AsyncTask<String, Void, Bitmap> {
         FirebaseStorage storage = FirebaseStorage.getInstance();
         StorageReference fileReference = storage.getReferenceFromUrl(url);
 
-   /*     final File path = new File(Environment.getExternalStorageDirectory()
-                + "/AUMessanger/");
-        if(!path.exists()) {
-            path.mkdir();
+        File path = parentContext.getCacheDir();
+
+        SharedPreferences settings = parentContext.getSharedPreferences(Settings.APP_PREFERENCES, Context.MODE_PRIVATE);
+        if (settings.getString(Settings.STORAGE_MODE, Settings.CACHE_STORAGE).equals(Settings.LOCAL_STORAGE)) {
+            path = new File(Environment.getExternalStorageDirectory()
+                    + "/AUMessanger/");
+            if(!path.exists()) {
+                path.mkdirs();
+            }
         }
-*/
-        final File file = new File(parentContext.getCacheDir(), fileReference.getName());
+
+        final File file = new File(path, fileReference.getName());
 
         Bitmap bitmap = MessagesAdapter.mMemoryCache.get(url);
         if(bitmap != null) {

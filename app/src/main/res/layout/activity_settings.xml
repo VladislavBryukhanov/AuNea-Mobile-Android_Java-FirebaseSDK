@@ -65,6 +65,18 @@
         android:layout_margin="10dp"
         android:hint="Bio" />
 
+    <Spinner
+        android:id="@+id/spStorage"
+        android:layout_width="match_parent"
+        android:layout_height="55dp"
+        android:popupBackground="@android:drawable/dialog_holo_light_frame" />
+
+    <!--<Spinner-->
+        <!--android:id="@+id/spinner3"-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:layout_weight="1" />-->
+
     <Switch
         android:id="@+id/cbNotify"
         android:layout_width="match_parent"
@@ -82,11 +94,5 @@
         android:checked="true"
         android:text="Enable location"
         android:textSize="18sp" />
-
-    <Spinner
-        android:id="@+id/spinner2"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_weight="1" />
 
 </LinearLayout>

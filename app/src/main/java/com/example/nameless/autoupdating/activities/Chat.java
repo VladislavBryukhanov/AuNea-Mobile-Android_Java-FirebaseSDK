@@ -325,7 +325,7 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
             if(requestCode == PICKFILE_RESULT_CODE || requestCode == CAMERA_REQUEST) {
                 FirebaseStorage storage = FirebaseStorage.getInstance();
                 StorageReference gsReference = storage.getReferenceFromUrl(
-                        "gs://messager-d15a0.appspot.com/");
+                        "gs://messager-d15a0.appspot.com");
                 Uri file;
                 if(requestCode == CAMERA_REQUEST) {
                     file = imgUri;
@@ -345,7 +345,7 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
 
 
                 StorageReference riversRef = gsReference.child(UserList.myAcc
-                        .getUid() + "/" + java.util.UUID.randomUUID() + extension); //file.getLastPathSegment()
+                        .getEmail() + "/images/" + java.util.UUID.randomUUID() + extension); //file.getLastPathSegment()
                 UploadTask uploadTask = riversRef.putFile(file);
 
                 uploadTask.addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
@@ -372,8 +372,7 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
         mediaRecorder = new MediaRecorder();
         mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
         mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
-        mediaRecorder.setOutputFile(Environment.getExternalStorageDirectory()
-                + "/AUMessanger/AudioCache.3gp");
+        mediaRecorder.setOutputFile(getApplicationContext().getCacheDir() + "AudioCache.3gp");
         mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
 
         try {
@@ -395,15 +394,15 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
         StorageReference gsReference = storage.getReferenceFromUrl(
                 "gs://messager-d15a0.appspot.com/");
 
-        final Uri file = Uri.fromFile(new File(Environment.getExternalStorageDirectory()
-                + "/AUMessanger/AudioCache.3gp"));
+        final Uri file = Uri.fromFile(new File(getApplicationContext().getCacheDir()
+                + "AudioCache.3gp"));
 
 //        String extension = getContentResolver().getType(file);
 //        final String fileType = extension.split("/")[0];
 //        extension = "." + extension.split("/")[1];
 
         StorageReference riversRef = gsReference.child(UserList.myAcc
-                .getUid() + "/" + java.util.UUID.randomUUID() + ".3gp");
+                .getEmail() + "/audioRecords/" + java.util.UUID.randomUUID() + ".3gp");
         UploadTask uploadTask = riversRef.putFile(file);
 
         uploadTask.addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {

@@ -1,15 +1,19 @@
 package com.example.nameless.autoupdating.asyncTasks;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.os.Environment;
+import android.util.Log;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
 import com.example.nameless.autoupdating.R;
+import com.example.nameless.autoupdating.activities.Settings;
 import com.example.nameless.autoupdating.models.User;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.storage.FileDownloadTask;
@@ -19,6 +23,7 @@ import com.google.firebase.storage.StorageReference;
 import java.io.File;
 
 import de.hdodenhof.circleimageview.CircleImageView;
+import io.fabric.sdk.android.services.common.CommonUtils;
 
 /**
  * Created by nameless on 13.06.18.
@@ -74,13 +79,18 @@ public class DownloadAvatarByUrl extends AsyncTask<String, Void, Bitmap> {
         FirebaseStorage storage = FirebaseStorage.getInstance();
         StorageReference fileReference = storage.getReferenceFromUrl(url);
 
-//        File path = new File(Environment.getExternalStorageDirectory()
-//                + "/AUMessanger/Users/");
-//        if(!path.exists()) {
-//            path.mkdirs();
-//        }
+        File path = parentContext.getCacheDir();
 
-        final File imgFile = new File(parentContext.getCacheDir(), fileReference.getName());
+        SharedPreferences settings = parentContext.getSharedPreferences(Settings.APP_PREFERENCES, Context.MODE_PRIVATE);
+        if (settings.getString(Settings.STORAGE_MODE, Settings.CACHE_STORAGE).equals(Settings.LOCAL_STORAGE)) {
+            path = new File(Environment.getExternalStorageDirectory()
+                    + "/AUMessanger/Users/");
+            if(!path.exists()) {
+                path.mkdirs();
+            }
+        }
+
+        final File imgFile = new File(path, fileReference.getName());
 
         if (!imgFile.exists()) {
             fileReference.getFile(imgFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
