@@ -58,6 +58,7 @@ public class DownloadMediaFIle extends AsyncTask<String, Void, Bitmap> {
     private ImageView bmImage;
     private ProgressBar pbLoading;
     private LinearLayout audioUI;
+    private ProgressBar audioPbLoading;
     private Context parentContext;
     private String fileType;
 
@@ -79,6 +80,7 @@ public class DownloadMediaFIle extends AsyncTask<String, Void, Bitmap> {
         this.fileType = fileType;
         audioButton = audioUI.findViewById(R.id.audioButton);
         trackSeekBar = audioUI.findViewById(R.id.seekBar);
+        audioPbLoading = audioUI.findViewById(R.id.pbLoading);
     }
 
     @Override
@@ -99,13 +101,14 @@ public class DownloadMediaFIle extends AsyncTask<String, Void, Bitmap> {
 
                 timeDuration.setText(time);
                 audioButton.setImageBitmap(bmp);
-                pbLoading.setVisibility(View.GONE);
-                audioUI.setVisibility(View.VISIBLE);
+//                pbLoading.setVisibility(View.GONE);
+//                audioUI.setVisibility(View.VISIBLE);
+                audioPbLoading.setVisibility(View.GONE);
+                audioButton.setVisibility(View.VISIBLE);
 
                 if(isTrackPlaying) {
                     setDurationSeek();
                 }
-
             } else {
                 bmImage.setImageBitmap(bmp);
                 pbLoading.setVisibility(View.GONE);

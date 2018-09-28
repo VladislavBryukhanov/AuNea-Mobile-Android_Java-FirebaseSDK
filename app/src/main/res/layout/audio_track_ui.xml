@@ -11,6 +11,14 @@
         android:layout_width="45dp"
         android:layout_height="45dp" />
 
+    <ProgressBar
+        android:id="@+id/pbLoading"
+        android:layout_width="45dp"
+        android:layout_height="45dp"
+        android:indeterminate="true"
+        android:indeterminateTint="@color/lightBlue"
+        android:visibility="gone" />
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

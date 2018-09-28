@@ -157,7 +157,19 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
 //                } else {
 //                    loading.setVisibility(View.VISIBLE);
 //                }
-                loading.setVisibility(View.VISIBLE);
+
+                if((filteredMessageList.get(position).getFileType()).equals("image")) {
+                    loading.setVisibility(View.VISIBLE);
+                } else if((filteredMessageList.get(position).getFileType()).equals("audio")) {
+                    ImageView audioButton = audioUI.findViewById(R.id.audioButton);
+                    ProgressBar audioPbLoading = audioUI.findViewById(R.id.pbLoading);
+                    TextView timeDuration = audioUI.findViewById(R.id.tvTime);
+
+                    timeDuration.setText("Loading...");
+                    audioPbLoading.setVisibility(View.VISIBLE);
+                    audioButton.setVisibility(View.GONE);
+                    audioUI.setVisibility(View.VISIBLE);
+                }
 
 
 //                if((filteredMessageList.get(position).getFileType()).equals("image")) {
