@@ -157,8 +157,8 @@ public class Authentification extends GlobalMenu {
                 public void onCancelled(DatabaseError databaseError) {}
             });
         }
-            setResult(Activity.RESULT_OK);
-            finish();
+        setResult(Activity.RESULT_OK);
+        finish();
     }
 
 

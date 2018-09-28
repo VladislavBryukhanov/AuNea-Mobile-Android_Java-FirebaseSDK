@@ -101,7 +101,7 @@ public class UserList extends GlobalMenu {
         super.onActivityResult(requestCode, resultCode, data);
         if(requestCode == AUTH_SUCESS) {
             if(resultCode == Activity.RESULT_OK) {
-                initialiseData();
+                signIn();
             } else {
                 finish();
             }
