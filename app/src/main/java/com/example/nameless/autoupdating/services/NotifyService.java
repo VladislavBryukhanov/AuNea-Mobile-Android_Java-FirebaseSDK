@@ -59,6 +59,8 @@ public class NotifyService extends Service implements NetworkStateReceiver.Netwo
     private String interlocutor; //собеседник
     private Date disconnectTime;
 
+    private HashMap<String, Integer> usersId;
+
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
@@ -71,6 +73,7 @@ public class NotifyService extends Service implements NetworkStateReceiver.Netwo
         mAuth = FirebaseAuth.getInstance();
         refToListeners = new HashMap<>();
         timeOut = new HashMap<>();
+        usersId = new HashMap<>();
 
         interlocutor = "";
         isDisconnected = false;
@@ -223,9 +226,12 @@ public class NotifyService extends Service implements NetworkStateReceiver.Netwo
         });
     }
 
-    private void buildNotify(User to, Message msg, Bitmap largeIconBitmap) {
+    private void buildNotify(User who, Message msg, Bitmap largeIconBitmap) {
+        if(usersId.get(who.getUid()) == null) {
+            usersId.put(who.getUid(), usersId.size() + 1);
+        }
         Intent notificationIntent = new Intent(getApplicationContext(), Chat.class);
-        notificationIntent.putExtra("to", to);
+        notificationIntent.putExtra("to", who);
         notificationIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP
                 | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         PendingIntent intent = PendingIntent.getActivity(getApplicationContext(), 0,
@@ -233,7 +239,7 @@ public class NotifyService extends Service implements NetworkStateReceiver.Netwo
 
         final NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         final Notification.Builder builder = new Notification.Builder(getApplicationContext());
-        builder .setContentTitle(to.getLogin())
+        builder .setContentTitle(who.getLogin())
                 .setContentText(msg.getContent())
                 .setContentIntent(intent)
                 .setVibrate(new long[] { 400, 400 })
@@ -258,7 +264,7 @@ public class NotifyService extends Service implements NetworkStateReceiver.Netwo
         Notification notification = fullScreenNotify.build();
 //        notification.flags = Notification.FLAG_ONGOING_EVENT | Notification.FLAG_SHOW_LIGHTS | Notification.FLAG_INSISTENT;
 //        notification.flags |= Notification.FLAG_AUTO_CANCEL;
-        notificationManager.notify(1, notification);
+        notificationManager.notify(usersId.get(who.getUid()) , notification);
     }
 
     @Override

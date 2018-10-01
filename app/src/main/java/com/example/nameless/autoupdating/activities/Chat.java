@@ -98,6 +98,8 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
         lvMessages = findViewById(R.id.lvMessages);
         ivEdit = findViewById(R.id.ivEdit);
 
+        btnSend.setEnabled(false);
+        btnStartRec.setEnabled(false);
         messages = new ArrayList<>();
         Intent intent = getIntent();
         toUser = (User)intent.getSerializableExtra("to");
@@ -154,6 +156,9 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
 
                 adapter = new MessagesAdapter(getApplicationContext(), etMessage, messages, myRef);
                 lvMessages.setAdapter(adapter);
+
+                btnSend.setEnabled(true);
+                btnStartRec.setEnabled(true);
 
                 myRef.addChildEventListener(new ChildEventListener() {
                     @Override
@@ -257,10 +262,20 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
         btnStopRec.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                cancelRecord();
+                etMessage.setEnabled(true);
+                btnStartRec.setVisibility(View.VISIBLE);
+                btnStopRec.setVisibility(View.GONE);
+            }
+        });
+        btnStopRec.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View view) {
                 stopRecord();
                 etMessage.setEnabled(true);
                 btnStartRec.setVisibility(View.VISIBLE);
                 btnStopRec.setVisibility(View.GONE);
+                return true;
             }
         });
     }
@@ -397,10 +412,6 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
         final Uri file = Uri.fromFile(new File(getApplicationContext().getCacheDir()
                 + "AudioCache.3gp"));
 
-//        String extension = getContentResolver().getType(file);
-//        final String fileType = extension.split("/")[0];
-//        extension = "." + extension.split("/")[1];
-
         StorageReference riversRef = gsReference.child(UserList.myAcc
                 .getEmail() + "/audioRecords/" + java.util.UUID.randomUUID() + ".3gp");
         UploadTask uploadTask = riversRef.putFile(file);
@@ -425,6 +436,15 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
                 Toast.makeText(Chat.this, ":c", Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    public void cancelRecord() {
+        mediaRecorder.stop();
+        mediaRecorder.release();
+        mediaRecorder = null;
+        File audioCahce = new File(getApplicationContext().getCacheDir()
+                + "AudioCache.3gp");
+        audioCahce.delete();
     }
 
     public String getImageSides(Uri uri) {
