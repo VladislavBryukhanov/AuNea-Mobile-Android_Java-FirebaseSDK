@@ -359,7 +359,7 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
 //                Toast.makeText(this, fileType, Toast.LENGTH_SHORT).show();
 
 
-                StorageReference riversRef = gsReference.child(UserList.myAcc
+                StorageReference riversRef = gsReference.child(mAuth.getCurrentUser()
                         .getEmail() + "/images/" + java.util.UUID.randomUUID() + extension); //file.getLastPathSegment()
                 UploadTask uploadTask = riversRef.putFile(file);
 
@@ -412,7 +412,7 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
         final Uri file = Uri.fromFile(new File(getApplicationContext().getCacheDir()
                 + "AudioCache.3gp"));
 
-        StorageReference riversRef = gsReference.child(UserList.myAcc
+        StorageReference riversRef = gsReference.child(mAuth.getCurrentUser()
                 .getEmail() + "/audioRecords/" + java.util.UUID.randomUUID() + ".3gp");
         UploadTask uploadTask = riversRef.putFile(file);
 
