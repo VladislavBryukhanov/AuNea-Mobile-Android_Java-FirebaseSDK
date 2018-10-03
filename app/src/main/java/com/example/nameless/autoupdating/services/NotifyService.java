@@ -11,11 +11,14 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
+import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.target.SimpleTarget;
+import com.bumptech.glide.request.transition.Transition;
 import com.example.nameless.autoupdating.receivers.NetworkStateReceiver;
 import com.example.nameless.autoupdating.R;
 import com.example.nameless.autoupdating.activities.Chat;
@@ -30,8 +33,6 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
-import com.squareup.picasso.Picasso;
-import com.squareup.picasso.Target;
 
 import java.io.File;
 import java.util.Calendar;
@@ -112,11 +113,11 @@ public class NotifyService extends Service implements NetworkStateReceiver.Netwo
                             public void onChildAdded(DataSnapshot dataSnapshot, String s) {
 
                                 Message newMsg = dataSnapshot.getValue(Message.class);
-                                if (!(newMsg.getWho()).equals(interlocutor)
-                                        && (newMsg.getTo()).equals(mAuth.getUid())) {
-                                    if(!timeOut.get(foreignListenerTmp)) {
-                                        timeOut.put(foreignListenerTmp, true);
-                                    } else {
+                                if(!timeOut.get(foreignListenerTmp)) {
+                                    timeOut.put(foreignListenerTmp, true);
+                                } else {
+                                    if (!(newMsg.getWho()).equals(interlocutor)
+                                            && (newMsg.getTo()).equals(mAuth.getUid())) {
                                         sendNotify(newMsg);
                                     }
                                 }
@@ -192,28 +193,26 @@ public class NotifyService extends Service implements NetworkStateReceiver.Netwo
 
 
     public void sendNotify(final Message msg) {
-
         Query getUser = database.getReference("Users").orderByChild("uid").equalTo(msg.getWho());
         getUser.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 for(DataSnapshot data : dataSnapshot.getChildren()) {
                     final User user = data.getValue(User.class);
-
                     if(user.getAvatarUrl() != null) {
-                        Target target = new Target() {
-                            @Override
-                            public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
-                                buildNotify(user, msg, bitmap);
-                            }
-                            @Override
-                            public void onBitmapFailed(Drawable errorDrawable) {
-                            }
-                            @Override
-                            public void onPrepareLoad(Drawable placeHolderDrawable) {
-                            }
-                        };
-                        Picasso.with(getApplicationContext()).load(user.getAvatarUrl()).into(target);
+                        Toast.makeText(getApplicationContext(), "1.2", Toast.LENGTH_SHORT).show();
+                        Glide
+                            .with(getApplicationContext())
+                            .asBitmap()
+                            .load(user.getAvatarUrl())
+                            .into(new SimpleTarget<Bitmap>(96, 96) {
+                                @Override
+                                public void onResourceReady(Bitmap resource, Transition<? super Bitmap> transition) {
+                                    Toast.makeText(getApplicationContext(), "2", Toast.LENGTH_SHORT).show();
+                                    buildNotify(user, msg, resource);
+                                }
+                            });
+
                     } else {
                         BitmapDrawable bitmapDrawable = (BitmapDrawable)getDrawable(R.drawable.avatar);
                         Bitmap largeIconBitmap = bitmapDrawable.getBitmap();
