@@ -200,7 +200,6 @@ public class NotifyService extends Service implements NetworkStateReceiver.Netwo
                 for(DataSnapshot data : dataSnapshot.getChildren()) {
                     final User user = data.getValue(User.class);
                     if(user.getAvatarUrl() != null) {
-                        Toast.makeText(getApplicationContext(), "1.2", Toast.LENGTH_SHORT).show();
                         Glide
                             .with(getApplicationContext())
                             .asBitmap()
@@ -208,7 +207,6 @@ public class NotifyService extends Service implements NetworkStateReceiver.Netwo
                             .into(new SimpleTarget<Bitmap>(96, 96) {
                                 @Override
                                 public void onResourceReady(Bitmap resource, Transition<? super Bitmap> transition) {
-                                    Toast.makeText(getApplicationContext(), "2", Toast.LENGTH_SHORT).show();
                                     buildNotify(user, msg, resource);
                                 }
                             });

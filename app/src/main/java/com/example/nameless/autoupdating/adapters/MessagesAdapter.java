@@ -68,10 +68,13 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
     private ArrayList<Message> messages;
     private ArrayList<Message> filteredMessageList;
 
+    //TODO put in a separate class
     public static Pair<String, LinearLayout> runningAudio;
     public static MediaPlayer mediaPlayer;
     public static Handler trackDurationHandler;
+    public static Handler trackSeekBarHandler;
     public static LruCache<String, Bitmap> mMemoryCache;
+    public static int trackDuration;
 
 //    public static Picasso mPicasso;
 
