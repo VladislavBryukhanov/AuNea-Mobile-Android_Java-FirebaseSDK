@@ -135,14 +135,11 @@ public class Settings extends AppCompatActivity {
             avatar.setImageBitmap(BitmapFactory.decodeFile(UserList.myAcc.getAvatar()));
         }
 
-        avatar.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent();
-                intent.setType("image/*");
-                intent.setAction(Intent.ACTION_GET_CONTENT);
-                startActivityForResult(Intent.createChooser(intent, "Select Picture"), Chat.PICKFILE_RESULT_CODE);
-            }
+        avatar.setOnClickListener(v -> {
+            Intent intent = new Intent();
+            intent.setType("image/*");
+            intent.setAction(Intent.ACTION_GET_CONTENT);
+            startActivityForResult(Intent.createChooser(intent, "Select Picture"), Chat.PICKFILE_RESULT_CODE);
         });
     }
 
@@ -182,22 +179,19 @@ public class Settings extends AppCompatActivity {
                 .getEmail() + "/Avatar/" + java.util.UUID.randomUUID() + extension);
         UploadTask uploadTask = riversRef.putFile(avatarImage);
 
-        uploadTask.addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-            @Override
-            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                UserList.myAcc.setAvatarUrl(taskSnapshot.getDownloadUrl().toString());
-                myRef.child(data.getKey()).child("avatarUrl").setValue(UserList.myAcc.getAvatarUrl());
+        uploadTask.addOnSuccessListener(taskSnapshot -> {
+            UserList.myAcc.setAvatarUrl(taskSnapshot.getDownloadUrl().toString());
+            myRef.child(data.getKey()).child("avatarUrl").setValue(UserList.myAcc.getAvatarUrl());
 
-                DownloadAvatarByUrl downloadTask = new DownloadAvatarByUrl(avatar, UserList.myAcc, getApplication());
-                try {
-                    downloadTask.execute(UserList.myAcc.getAvatarUrl()).get();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                } catch (ExecutionException e) {
-                    e.printStackTrace();
-                }
-                Settings.this.finish();
+            DownloadAvatarByUrl downloadTask = new DownloadAvatarByUrl(avatar, UserList.myAcc, getApplication());
+            try {
+                downloadTask.execute(UserList.myAcc.getAvatarUrl()).get();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } catch (ExecutionException e) {
+                e.printStackTrace();
             }
+            Settings.this.finish();
         });
     }
 

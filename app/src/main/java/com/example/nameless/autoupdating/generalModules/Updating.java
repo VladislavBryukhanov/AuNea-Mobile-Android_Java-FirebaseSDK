@@ -37,18 +37,10 @@ public class Updating {
         StorageReference gsReference = storage.getReferenceFromUrl(
                 "gs://messager-d15a0.appspot.com/app-debug.apk");
         toInstall = new File(path, "app-update.apk");
-        gsReference.getFile(toInstall).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
-            @Override
-            public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
+        gsReference.getFile(toInstall).addOnSuccessListener(taskSnapshot -> {
 //                Toast.makeText(ma, "Success", Toast.LENGTH_SHORT).show();
-                updateApp();
-            }
-        }).addOnFailureListener(new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception e) {
-                Toast.makeText(ma, "Error", Toast.LENGTH_SHORT).show();
-            }
-        });
+            updateApp();
+        }).addOnFailureListener(e -> Toast.makeText(ma, "Error", Toast.LENGTH_SHORT).show());
     }
     public void updateApp() {
 

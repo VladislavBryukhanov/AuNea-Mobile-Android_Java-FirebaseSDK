@@ -288,14 +288,11 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
                 float dpi = getContext().getResources().getDisplayMetrics().density;
                 urlPart.setMaxWidth((int)(240 * dpi));
 
-                urlPart.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        Intent i = new Intent();
-                        i.setAction(Intent.ACTION_VIEW);
-                        i.setData(Uri.parse(findUrl));
-                        ma.startActivity(i);
-                    }
+                urlPart.setOnClickListener(v -> {
+                    Intent i = new Intent();
+                    i.setAction(Intent.ACTION_VIEW);
+                    i.setData(Uri.parse(findUrl));
+                    ma.startActivity(i);
                 });
 
       /*          urlPart.setOnTouchListener(new View.OnTouchListener() {
@@ -312,12 +309,7 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
             }
         }
 
-        (convertView.findViewById(R.id.msgItem)).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                showPopupMenu(v, message);
-            }
-        });
+        (convertView.findViewById(R.id.msgItem)).setOnClickListener(v -> showPopupMenu(v, message));
 
         TextView tvContent = convertView.findViewById(R.id.tvContent);
         if(msg.length() > 0) {
@@ -347,49 +339,35 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
         final PopupWindow popupWindow = new PopupWindow(popupView, ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT, true);
         popupWindow.showAtLocation(view, Gravity.CENTER, 0, 0);
-        popupView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                popupWindow.dismiss();
-            }
-        });
+        popupView.setOnClickListener(v -> popupWindow.dismiss());
         Button btnCopy = popupView.findViewById(R.id.btnCopy);
         Button btnEdit= popupView.findViewById(R.id.btnEdit);
         Button btnDelete= popupView.findViewById(R.id.btnDelete);
 
-        btnCopy.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                ClipboardManager clipboard = (ClipboardManager)ma.getSystemService(Context.CLIPBOARD_SERVICE);
-                ClipData clip = ClipData.newPlainText("buff", ((TextView)view.findViewById(R.id.tvContent)).getText());
-                clipboard.setPrimaryClip(clip);
-                popupWindow.dismiss();
-            }
+        btnCopy.setOnClickListener(v -> {
+            ClipboardManager clipboard = (ClipboardManager)ma.getSystemService(Context.CLIPBOARD_SERVICE);
+            ClipData clip = ClipData.newPlainText("buff", ((TextView)view.findViewById(R.id.tvContent)).getText());
+            clipboard.setPrimaryClip(clip);
+            popupWindow.dismiss();
         });
-        btnEdit.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        btnEdit.setOnClickListener(v -> {
 //                FirebaseStorage storage = FirebaseStorage.getInstance();
 //                StorageReference edRef = storage.getReferenceFromUrl(msg.getFileUrl());
 
-                Chat.onEdit(msg);
-                popupWindow.dismiss();
-            }
+            Chat.onEdit(msg);
+            popupWindow.dismiss();
         });
-        btnDelete.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if(msg.getFileUrl() != null ) {
-                    FirebaseStorage storage = FirebaseStorage.getInstance();
-                    StorageReference delRef = storage.getReferenceFromUrl(msg.getFileUrl());
-                    delRef.delete();
-                    //Мб можно еще и с устройства удалить, но лень
-                }
-                myRef.child(msg.getUid()).removeValue();
-                messages.remove(msg);
-                notifyDataSetChanged();
-                popupWindow.dismiss();
+        btnDelete.setOnClickListener(v -> {
+            if(msg.getFileUrl() != null ) {
+                FirebaseStorage storage = FirebaseStorage.getInstance();
+                StorageReference delRef = storage.getReferenceFromUrl(msg.getFileUrl());
+                delRef.delete();
+                //Мб можно еще и с устройства удалить, но лень
             }
+            myRef.child(msg.getUid()).removeValue();
+            messages.remove(msg);
+            notifyDataSetChanged();
+            popupWindow.dismiss();
         });
     }
 }

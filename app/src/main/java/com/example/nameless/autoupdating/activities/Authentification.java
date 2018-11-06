@@ -81,12 +81,9 @@ public class Authentification extends GlobalMenu {
         mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
         mAuth = FirebaseAuth.getInstance();
 
-        btnSignIn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent signInIntent = mGoogleSignInClient.getSignInIntent();
-                startActivityForResult(signInIntent, RC_SIGN_IN);
-            }
+        btnSignIn.setOnClickListener(v -> {
+            Intent signInIntent = mGoogleSignInClient.getSignInIntent();
+            startActivityForResult(signInIntent, RC_SIGN_IN);
         });
     }
 
@@ -120,16 +117,13 @@ public class Authentification extends GlobalMenu {
     private void firebaseAuthWithGoogle(GoogleSignInAccount acct) {
         AuthCredential credential = GoogleAuthProvider.getCredential(acct.getIdToken(), null);
         mAuth.signInWithCredential(credential)
-            .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
-                @Override
-                public void onComplete(@NonNull Task<AuthResult> task) {
-                if (task.isSuccessful()) {
-                    UserList.myAcc = new User(mAuth.getUid(), String.valueOf(etLogin.getText()));
-                    signUp();
-                } else {
-                    Toast.makeText(Authentification.this, ":(9(9((", Toast.LENGTH_SHORT).show();
-                }
-                }
+            .addOnCompleteListener(this, task -> {
+            if (task.isSuccessful()) {
+                UserList.myAcc = new User(mAuth.getUid(), String.valueOf(etLogin.getText()));
+                signUp();
+            } else {
+                Toast.makeText(Authentification.this, ":(9(9((", Toast.LENGTH_SHORT).show();
+            }
             });
     }
 

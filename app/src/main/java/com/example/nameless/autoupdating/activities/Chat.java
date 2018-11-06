@@ -205,12 +205,7 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
                 }
             });
 
-        btnAffixFile.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                showPopupWindow(v);
-            }
-        });
+        btnAffixFile.setOnClickListener(v -> showPopupWindow(v));
 
         etMessage.addTextChangedListener(new TextWatcher() {
             @Override
@@ -231,52 +226,40 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
             public void afterTextChanged(Editable s) {}
         });
 
-        btnSend.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if(messageForEditing != null) {
-                    messageForEditing.setContent(String.valueOf(etMessage.getText()));
-                    parseMessageContent(messageForEditing);
-                    messageForEditing = null;
-                    etMessage.setText("");
-                    ivEdit.setVisibility(View.GONE);
-                    return;
-                }
-//                if (!(String.valueOf(etMessage.getText()).trim()).equals("")) {
-                Message newMsg = new Message(String.valueOf(etMessage.getText()), null,
-                        new Date(), mAuth.getUid(), toUser.getUid(), null, null, false);
-                parseMessageContent(newMsg);
-//                }
+        btnSend.setOnClickListener(v -> {
+            if(messageForEditing != null) {
+                messageForEditing.setContent(String.valueOf(etMessage.getText()));
+                parseMessageContent(messageForEditing);
+                messageForEditing = null;
+                etMessage.setText("");
+                ivEdit.setVisibility(View.GONE);
+                return;
             }
+//                if (!(String.valueOf(etMessage.getText()).trim()).equals("")) {
+            Message newMsg = new Message(String.valueOf(etMessage.getText()), null,
+                    new Date(), mAuth.getUid(), toUser.getUid(), null, null, false);
+            parseMessageContent(newMsg);
+//                }
         });
 
-        btnStartRec.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startRecord();
-                etMessage.setEnabled(false);
-                btnStartRec.setVisibility(View.GONE);
-                btnStopRec.setVisibility(View.VISIBLE);
-            }
+        btnStartRec.setOnClickListener(v -> {
+            startRecord();
+            etMessage.setEnabled(false);
+            btnStartRec.setVisibility(View.GONE);
+            btnStopRec.setVisibility(View.VISIBLE);
         });
-        btnStopRec.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                cancelRecord();
-                etMessage.setEnabled(true);
-                btnStartRec.setVisibility(View.VISIBLE);
-                btnStopRec.setVisibility(View.GONE);
-            }
+        btnStopRec.setOnClickListener(v -> {
+            cancelRecord();
+            etMessage.setEnabled(true);
+            btnStartRec.setVisibility(View.VISIBLE);
+            btnStopRec.setVisibility(View.GONE);
         });
-        btnStopRec.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View view) {
-                stopRecord();
-                etMessage.setEnabled(true);
-                btnStartRec.setVisibility(View.VISIBLE);
-                btnStopRec.setVisibility(View.GONE);
-                return true;
-            }
+        btnStopRec.setOnLongClickListener(view -> {
+            stopRecord();
+            etMessage.setEnabled(true);
+            btnStartRec.setVisibility(View.VISIBLE);
+            btnStopRec.setVisibility(View.GONE);
+            return true;
         });
     }
 
@@ -363,21 +346,13 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
                         .getEmail() + "/images/" + java.util.UUID.randomUUID() + extension); //file.getLastPathSegment()
                 UploadTask uploadTask = riversRef.putFile(file);
 
-                uploadTask.addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-                    @Override
-                    public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                        Message newMsg = new Message(String.valueOf(etMessage.getText()), taskSnapshot.getDownloadUrl().toString(),
-                                new Date(), mAuth.getUid(), toUser.getUid(), fileType, fileMediaSides, false);
-                        parseMessageContent(newMsg);
-                    }
+                uploadTask.addOnSuccessListener(taskSnapshot -> {
+                    Message newMsg = new Message(String.valueOf(etMessage.getText()), taskSnapshot.getDownloadUrl().toString(),
+                            new Date(), mAuth.getUid(), toUser.getUid(), fileType, fileMediaSides, false);
+                    parseMessageContent(newMsg);
                 });
 
-                uploadTask.addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        Toast.makeText(Chat.this, ":c", Toast.LENGTH_SHORT).show();
-                    }
-                });
+                uploadTask.addOnFailureListener(e -> Toast.makeText(Chat.this, ":c", Toast.LENGTH_SHORT).show());
             }
         }
 
@@ -392,9 +367,7 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
 
         try {
             mediaRecorder.prepare();
-        } catch (IllegalStateException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
+        } catch (IllegalStateException | IOException e) {
             e.printStackTrace();
         }
         mediaRecorder.start();
@@ -416,26 +389,18 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
                 .getEmail() + "/audioRecords/" + java.util.UUID.randomUUID() + ".3gp");
         UploadTask uploadTask = riversRef.putFile(file);
 
-        uploadTask.addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-            @Override
-            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                Message newMsg = new Message(String.valueOf(etMessage.getText()), taskSnapshot.getDownloadUrl().toString(),
-                        new Date(), mAuth.getUid(), toUser.getUid(), "audio", null, false);
-                parseMessageContent(newMsg);
+        uploadTask.addOnSuccessListener(taskSnapshot -> {
+            Message newMsg = new Message(String.valueOf(etMessage.getText()), taskSnapshot.getDownloadUrl().toString(),
+                    new Date(), mAuth.getUid(), toUser.getUid(), "audio", null, false);
+            parseMessageContent(newMsg);
 
-                File fdelete = new File(file.getPath());
-                if (fdelete.exists()) {
-                    fdelete.delete();
-                }
+            File fdelete = new File(file.getPath());
+            if (fdelete.exists()) {
+                fdelete.delete();
             }
         });
 
-        uploadTask.addOnFailureListener(new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception e) {
-                Toast.makeText(Chat.this, ":c", Toast.LENGTH_SHORT).show();
-            }
-        });
+        uploadTask.addOnFailureListener(e -> Toast.makeText(Chat.this, ":c", Toast.LENGTH_SHORT).show());
     }
 
     public void cancelRecord() {
@@ -499,16 +464,13 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
             DownloadAvatarByUrl downloadTask = new DownloadAvatarByUrl(alienAvatar, toUser, getApplication());
             downloadTask.execute(toUser.getAvatarUrl());
         }
-        alienAvatar.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(getApplicationContext(), AlienPage.class);
-                intent.putExtra("to", toUser);
-                startActivity(intent);
-            }
+        alienAvatar.setOnClickListener(v -> {
+            Intent intent = new Intent(getApplicationContext(), AlienPage.class);
+            intent.putExtra("to", toUser);
+            startActivity(intent);
         });
     }
-    public void showPopupWindow(View v) {
+    public void showPopupWindow(View view) {
 
         LayoutInflater layoutInflater
                 = (LayoutInflater)getApplicationContext()
@@ -517,20 +479,13 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
 
         final PopupWindow popupWindow = new PopupWindow(popupView, ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT, true);
-        popupWindow.showAtLocation(v, Gravity.CENTER, 0, 0);
-        popupView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                popupWindow.dismiss();
-            }
-        });
+        popupWindow.showAtLocation(view, Gravity.CENTER, 0, 0);
+        popupView.setOnClickListener(v -> popupWindow.dismiss());
         Button btnCamera = popupView.findViewById(R.id.btnCamera);
         Button btnGallery = popupView.findViewById(R.id.btnGallery);
         Button btnDevice = popupView.findViewById(R.id.btnDevice);
 
-        btnCamera.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        btnCamera.setOnClickListener(v -> {
             Intent i = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
             ContentValues values = new ContentValues();
             values.put(MediaStore.Images.Media.TITLE, "New Picture");
@@ -539,34 +494,27 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
             i.putExtra(MediaStore.EXTRA_OUTPUT, imgUri);
             startActivityForResult(i, CAMERA_REQUEST);
             popupWindow.dismiss();
-            }
         });
 
-        btnGallery.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        btnGallery.setOnClickListener(v -> {
             Intent intent = new Intent();
             intent.setType("image/*");
             intent.setAction(Intent.ACTION_GET_CONTENT);
             startActivityForResult(Intent.createChooser(intent, "Select Picture"), PICKFILE_RESULT_CODE);
 
-//             Intent intent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-//            Intent intent = new Intent(Intent.ACTION_GET_CONTENT, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-//            intent.setType("image/*");
-//            startActivityForResult(Intent.createChooser(intent, "Select Picture"), PICKFILE_RESULT_CODE);
+    //             Intent intent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+    //            Intent intent = new Intent(Intent.ACTION_GET_CONTENT, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+    //            intent.setType("image/*");
+    //            startActivityForResult(Intent.createChooser(intent, "Select Picture"), PICKFILE_RESULT_CODE);
             popupWindow.dismiss();
-            }
         });
 
-        btnDevice.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent();
-                intent.setType("*/*");
-                intent.setAction(Intent.ACTION_GET_CONTENT);
-                startActivityForResult(intent, PICKFILE_RESULT_CODE);
-                popupWindow.dismiss();
-            }
+        btnDevice.setOnClickListener(v -> {
+            Intent intent = new Intent();
+            intent.setType("*/*");
+            intent.setAction(Intent.ACTION_GET_CONTENT);
+            startActivityForResult(intent, PICKFILE_RESULT_CODE);
+            popupWindow.dismiss();
         });
     }
 

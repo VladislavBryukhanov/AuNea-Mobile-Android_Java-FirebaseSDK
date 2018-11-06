@@ -98,12 +98,7 @@ public class GlobalMenu extends AppCompatActivityWithInternetStatusListener {
                 AlertDialog.Builder builder = new AlertDialog.Builder(this);
                 builder.setTitle("Current version");
                 builder.setMessage("Application's version: " + myVersion);
-                builder.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        dialogInterface.cancel();
-                    }
-                });
+                builder.setPositiveButton("Ok", (dialogInterface, i) -> dialogInterface.cancel());
                 AlertDialog dialog = builder.create();
                 dialog.setCancelable(true);
                 dialog.show();

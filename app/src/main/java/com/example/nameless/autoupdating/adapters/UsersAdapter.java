@@ -60,9 +60,7 @@ public class UsersAdapter extends ArrayAdapter<User>  implements Filterable{
                         BitmapFactory.decodeResource(getContext().getResources(), R.drawable.avatar));
                 try {
                     downloadTask.execute(filteredUserList.get(position).getAvatarUrl()).get();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                } catch (ExecutionException e) {
+                } catch (InterruptedException | ExecutionException e) {
                     e.printStackTrace();
                 }
 /*                CircleImageView avatar = convertView.findViewById(R.id.profile_image);

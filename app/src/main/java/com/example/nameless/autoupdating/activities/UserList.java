@@ -213,13 +213,10 @@ public class UserList extends GlobalMenu {
             }
         });
 
-        lvUsers.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Intent intent = new Intent(getApplicationContext(), Chat.class);
-                intent.putExtra("to", users.get(position));
-                startActivity(intent);
-            }
+        lvUsers.setOnItemClickListener((parent, view, position, id) -> {
+            Intent intent = new Intent(getApplicationContext(), Chat.class);
+            intent.putExtra("to", users.get(position));
+            startActivity(intent);
         });
 
         etSearch.addTextChangedListener(new TextWatcher() {

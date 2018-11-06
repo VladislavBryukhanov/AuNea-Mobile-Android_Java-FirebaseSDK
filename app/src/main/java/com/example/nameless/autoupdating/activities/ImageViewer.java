@@ -49,23 +49,20 @@ public class ImageViewer extends AppCompatActivity {
         });*/
 
         imgViewer.setImageBitmap(BitmapFactory.decodeFile(path));
-        imgViewer.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View view, MotionEvent motionEvent) {
+        imgViewer.setOnTouchListener((view, motionEvent) -> {
 //                scaling.onTouchEvent(motionEvent);
-                switch(motionEvent.getAction()){
-                    case MotionEvent.ACTION_DOWN:{
-                        xy1 = new Pair<>( motionEvent.getX(), motionEvent.getY());
-                        break;
-                    }
-                    case MotionEvent.ACTION_UP:{
-                        xy2 = new Pair<>( motionEvent.getX(), motionEvent.getY());
-                        getSide();
-                        break;
-                    }
+            switch(motionEvent.getAction()){
+                case MotionEvent.ACTION_DOWN:{
+                    xy1 = new Pair<>( motionEvent.getX(), motionEvent.getY());
+                    break;
                 }
-                return true;
+                case MotionEvent.ACTION_UP:{
+                    xy2 = new Pair<>( motionEvent.getX(), motionEvent.getY());
+                    getSide();
+                    break;
+                }
             }
+            return true;
         });
     }
 

@@ -180,13 +180,10 @@ public class DownloadMediaFIle extends AsyncTask<String, Void, Bitmap> {
         }
 
         if (!file.exists()) {
-            fileReference.getFile(file).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
-                @Override
-                public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
-                    DownloadMediaFIle downloadTask = new DownloadMediaFIle(
-                            bmImage, pbLoading, audioUI, parentContext, fileType);
-                    downloadTask.execute(url);
-                }
+            fileReference.getFile(file).addOnSuccessListener(taskSnapshot -> {
+                DownloadMediaFIle downloadTask = new DownloadMediaFIle(
+                        bmImage, pbLoading, audioUI, parentContext, fileType);
+                downloadTask.execute(url);
             });
             return null;
         } else {
@@ -213,13 +210,10 @@ public class DownloadMediaFIle extends AsyncTask<String, Void, Bitmap> {
     }
 
     private void setImageOnClickListener(final String path) {
-        bmImage.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(parentContext, ImageViewer.class);
-                intent.putExtra("bitmap", Uri.parse(path));
-                parentContext.startActivity(intent);
-            }
+        bmImage.setOnClickListener(v -> {
+            Intent intent = new Intent(parentContext, ImageViewer.class);
+            intent.putExtra("bitmap", Uri.parse(path));
+            parentContext.startActivity(intent);
         });
     }
 
@@ -232,47 +226,34 @@ public class DownloadMediaFIle extends AsyncTask<String, Void, Bitmap> {
         trackDuration = Integer.parseInt(durationStr);
 
         trackSeekBar.setMax(trackDuration);
-        audioButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                try {
-                    if(MessagesAdapter.mediaPlayer.isPlaying() && url.equals(
-                            MessagesAdapter.runningAudio.first)) {
+        audioButton.setOnClickListener(v -> {
+            try {
+                if(MessagesAdapter.mediaPlayer.isPlaying() && url.equals(
+                        MessagesAdapter.runningAudio.first)) {
 //                        MessagesAdapter.mediaPlayer.pause();
-                        stopTrack(true);
+                    stopTrack(true);
 
-                    } else {
-                        stopTrack(false);
-                        MessagesAdapter.mediaPlayer.setDataSource(path);
-                        MessagesAdapter.mediaPlayer.prepare();
-                        MessagesAdapter.mediaPlayer.start();
-                        MessagesAdapter.mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-                            @Override
-                            public void onCompletion(MediaPlayer mp) {
-                                stopTrack(true);
-                            }
-                        });
-                        setDurationSeek();
-                        audioButton.setImageDrawable(ResourcesCompat.getDrawable(
-                                parentContext.getResources(),
-                                R.drawable.audio_pause_button, null));
-                        MessagesAdapter.runningAudio = new Pair<>(url, audioUI);
-                        MessagesAdapter.trackDuration = trackDuration;
+                } else {
+                    stopTrack(false);
+                    MessagesAdapter.mediaPlayer.setDataSource(path);
+                    MessagesAdapter.mediaPlayer.prepare();
+                    MessagesAdapter.mediaPlayer.start();
+                    MessagesAdapter.mediaPlayer.setOnCompletionListener(mp -> stopTrack(true));
+                    setDurationSeek();
+                    audioButton.setImageDrawable(ResourcesCompat.getDrawable(
+                            parentContext.getResources(),
+                            R.drawable.audio_pause_button, null));
+                    MessagesAdapter.runningAudio = new Pair<>(url, audioUI);
+                    MessagesAdapter.trackDuration = trackDuration;
 
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
                 }
+            } catch (IOException e) {
+                e.printStackTrace();
             }
         });
         if(MessagesAdapter.runningAudio != null && url.equals(MessagesAdapter.runningAudio.first)) {
             isTrackPlaying = true;
-            MessagesAdapter.mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-                @Override
-                public void onCompletion(MediaPlayer mp) {
-                    stopTrack(true);
-                }
-            });
+            MessagesAdapter.mediaPlayer.setOnCompletionListener(mp -> stopTrack(true));
             return drawableItemToBitmap(R.drawable.audio_pause_button);
         } else {
             isTrackPlaying = false;
@@ -361,13 +342,10 @@ public class DownloadMediaFIle extends AsyncTask<String, Void, Bitmap> {
 
 
     private Bitmap setVideoFile(final String url) {
-        bmImage.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(parentContext, VideoPlayer.class);
-                intent.putExtra("videoUrl", url);
-                parentContext.startActivity(intent);
-            }
+        bmImage.setOnClickListener(v -> {
+            Intent intent = new Intent(parentContext, VideoPlayer.class);
+            intent.putExtra("videoUrl", url);
+            parentContext.startActivity(intent);
         });
 //        Bitmap img = ThumbnailUtils.createVideoThumbnail(url, MediaStore.Video.Thumbnails.MINI_KIND);
 

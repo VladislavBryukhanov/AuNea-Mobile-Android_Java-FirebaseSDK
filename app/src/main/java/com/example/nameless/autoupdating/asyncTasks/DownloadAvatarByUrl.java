@@ -93,13 +93,10 @@ public class DownloadAvatarByUrl extends AsyncTask<String, Void, Bitmap> {
         final File imgFile = new File(path, fileReference.getName());
 
         if (!imgFile.exists()) {
-            fileReference.getFile(imgFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
-                @Override
-                public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
-                    Bitmap bmp = BitmapFactory.decodeFile(imgFile.getPath());
-                    user.setAvatar(imgFile.getPath());
-                     onPostExecute(bmp);
-                }
+            fileReference.getFile(imgFile).addOnSuccessListener(taskSnapshot -> {
+                Bitmap bmp = BitmapFactory.decodeFile(imgFile.getPath());
+                user.setAvatar(imgFile.getPath());
+                 onPostExecute(bmp);
             });
         } else {
             user.setAvatar(imgFile.getPath());

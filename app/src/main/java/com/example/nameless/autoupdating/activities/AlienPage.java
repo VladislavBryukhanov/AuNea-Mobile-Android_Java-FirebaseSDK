@@ -51,18 +51,12 @@ public class AlienPage extends GlobalMenu {
             try {
                 downloadTask.execute(user.getAvatarUrl()).get();
 
-                avatar.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-
-                        Intent intent = new Intent(getApplicationContext(), ImageViewer.class);
-                        intent.putExtra("bitmap", Uri.parse(user.getAvatar()));
-                        startActivity(intent);
-                    }
+                avatar.setOnClickListener(v -> {
+                    Intent intent1 = new Intent(getApplicationContext(), ImageViewer.class);
+                    intent1.putExtra("bitmap", Uri.parse(user.getAvatar()));
+                    startActivity(intent1);
                 });
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            } catch (ExecutionException e) {
+            } catch (InterruptedException | ExecutionException e) {
                 e.printStackTrace();
             }
         }
