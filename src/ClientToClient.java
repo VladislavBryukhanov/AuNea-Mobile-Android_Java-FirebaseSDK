@@ -1,45 +1,15 @@
 import java.net.InetAddress;
-import java.util.HashMap;
 
 public class ClientToClient {
 
-    private String firstUser;
-    private String secondUser;
     private InetAddress firstUserIP;
     private int firstUserPort;
     private InetAddress secondUserIP;
     private int secondUserPort;
-    private boolean isConnected;
 
-    public ClientToClient() {}
-
-    public ClientToClient(String firstUser, String secondUser) {
-        this.firstUser = firstUser;
-        this.secondUser = secondUser;
-    }
-
-    public boolean isConnected() {
-        return isConnected;
-    }
-
-    public void setConnected(boolean connected) {
-        isConnected = connected;
-    }
-
-    public String getFirstUser() {
-        return firstUser;
-    }
-
-    public void setFirstUser(String firstUser) {
-        this.firstUser = firstUser;
-    }
-
-    public String getSecondUser() {
-        return secondUser;
-    }
-
-    public void setSecondUser(String secondUser) {
-        this.secondUser = secondUser;
+    ClientToClient(InetAddress firstUserIP, int firstUserPort) {
+        this.firstUserIP = firstUserIP;
+        this.firstUserPort = firstUserPort;
     }
 
     public InetAddress getFirstUserIP() {

@@ -1,21 +1,13 @@
-import com.google.gson.Gson;
-
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.net.*;
-import java.util.ArrayList;
-import java.util.HashMap;
 
 public class UDPServer {
 
     public static DatagramSocket udpSocket;
     private final int port = 2891;
-    private HashMap<String, ClientToClient> dialogs;
 
     public UDPServer() throws SocketException {
-        this.udpSocket = new DatagramSocket(port);
-        dialogs = new HashMap<>();
+        udpSocket = new DatagramSocket(port);
     }
 
     private void listen() throws IOException {
@@ -25,34 +17,20 @@ public class UDPServer {
             DatagramPacket packet = new DatagramPacket(buf, buf.length);
             udpSocket.receive(packet);
 
-            String json = new String(packet.getData()).trim();
-            ClientToClient ctc = new Gson().fromJson(json, ClientToClient.class);
-            if(dialogs.containsKey(ctc.getFirstUser())) {
-                String key = ctc.getFirstUser();
-                ctc = dialogs.get(key);
-                ctc.setSecondUserIP(packet.getAddress());
-                ctc.setSecondUserPort(packet.getPort());
-                ctc.setConnected(true);
-                ServerThread st = new ServerThread(ctc);
-                st.start();
-                dialogs.remove(key);
-            } else {
-                ctc.setFirstUserIP(packet.getAddress());
-                ctc.setFirstUserPort(packet.getPort());
-                dialogs.put(ctc.getFirstUser(), ctc);
-                ctc.setConnected(false);
-            }
+            ClientToClient ctc = new ClientToClient(
+                    packet.getAddress(),
+                    packet.getPort());
+            ServerThread st = new ServerThread(ctc);
+            st.start();
         }
     }
+
     public static void main(String[] args) {
         try {
             UDPServer serv = new UDPServer();
             serv.listen();
-        } catch (SocketException e) {
-            e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
-
 }
