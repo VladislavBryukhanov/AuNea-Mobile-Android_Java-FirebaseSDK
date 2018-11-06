@@ -2,12 +2,9 @@ package com.example.nameless.autoupdating.services;
 
 import android.app.Service;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import com.example.nameless.autoupdating.activities.VoiceCalling;
-import com.example.nameless.autoupdating.receivers.NetworkStateReceiver;
-import com.example.nameless.autoupdating.models.ClientToClient;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
@@ -16,7 +13,6 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -63,9 +59,8 @@ public class CallService extends Service {
                                 String dialogChannel = (String)dataSnapshot.getValue();
                                 if(!dialogChannel.equals(VoiceCalling.CALLING_STATE)) {
                                     Intent intent = new Intent(getApplicationContext(), VoiceCalling.class);
-                                    ClientToClient ctc = new ClientToClient((String)dataSnapshot.getValue(), mAuth.getUid());
-                                    intent.putExtra("dialog", ctc);
-                                    intent.putExtra("action", dataSnapshot.getKey());
+                                    intent.putExtra("action", VoiceCalling.INCOMING_CALL_ACTION);
+                                    intent.putExtra("privateRoomPort", dialogChannel);
                                     startActivity(intent);
                                 }
                             }

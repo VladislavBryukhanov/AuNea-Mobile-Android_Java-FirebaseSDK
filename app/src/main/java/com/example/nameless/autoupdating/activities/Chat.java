@@ -325,7 +325,7 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
                 Intent intent = new Intent(getApplicationContext(), VoiceCalling.class);
                 ClientToClient ctc = new ClientToClient(mAuth.getUid(), toUser.getUid());
                 intent.putExtra("dialog", ctc);
-                intent.putExtra("action", "call");
+                intent.putExtra("action", VoiceCalling.OUTGOING_CALL_ACTION);
                 startActivity(intent);
                 break;
             }

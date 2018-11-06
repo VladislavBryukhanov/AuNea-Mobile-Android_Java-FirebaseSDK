@@ -38,9 +38,14 @@ public class WriteVoiceStream {
     private int port;
 
     public WriteVoiceStream(int port) {
-        this.port = port;
-
         try {
+            this.port = port;
+            recorder = new AudioRecord(
+                MediaRecorder.AudioSource.MIC,
+                sampleRate,
+                channelConfig,
+                audioFormat,
+                minBufSize * 10);
             socket = new DatagramSocket();
         } catch (SocketException e) {
             e.printStackTrace();
@@ -62,18 +67,10 @@ public class WriteVoiceStream {
         socket.close();
     }
 
-    public void startStreaming() throws IOException {
+    private void startStreaming() throws IOException {
         DatagramPacket packet;
-        recorder = new AudioRecord(
-                MediaRecorder.AudioSource.MIC,
-                sampleRate,
-                channelConfig,
-                audioFormat,
-                minBufSize * 10);
         recorder.startRecording();
-
         while(status) {
-//            minBufSize = recorder.read(buffer, 0, buffer.length);
             recorder.read(buffer, 0, buffer.length);
             packet = new DatagramPacket (buffer, buffer.length, UserList.voiceStreamServerIpAddress, port);
             socket.send(packet);
