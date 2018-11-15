@@ -1,6 +1,7 @@
 package com.example.nameless.autoupdating.services;
 
 import android.app.Notification;
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -11,7 +12,9 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
+import android.media.AudioAttributes;
 import android.net.Uri;
+import android.os.Build;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.widget.Toast;
@@ -46,6 +49,10 @@ import java.util.Map;
 
 public class NotifyService extends Service implements NetworkStateReceiver.NetworkStateReceiverListener {
 
+    private final String notifyChannelId = "notifyChannelId";
+    private Uri notifySoundUri;
+    private boolean isSoundEnabled;
+
     private FirebaseDatabase database;
     private DatabaseReference myRef;
     private HashMap<String, Boolean> timeOut; //первым childAdded всегда будет последнее отправленное нам сообщение во время диалога, пропускаем его
@@ -70,6 +77,11 @@ public class NotifyService extends Service implements NetworkStateReceiver.Netwo
 
     @Override
     public void onCreate() {
+        notifySoundUri = Uri.parse(ContentResolver.SCHEME_ANDROID_RESOURCE
+                + "://" + getApplicationContext().getPackageName() + File.separator + R.raw.notify);
+        SharedPreferences settings = getSharedPreferences(Settings.APP_PREFERENCES, Context.MODE_PRIVATE);
+        isSoundEnabled = settings.getBoolean(Settings.IS_NOTIFY_ENABLED, false);
+
         database = FirebaseDatabase.getInstance();
         mAuth = FirebaseAuth.getInstance();
         refToListeners = new HashMap<>();
@@ -234,31 +246,46 @@ public class NotifyService extends Service implements NetworkStateReceiver.Netwo
         PendingIntent intent = PendingIntent.getActivity(getApplicationContext(), 0,
                 notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
-        final NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        final NotificationManager notificationManager =
+                (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         final Notification.Builder builder = new Notification.Builder(getApplicationContext());
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+
+            NotificationChannel mChannel = new NotificationChannel(
+                    who.getUid(), notifyChannelId, NotificationManager.IMPORTANCE_HIGH);
+
+            AudioAttributes audioAttributes = new AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
+                    .build();
+
+            mChannel.setSound(notifySoundUri, audioAttributes);
+//            if(isSoundEnabled) {
+//                mChannel.setSound(notifySoundUri, audioAttributes);
+//            }
+            notificationManager.createNotificationChannel(mChannel);
+            builder.setChannelId(who.getUid());
+        }
+
         builder .setContentTitle(who.getLogin())
                 .setContentText(msg.getContent())
                 .setContentIntent(intent)
-                .setVibrate(new long[] { 400, 400 })
                 .setAutoCancel(true)
                 .setLargeIcon(largeIconBitmap)
                 .setShowWhen(true)
+                .setDefaults(Notification.DEFAULT_VIBRATE)
                 .setWhen(Calendar.getInstance().getTimeInMillis())
-                .setSmallIcon(R.drawable.send2);
+                .setSmallIcon(R.drawable.send2)
+                .setPriority(Notification.PRIORITY_HIGH);
 
-        SharedPreferences settings = getSharedPreferences(Settings.APP_PREFERENCES, Context.MODE_PRIVATE);
-        if(settings.getBoolean(Settings.IS_NOTIFY_ENABLED, false)) {
-            builder.setSound(Uri.parse(ContentResolver.SCHEME_ANDROID_RESOURCE+ "://" + getApplicationContext()
-                    .getPackageName() + File.separator + R.raw.notify));
+        if(isSoundEnabled) {
+            builder.setSound(notifySoundUri);
         } else {
             builder.setDefaults(Notification.DEFAULT_ALL);
         }
 
-        Notification.Builder fullScreenNotify = builder;
-//        fullScreenNotify.setFullScreenIntent(intent, true);
-        fullScreenNotify.setPriority(Notification.PRIORITY_HIGH);
-
-        Notification notification = fullScreenNotify.build();
+//        builder.setFullScreenIntent(intent, true);
+        Notification notification = builder.build();
 //        notification.flags = Notification.FLAG_ONGOING_EVENT | Notification.FLAG_SHOW_LIGHTS | Notification.FLAG_INSISTENT;
 //        notification.flags |= Notification.FLAG_AUTO_CANCEL;
         notificationManager.notify(usersId.get(who.getUid()) , notification);
