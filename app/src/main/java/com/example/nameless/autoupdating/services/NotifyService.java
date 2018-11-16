@@ -11,12 +11,14 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.media.AudioAttributes;
 import android.net.Uri;
 import android.os.Build;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
+import android.support.v4.app.NotificationCompat;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
@@ -51,7 +53,6 @@ public class NotifyService extends Service implements NetworkStateReceiver.Netwo
 
     private final String notifyChannelId = "notifyChannelId";
     private Uri notifySoundUri;
-    private boolean isSoundEnabled;
 
     private FirebaseDatabase database;
     private DatabaseReference myRef;
@@ -79,8 +80,6 @@ public class NotifyService extends Service implements NetworkStateReceiver.Netwo
     public void onCreate() {
         notifySoundUri = Uri.parse(ContentResolver.SCHEME_ANDROID_RESOURCE
                 + "://" + getApplicationContext().getPackageName() + File.separator + R.raw.notify);
-        SharedPreferences settings = getSharedPreferences(Settings.APP_PREFERENCES, Context.MODE_PRIVATE);
-        isSoundEnabled = settings.getBoolean(Settings.IS_NOTIFY_ENABLED, false);
 
         database = FirebaseDatabase.getInstance();
         mAuth = FirebaseAuth.getInstance();
@@ -244,28 +243,32 @@ public class NotifyService extends Service implements NetworkStateReceiver.Netwo
         notificationIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP
                 | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         PendingIntent intent = PendingIntent.getActivity(getApplicationContext(), 0,
-                notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+                notificationIntent, PendingIntent.FLAG_ONE_SHOT);
 
         final NotificationManager notificationManager =
                 (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        final Notification.Builder builder = new Notification.Builder(getApplicationContext());
 
+        NotificationCompat.Builder builder  = new NotificationCompat.Builder(this, who.getUid());
+/*
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
 
-            NotificationChannel mChannel = new NotificationChannel(
-                    who.getUid(), notifyChannelId, NotificationManager.IMPORTANCE_HIGH);
+            // channel not working
 
-            AudioAttributes audioAttributes = new AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
-                    .build();
-
-            mChannel.setSound(notifySoundUri, audioAttributes);
+//            NotificationChannel mChannel = new NotificationChannel(
+//                    who.getUid(), notifyChannelId, NotificationManager.IMPORTANCE_HIGH);
+//
 //            if(isSoundEnabled) {
+//                AudioAttributes audioAttributes = new AudioAttributes.Builder()
+//                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+//                        .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+//                        .build();
 //                mChannel.setSound(notifySoundUri, audioAttributes);
 //            }
-            notificationManager.createNotificationChannel(mChannel);
+//
+//            notificationManager.createNotificationChannel(mChannel);
             builder.setChannelId(who.getUid());
         }
+*/
 
         builder .setContentTitle(who.getLogin())
                 .setContentText(msg.getContent())
@@ -278,10 +281,12 @@ public class NotifyService extends Service implements NetworkStateReceiver.Netwo
                 .setSmallIcon(R.drawable.send2)
                 .setPriority(Notification.PRIORITY_HIGH);
 
+        SharedPreferences settings = getSharedPreferences(Settings.APP_PREFERENCES, Context.MODE_PRIVATE);
+        boolean isSoundEnabled = settings.getBoolean(Settings.IS_NOTIFY_ENABLED, false);
         if(isSoundEnabled) {
             builder.setSound(notifySoundUri);
         } else {
-            builder.setDefaults(Notification.DEFAULT_ALL);
+            builder.setDefaults(Notification.DEFAULT_SOUND);
         }
 
 //        builder.setFullScreenIntent(intent, true);

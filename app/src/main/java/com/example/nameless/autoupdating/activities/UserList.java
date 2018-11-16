@@ -19,6 +19,7 @@ import android.widget.Toast;
 
 import com.example.nameless.autoupdating.asyncTasks.DownloadAvatarByUrl;
 import com.example.nameless.autoupdating.generalModules.GlobalMenu;
+import com.example.nameless.autoupdating.receivers.NetworkStateReceiver;
 import com.example.nameless.autoupdating.services.CallService;
 import com.example.nameless.autoupdating.services.NotifyService;
 import com.example.nameless.autoupdating.R;
@@ -47,7 +48,7 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.concurrent.ExecutionException;
 
-public class UserList extends GlobalMenu {
+public class UserList extends GlobalMenu implements NetworkStateReceiver.NetworkStateReceiverListener {
 
     public static User myAcc;
     public static InetAddress voiceStreamServerIpAddress;
@@ -63,7 +64,7 @@ public class UserList extends GlobalMenu {
     private DatabaseReference myRef;
     private FirebaseAuth mAuth;
 
-    private final int AUTH_SUCESS = 789;
+    private final int AUTH_SUCCESS = 789;
 
 
     @Override
@@ -78,7 +79,6 @@ public class UserList extends GlobalMenu {
         adapter = new UsersAdapter(this, users);
         lvUsers.setAdapter(adapter);
 
-//        FirebaseDatabase.getInstance().setPersistenceEnabled(true);
         mAuth = FirebaseAuth.getInstance();
         FirebaseUser currentUser = mAuth.getCurrentUser();
 
@@ -86,7 +86,7 @@ public class UserList extends GlobalMenu {
             signIn();
         } else {
             Intent i = new Intent(UserList.this, Authentification.class);
-            startActivityForResult(i, AUTH_SUCESS);
+            startActivityForResult(i, AUTH_SUCCESS);
         }
     }
 
@@ -99,7 +99,7 @@ public class UserList extends GlobalMenu {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if(requestCode == AUTH_SUCESS) {
+        if(requestCode == AUTH_SUCCESS) {
             if(resultCode == Activity.RESULT_OK) {
                 signIn();
             } else {
@@ -122,7 +122,7 @@ public class UserList extends GlobalMenu {
         final DatabaseReference connectedRef = FirebaseDatabase
                 .getInstance()
                 .getReference(".info/connected");
-        connectedRef.addValueEventListener(new ValueEventListener() {
+        connectedRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(final DataSnapshot snapshot) {
 
@@ -170,10 +170,10 @@ public class UserList extends GlobalMenu {
         myRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                for (DataSnapshot user : dataSnapshot.getChildren()) {
+                for (DataSnapshot data : dataSnapshot.getChildren()) {
                     try {
                         voiceStreamServerIpAddress = InetAddress.getByName(
-                            user.getValue().toString());
+                            data.getValue().toString());
                     } catch (UnknownHostException e) {
                         e.printStackTrace();
                     }
@@ -280,5 +280,15 @@ public class UserList extends GlobalMenu {
             @Override
             public void onCancelled(DatabaseError databaseError) {}
         });
+    }
+
+    @Override
+    public void networkAvailable() {
+        setStatus();
+    }
+
+    @Override
+    public void networkUnavailable() {
+
     }
 }
