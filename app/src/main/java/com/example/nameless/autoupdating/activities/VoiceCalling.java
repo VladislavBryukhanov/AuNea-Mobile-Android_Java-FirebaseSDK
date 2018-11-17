@@ -7,6 +7,7 @@ import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.annotation.NonNull;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
@@ -27,6 +28,9 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
+
+import java.io.IOException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 
 public class VoiceCalling extends AppCompatActivity {
@@ -55,7 +59,6 @@ public class VoiceCalling extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_voice_calling);
 
-
         btnAccept = findViewById(R.id.btnAccept);
         btnReject = findViewById(R.id.btnReject);
 
@@ -81,15 +84,15 @@ public class VoiceCalling extends AppCompatActivity {
                     btnReject.setLayoutParams(lp);
                     btnAccept.setVisibility(View.GONE);
 
-                    initConnection(ctc.getSecondUser());
+                    createConnection(ctc.getSecondUser());
 
                     beep = MediaPlayer.create(getBaseContext(), R.raw.beep);
                     beep.setLooping(true);
                     beep.start();
                 } else if (action.equals(VoiceCalling.INCOMING_CALL_ACTION)) {
                     privateRoomPort = Integer.parseInt(intent.getStringExtra("privateRoomPort"));
-                    client = new UDPClient(UserList.voiceStreamServerIpAddress, privateRoomPort, () -> onReject());
-                    client.createPrivateStream("secondCon");
+                    initConnection(privateRoomPort, true);
+
                     Uri notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE);
                     ringtone = RingtoneManager.getRingtone(getApplicationContext(), notification);
                     ringtone.play();
@@ -98,7 +101,7 @@ public class VoiceCalling extends AppCompatActivity {
             @Override
             public void onChildChanged(DataSnapshot dataSnapshot, String s) {
                 if(!dataSnapshot.child("voiceCall").exists()) {
-                    closeConnection();
+                    onReject();
                 }
             }
             @Override
@@ -122,7 +125,7 @@ public class VoiceCalling extends AppCompatActivity {
     private void onAccept() {
         myRef.setValue(CALLING_STATE).addOnCompleteListener(task -> {
             ringtone.stop();
-            createConnection();
+            startVoip();
         });
     }
 
@@ -139,7 +142,40 @@ public class VoiceCalling extends AppCompatActivity {
         closeConnection();
     }
 
-    private void initConnection(final String who) {
+    private void initConnection(int port, boolean isConnection) {
+        try {
+            Thread th = new Thread(() -> {
+                try {
+                    client = new UDPClient(UserList.voiceStreamServerIpAddress, port);
+                    if (isConnection) {
+                            client.connectToPrivateStream("newConnection");
+                    } else {
+                        privateRoomPort = client.createPrivateStream("init");
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    this.onReject();
+//                    throw new RuntimeException();
+                }
+            });
+            th.start();
+            th.join();
+
+//            th.setUncaughtExceptionHandler((thread, throwable) -> {
+//                throwable.printStackTrace();
+//                Toast.makeText(VoiceCalling.this,
+//                        "Server is not available", Toast.LENGTH_SHORT).show();
+//                this.onReject();
+//            });
+        } catch (InterruptedException e) {
+            /*Toast.makeText(VoiceCalling.this,
+                    "Server is not available", Toast.LENGTH_SHORT).show();
+            this.onReject();*/
+            e.printStackTrace();
+        }
+    }
+
+    private void createConnection(final String who) {
         Query getUser = FirebaseDatabase.getInstance()
                 .getReference("Users")
                 .orderByChild("uid")
@@ -153,16 +189,9 @@ public class VoiceCalling extends AppCompatActivity {
                             .child(data.getKey())
                             .child("voiceCall");
                     if(action.equals(VoiceCalling.OUTGOING_CALL_ACTION)) {
-                        client = new UDPClient(
-                                UserList.voiceStreamServerIpAddress,
-                                UserList.voiceStreamServerPort,
-                                () -> onReject());
-                        privateRoomPort = client.createPrivateStream("firstCon");
-
-                        if (privateRoomPort < 0) {
-                            Toast.makeText(VoiceCalling.this, "Server is not available", Toast.LENGTH_SHORT).show();
-                            return;
-                        }
+                        //creating of channel and get his port
+                        initConnection(UserList.voiceStreamServerPort, false);
+                        initConnection(privateRoomPort, true);
 
                         Handler rejectHandler = new Handler();
                         rejectHandler.postDelayed(() -> onReject(), 30000); // calling timeout
@@ -177,10 +206,10 @@ public class VoiceCalling extends AppCompatActivity {
                                 String value = (String)(dataSnapshot.getValue());
                                 if (key == null || value == null) {
                                     onReject();
-                                } else  if(key.equals("voiceCall") && value.equals(CALLING_STATE)) {
+                                } else if(key.equals("voiceCall") && value.equals(CALLING_STATE)) {
                                     beep.stop();
                                     rejectHandler.removeCallbacksAndMessages(null);
-                                    createConnection();
+                                    startVoip();
                                 }
                             }
                             @Override
@@ -204,7 +233,7 @@ public class VoiceCalling extends AppCompatActivity {
         });
     }
 
-    private void createConnection() {
+    private void startVoip() {
         Thread streamThread = new Thread(() -> {
             Thread writerThread = new Thread(() -> {
                 voiceWriter = new WriteVoiceStream(privateRoomPort);

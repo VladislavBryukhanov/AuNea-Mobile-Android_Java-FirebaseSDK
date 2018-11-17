@@ -59,7 +59,7 @@ public class GlobalMenu extends AppCompatActivity {
             e.printStackTrace();
         }
 //        Production only, need add paging (limitToLast)
-        FirebaseDatabase.getInstance().setPersistenceEnabled(true);
+//        FirebaseDatabase.getInstance().setPersistenceEnabled(true);
         myVersion = pInfo.versionName;
         database = FirebaseDatabase.getInstance();
         mAuth = FirebaseAuth.getInstance();
