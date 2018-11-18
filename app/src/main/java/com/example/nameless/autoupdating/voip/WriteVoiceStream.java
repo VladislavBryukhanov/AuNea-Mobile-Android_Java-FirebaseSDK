@@ -17,6 +17,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.net.SocketException;
 
 /**
@@ -35,11 +36,13 @@ public class WriteVoiceStream {
     private int audioFormat = AudioFormat.ENCODING_PCM_8BIT;
     private boolean status = true;
 
+    private InetAddress voiceStreamServerIpAddress;
     private int port;
 
-    public WriteVoiceStream(int port) {
+    public WriteVoiceStream(InetAddress voiceStreamServerIpAddress, int port) {
         try {
             this.port = port;
+            this.voiceStreamServerIpAddress = voiceStreamServerIpAddress;
             recorder = new AudioRecord(
                 MediaRecorder.AudioSource.MIC,
                 sampleRate,
@@ -72,7 +75,7 @@ public class WriteVoiceStream {
         recorder.startRecording();
         while(status) {
             recorder.read(buffer, 0, buffer.length);
-            packet = new DatagramPacket (buffer, buffer.length, UserList.voiceStreamServerIpAddress, port);
+            packet = new DatagramPacket (buffer, buffer.length, voiceStreamServerIpAddress, port);
             socket.send(packet);
         }
 

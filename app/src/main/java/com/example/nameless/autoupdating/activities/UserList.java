@@ -51,9 +51,6 @@ import java.util.concurrent.ExecutionException;
 public class UserList extends GlobalMenu implements NetworkStateReceiver.NetworkStateReceiverListener {
 
     public static User myAcc;
-    public static InetAddress voiceStreamServerIpAddress;
-    public static int voiceStreamServerPort = 2891;
-
 
     private EditText etSearch;
     private ListView lvUsers;
@@ -165,24 +162,6 @@ public class UserList extends GlobalMenu implements NetworkStateReceiver.Network
     private void initialiseData() {
 
         database = FirebaseDatabase.getInstance();
-
-        myRef = database.getReference("Server");
-        myRef.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                for (DataSnapshot data : dataSnapshot.getChildren()) {
-                    try {
-                        voiceStreamServerIpAddress = InetAddress.getByName(
-                            data.getValue().toString());
-                    } catch (UnknownHostException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {}
-        });
 
         myRef = database.getReference("Users");
 

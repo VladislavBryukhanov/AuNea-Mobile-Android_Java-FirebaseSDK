@@ -7,6 +7,7 @@ import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.annotation.NonNull;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
@@ -29,10 +30,14 @@ import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 
 public class VoiceCalling extends AppCompatActivity {
+    public static int voiceStreamServerPort = 2891;
+    public static InetAddress voiceStreamServerIpAddress;
 
     public static final String CALLING_STATE = "calling...";
     public static final String INCOMING_CALL_ACTION = "incoming_call";
@@ -64,13 +69,65 @@ public class VoiceCalling extends AppCompatActivity {
         final Intent intent = getIntent();
         action = intent.getStringExtra("action");
 
+        myRef = FirebaseDatabase.getInstance().getReference("Server");
+        myRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                for (DataSnapshot data : dataSnapshot.getChildren()) {
+                    try {
+                        voiceStreamServerIpAddress = InetAddress.getByName(
+                                data.getValue().toString());
+
+                        initAction(intent);
+
+                        btnAccept.setOnClickListener(view -> {
+                            CoordinatorLayout.LayoutParams lp = (CoordinatorLayout.LayoutParams) btnReject.getLayoutParams();
+                            lp.anchorGravity = Gravity.CENTER;
+                            btnReject.setLayoutParams(lp);
+                            btnAccept.setVisibility(View.GONE);
+                            onAccept();
+                        });
+                        btnReject.setOnClickListener(view -> onReject());
+
+                    } catch (UnknownHostException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {}
+        });
+    }
+
+    private void onAccept() {
+        myRef.setValue(CALLING_STATE).addOnCompleteListener(task -> {
+            ringtone.stop();
+            startVoip();
+        });
+    }
+
+    private void onReject() {
+        if(connectionListener != null) {
+            toRef.removeEventListener(connectionListener);
+        }
+        if(toRef != null) {
+            toRef.removeValue();
+        }
+        if(myRef != null) {
+            myRef.removeValue();
+        }
+        closeConnection();
+    }
+
+    private void initAction(Intent intent) {
         Query getUser = FirebaseDatabase.getInstance()
                 .getReference("Users")
                 .orderByChild("uid")
                 .equalTo(FirebaseAuth.getInstance().getUid());
         getUser.addChildEventListener(new ChildEventListener() {
             @Override
-            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+            public void onChildAdded(@NonNull DataSnapshot dataSnapshot, String s) {
                 myRef = FirebaseDatabase.getInstance()
                         .getReference("Users")
                         .child(dataSnapshot.getKey())
@@ -98,47 +155,18 @@ public class VoiceCalling extends AppCompatActivity {
                 }
             }
             @Override
-            public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+            public void onChildChanged(@NonNull DataSnapshot dataSnapshot, String s) {
                 if(!dataSnapshot.child("voiceCall").exists()) {
                     onReject();
                 }
             }
             @Override
-            public void onChildRemoved(DataSnapshot dataSnapshot) {}
+            public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {}
             @Override
-            public void onChildMoved(DataSnapshot dataSnapshot, String s) {}
+            public void onChildMoved(@NonNull DataSnapshot dataSnapshot, String s) {}
             @Override
-            public void onCancelled(DatabaseError databaseError) {}
+            public void onCancelled(@NonNull DatabaseError databaseError) {}
         });
-
-        btnAccept.setOnClickListener(view -> {
-            CoordinatorLayout.LayoutParams lp = (CoordinatorLayout.LayoutParams) btnReject.getLayoutParams();
-            lp.anchorGravity = Gravity.CENTER;
-            btnReject.setLayoutParams(lp);
-            btnAccept.setVisibility(View.GONE);
-            onAccept();
-        });
-        btnReject.setOnClickListener(view -> onReject());
-    }
-
-    private void onAccept() {
-        myRef.setValue(CALLING_STATE).addOnCompleteListener(task -> {
-            ringtone.stop();
-            startVoip();
-        });
-    }
-
-    private void onReject() {
-        if(connectionListener != null) {
-            toRef.removeEventListener(connectionListener);
-        }
-        if(toRef != null) {
-            toRef.removeValue();
-        }
-        if(myRef != null) {
-            myRef.removeValue();
-        }
-        closeConnection();
     }
 
     private boolean initConnection(int port, boolean isConnection) {
@@ -146,7 +174,7 @@ public class VoiceCalling extends AppCompatActivity {
         try {
             Thread th = new Thread(() -> {
                 try {
-                    client = new UDPClient(UserList.voiceStreamServerIpAddress, port);
+                    client = new UDPClient(voiceStreamServerIpAddress, port);
                     if (isConnection) {
                             client.connectToPrivateStream("newConnection");
                     } else {
@@ -183,7 +211,7 @@ public class VoiceCalling extends AppCompatActivity {
                             .child("voiceCall");
                     if(action.equals(VoiceCalling.OUTGOING_CALL_ACTION)) {
                         //creating of channel and get his port
-                        initConnection(UserList.voiceStreamServerPort, false);
+                        initConnection(voiceStreamServerPort, false);
                         //if connection can not created - stop calling
                         if (!initConnection(privateRoomPort, true)) {
                             Toast.makeText(VoiceCalling.this,
@@ -234,7 +262,7 @@ public class VoiceCalling extends AppCompatActivity {
     private void startVoip() {
         Thread streamThread = new Thread(() -> {
             Thread writerThread = new Thread(() -> {
-                voiceWriter = new WriteVoiceStream(privateRoomPort);
+                voiceWriter = new WriteVoiceStream(voiceStreamServerIpAddress, privateRoomPort);
                 voiceWriter.start();
                 onReject();
             });
