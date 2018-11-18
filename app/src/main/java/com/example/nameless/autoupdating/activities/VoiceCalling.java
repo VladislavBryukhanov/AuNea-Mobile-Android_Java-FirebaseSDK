@@ -7,7 +7,6 @@ import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.annotation.NonNull;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
@@ -30,7 +29,7 @@ import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
 import java.io.IOException;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 
 public class VoiceCalling extends AppCompatActivity {
@@ -142,7 +141,8 @@ public class VoiceCalling extends AppCompatActivity {
         closeConnection();
     }
 
-    private void initConnection(int port, boolean isConnection) {
+    private boolean initConnection(int port, boolean isConnection) {
+        AtomicBoolean resultStatus = new AtomicBoolean(true);
         try {
             Thread th = new Thread(() -> {
                 try {
@@ -154,25 +154,18 @@ public class VoiceCalling extends AppCompatActivity {
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
+                    resultStatus.set(false);
                     this.onReject();
 //                    throw new RuntimeException();
                 }
             });
             th.start();
             th.join();
-
-//            th.setUncaughtExceptionHandler((thread, throwable) -> {
-//                throwable.printStackTrace();
-//                Toast.makeText(VoiceCalling.this,
-//                        "Server is not available", Toast.LENGTH_SHORT).show();
-//                this.onReject();
-//            });
         } catch (InterruptedException e) {
-            /*Toast.makeText(VoiceCalling.this,
-                    "Server is not available", Toast.LENGTH_SHORT).show();
-            this.onReject();*/
+            resultStatus.set(false);
             e.printStackTrace();
         }
+        return resultStatus.get();
     }
 
     private void createConnection(final String who) {
@@ -191,7 +184,12 @@ public class VoiceCalling extends AppCompatActivity {
                     if(action.equals(VoiceCalling.OUTGOING_CALL_ACTION)) {
                         //creating of channel and get his port
                         initConnection(UserList.voiceStreamServerPort, false);
-                        initConnection(privateRoomPort, true);
+                        //if connection can not created - stop calling
+                        if (!initConnection(privateRoomPort, true)) {
+                            Toast.makeText(VoiceCalling.this,
+                                    "Server is not available", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
 
                         Handler rejectHandler = new Handler();
                         rejectHandler.postDelayed(() -> onReject(), 30000); // calling timeout
