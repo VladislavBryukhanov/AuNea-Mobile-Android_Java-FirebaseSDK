@@ -51,7 +51,10 @@ import java.util.Map;
 
 public class NotifyService extends Service implements NetworkStateReceiver.NetworkStateReceiverListener {
 
-    private final String notifyChannelId = "notifyChannelId";
+    private final String NOTIFY_CHANNEL_NAME = "NOTIFY_CHANNEL_ID";
+    private final String DEFAULT_SOUND_CHANNEL = "DEFAULT_SOUND_CHANNEL";
+    private final String CUSTOM_SOUND_CHANNEL = "CUSTOM_SOUND_CHANNEL";
+
     private Uri notifySoundUri;
 
     private FirebaseDatabase database;
@@ -238,6 +241,10 @@ public class NotifyService extends Service implements NetworkStateReceiver.Netwo
         if(usersId.get(who.getUid()) == null) {
             usersId.put(who.getUid(), usersId.size() + 1);
         }
+        SharedPreferences settings = getSharedPreferences(Settings.APP_PREFERENCES, Context.MODE_PRIVATE);
+        boolean isSoundEnabled = settings.getBoolean(Settings.IS_NOTIFY_ENABLED, false);
+        String channelId = isSoundEnabled ? CUSTOM_SOUND_CHANNEL : DEFAULT_SOUND_CHANNEL;
+
         Intent notificationIntent = new Intent(getApplicationContext(), Chat.class);
         notificationIntent.putExtra("to", who);
         notificationIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP
@@ -245,30 +252,25 @@ public class NotifyService extends Service implements NetworkStateReceiver.Netwo
         PendingIntent intent = PendingIntent.getActivity(getApplicationContext(), 0,
                 notificationIntent, PendingIntent.FLAG_ONE_SHOT);
 
-        final NotificationManager notificationManager =
+        NotificationManager notificationManager =
                 (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        Notification.Builder builder = new Notification.Builder(getApplicationContext());
 
-        NotificationCompat.Builder builder  = new NotificationCompat.Builder(this, who.getUid());
-/*
+        // Impossible to change exists channel (can not change channel sound) and then i create second channel
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel mChannel = new NotificationChannel(
+                    channelId, NOTIFY_CHANNEL_NAME, NotificationManager.IMPORTANCE_HIGH);
 
-            // channel not working
+            AudioAttributes audioAttributes = new AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
+                    .build();
 
-//            NotificationChannel mChannel = new NotificationChannel(
-//                    who.getUid(), notifyChannelId, NotificationManager.IMPORTANCE_HIGH);
-//
-//            if(isSoundEnabled) {
-//                AudioAttributes audioAttributes = new AudioAttributes.Builder()
-//                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-//                        .setUsage(AudioAttributes.USAGE_NOTIFICATION)
-//                        .build();
-//                mChannel.setSound(notifySoundUri, audioAttributes);
-//            }
-//
-//            notificationManager.createNotificationChannel(mChannel);
-            builder.setChannelId(who.getUid());
+            if(isSoundEnabled) {
+                mChannel.setSound(notifySoundUri, audioAttributes);
+            }
+            notificationManager.createNotificationChannel(mChannel);
+            builder.setChannelId(channelId);
         }
-*/
 
         builder .setContentTitle(who.getLogin())
                 .setContentText(msg.getContent())
@@ -281,8 +283,6 @@ public class NotifyService extends Service implements NetworkStateReceiver.Netwo
                 .setSmallIcon(R.drawable.send2)
                 .setPriority(Notification.PRIORITY_HIGH);
 
-        SharedPreferences settings = getSharedPreferences(Settings.APP_PREFERENCES, Context.MODE_PRIVATE);
-        boolean isSoundEnabled = settings.getBoolean(Settings.IS_NOTIFY_ENABLED, false);
         if(isSoundEnabled) {
             builder.setSound(notifySoundUri);
         } else {
