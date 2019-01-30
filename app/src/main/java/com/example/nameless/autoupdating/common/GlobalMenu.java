@@ -1,6 +1,5 @@
-package com.example.nameless.autoupdating.generalModules;
+package com.example.nameless.autoupdating.common;
 
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;

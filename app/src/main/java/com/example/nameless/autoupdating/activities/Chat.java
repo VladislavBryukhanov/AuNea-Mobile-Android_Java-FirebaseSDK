@@ -7,13 +7,14 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.media.MediaRecorder;
 import android.net.Uri;
-import android.os.Environment;
+import android.os.Parcelable;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.v7.app.ActionBar;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -30,16 +31,15 @@ import android.widget.TextView;
 import android.widget.Toast;
 //import android.widget.Toolbar;
 
-import com.example.nameless.autoupdating.generalModules.AppCompatActivityWithInternetStatusListener;
+import com.example.nameless.autoupdating.common.AppCompatActivityWithInternetStatusListener;
 import com.example.nameless.autoupdating.asyncTasks.DownloadAvatarByUrl;
+import com.example.nameless.autoupdating.common.InfiniteScroll;
 import com.example.nameless.autoupdating.services.NotifyService;
 import com.example.nameless.autoupdating.R;
 import com.example.nameless.autoupdating.adapters.MessagesAdapter;
 import com.example.nameless.autoupdating.models.ClientToClient;
 import com.example.nameless.autoupdating.models.Message;
 import com.example.nameless.autoupdating.models.User;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
@@ -108,22 +108,11 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
         myRef = database.getReference("Messages");
 
         setActionBar();
-        lvMessages.setTranscriptMode(ListView.TRANSCRIPT_MODE_NORMAL);
-        lvMessages.setStackFromBottom(true); // if dialog started first time need false
-
+//        lvMessages.setTranscriptMode(ListView.TRANSCRIPT_MODE_NORMAL);
+//        lvMessages.setStackFromBottom(true); // if dialog started first time need false
 
 //todo с помощью запроса получить название таблицы, которае содержит подстроку - логин нашего профиля, вместо поиска через листенер
 //todo time to live for messages
-//todo paging/cache
-//todo authorise, cookie, security for dialogs
-//todo оптимизация алгоритма выборки, разобраться какой расход трафика при выборке, что такое датаснэпшот, является ли он полностью готовым пришедшим с сервера пакетом данных или делает динамические запросы на выборку
-//todo сохранение состояниея при повороте экрана
-//todo каскадное удаление
-//todo add services
-//todo add message notify
-// todo last online
-//todo media sending
-
 
         myRef.addListenerForSingleValueEvent(new ValueEventListener() {
 
@@ -160,11 +149,53 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
                 btnSend.setEnabled(true);
                 btnStartRec.setEnabled(true);
 
-                myRef.addChildEventListener(new ChildEventListener() {
+//                myRef.addChildEventListener(new ChildEventListener() {
+//                    @Override
+//                    public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+//                        messages.add(new Message(dataSnapshot.getKey(), dataSnapshot.getValue(Message.class)));
+//                        adapter.notifyDataSetChanged();
+//                    }
+//
+//                    @Override
+//                    public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+//                        for (int i=0; i<messages.size(); i++) {
+//                            if(((messages.get(i)).getUid()).equals(dataSnapshot.getKey())) {
+//                                messages.set(i, new Message(dataSnapshot.getKey(), dataSnapshot.getValue(Message.class)));
+//                                adapter.notifyDataSetChanged();
+//                            }
+//                        }
+//                    }
+//
+//                    @Override
+//                    public void onChildRemoved(DataSnapshot dataSnapshot) {
+//                        Iterator<Message> itr = messages.iterator();
+//                        while(itr.hasNext()) {
+//                            Message message = itr.next();
+//                            if(message.getUid().equals(dataSnapshot.getKey())) {
+//                                itr.remove();
+//                                adapter.notifyDataSetChanged();
+//                            }
+//                        }
+//                    }
+//
+//                    @Override
+//                    public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+//                    }
+//
+//                    @Override
+//                    public void onCancelled(DatabaseError databaseError) {
+//                    }
+//                });
+
+                final int COUNT_FOR_ONE_DOWNLOADS = 30;
+
+                Query query = myRef.limitToLast(COUNT_FOR_ONE_DOWNLOADS);
+                // TODO количество прогрузок = количеству висящих сокетов? это будет под сотню сокетов, зато они будут реагировать на удаление и редактирование
+                query.addChildEventListener(new ChildEventListener() {
                     @Override
                     public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-                        messages.add(new Message(dataSnapshot.getKey(), dataSnapshot.getValue(Message.class)));
-                        adapter.notifyDataSetChanged();
+//                        messages.add(new Message(dataSnapshot.getKey(), dataSnapshot.getValue(Message.class)));
+//                        adapter.notifyDataSetChanged();
                     }
 
                     @Override
@@ -190,20 +221,69 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
                     }
 
                     @Override
-                    public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+                    public void onChildMoved(DataSnapshot dataSnapshot, String s) {}
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {}
+                });
+
+                query.addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                        for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                            messages.add(new Message(snapshot.getKey(), snapshot.getValue(Message.class)));
+                        }
+                        adapter.notifyDataSetChanged();
+
+                        lvMessages.setOnScrollListener(new InfiniteScroll(COUNT_FOR_ONE_DOWNLOADS) {
+                            @Override
+                            public void nextPage(int page, int itemsCount) {
+//                                Toast.makeText(Chat.this, ""+itemsCount, Toast.LENGTH_SHORT).show();
+                                Log.d("++++++++++++++++", ""+page);
+                                String lastKey = messages.get(0).getUid();
+                                Query query = myRef.orderByKey().endAt(lastKey).limitToLast(COUNT_FOR_ONE_DOWNLOADS);
+                                // TODO количество прогрузок = количеству висящих сокетов? это будет под сотню сокетов, зато они будут реагировать на удаление и редактирование
+                                query.addListenerForSingleValueEvent(new ValueEventListener() {
+
+                                    @Override
+                                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                                        ArrayList<Message> revertedCollection = new ArrayList<>();
+                                        for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                                            revertedCollection.add(new Message(snapshot.getKey(), snapshot.getValue(Message.class)));
+                                        }
+                                        revertedCollection.remove(revertedCollection.size() - 1);
+                                        messages.addAll(0, revertedCollection);
+                                        runOnUiThread(new Runnable() {
+                                            public void run() {
+                                                Parcelable state = lvMessages.onSaveInstanceState();
+                                                adapter.notifyDataSetChanged();
+                                                InfiniteScroll.setFetching(false);
+                                                lvMessages.onRestoreInstanceState(state);
+                                            }
+                                        });
+                                    }
+
+                                    @Override
+                                    public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                                    }
+                                });
+                            }
+                        });
                     }
 
                     @Override
-                    public void onCancelled(DatabaseError databaseError) {
+                    public void onCancelled(@NonNull DatabaseError databaseError) {
+
                     }
                 });
             }
 
-                @Override
-                public void onCancelled(DatabaseError databaseError) {
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
 
-                }
-            });
+            }
+        });
 
         btnAffixFile.setOnClickListener(v -> showPopupWindow(v));
 

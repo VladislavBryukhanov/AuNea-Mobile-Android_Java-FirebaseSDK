@@ -4,31 +4,22 @@ import android.app.Activity;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.BitmapFactory;
 import android.os.Bundle;
-import android.os.Environment;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.Menu;
-import android.view.View;
-import android.widget.AdapterView;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.ListView;
-import android.widget.Toast;
 
-import com.example.nameless.autoupdating.asyncTasks.DownloadAvatarByUrl;
-import com.example.nameless.autoupdating.generalModules.GlobalMenu;
+import com.example.nameless.autoupdating.common.GlobalMenu;
 import com.example.nameless.autoupdating.receivers.NetworkStateReceiver;
 import com.example.nameless.autoupdating.services.CallService;
 import com.example.nameless.autoupdating.services.NotifyService;
 import com.example.nameless.autoupdating.R;
 import com.example.nameless.autoupdating.adapters.UsersAdapter;
-import com.example.nameless.autoupdating.models.ClientToClient;
 import com.example.nameless.autoupdating.models.User;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -39,14 +30,11 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
 import java.io.File;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Locale;
-import java.util.concurrent.ExecutionException;
 
 public class UserList extends GlobalMenu implements NetworkStateReceiver.NetworkStateReceiverListener {
 
