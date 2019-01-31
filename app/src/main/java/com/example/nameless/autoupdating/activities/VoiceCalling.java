@@ -16,6 +16,7 @@ import android.view.View;
 import android.widget.Toast;
 
 import com.example.nameless.autoupdating.R;
+import com.example.nameless.autoupdating.generalModules.FirebaseSingleton;
 import com.example.nameless.autoupdating.voip.ListenVoiceStream;
 import com.example.nameless.autoupdating.voip.UDPClient;
 import com.example.nameless.autoupdating.voip.WriteVoiceStream;
@@ -69,7 +70,7 @@ public class VoiceCalling extends AppCompatActivity {
         final Intent intent = getIntent();
         action = intent.getStringExtra("action");
 
-        myRef = FirebaseDatabase.getInstance().getReference("Server");
+        myRef = FirebaseSingleton.getFirebaseInstanse().getReference("Server");
         myRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
@@ -121,14 +122,14 @@ public class VoiceCalling extends AppCompatActivity {
     }
 
     private void initAction(Intent intent) {
-        Query getUser = FirebaseDatabase.getInstance()
+        Query getUser = FirebaseSingleton.getFirebaseInstanse()
                 .getReference("Users")
                 .orderByChild("uid")
                 .equalTo(FirebaseAuth.getInstance().getUid());
         getUser.addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(@NonNull DataSnapshot dataSnapshot, String s) {
-                myRef = FirebaseDatabase.getInstance()
+                myRef = FirebaseSingleton.getFirebaseInstanse()
                         .getReference("Users")
                         .child(dataSnapshot.getKey())
                         .child("voiceCall");
@@ -197,7 +198,7 @@ public class VoiceCalling extends AppCompatActivity {
     }
 
     private void createConnection(final String who) {
-        Query getUser = FirebaseDatabase.getInstance()
+        Query getUser = FirebaseSingleton.getFirebaseInstanse()
                 .getReference("Users")
                 .orderByChild("uid")
                 .equalTo(who);
@@ -205,7 +206,7 @@ public class VoiceCalling extends AppCompatActivity {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 for(DataSnapshot data : dataSnapshot.getChildren()) {
-                    toRef = FirebaseDatabase.getInstance()
+                    toRef = FirebaseSingleton.getFirebaseInstanse()
                             .getReference("Users")
                             .child(data.getKey())
                             .child("voiceCall");

@@ -24,6 +24,7 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.SimpleTarget;
 import com.bumptech.glide.request.transition.Transition;
+import com.example.nameless.autoupdating.generalModules.FirebaseSingleton;
 import com.example.nameless.autoupdating.receivers.NetworkStateReceiver;
 import com.example.nameless.autoupdating.R;
 import com.example.nameless.autoupdating.activities.Chat;
@@ -84,7 +85,7 @@ public class NotifyService extends Service implements NetworkStateReceiver.Netwo
         notifySoundUri = Uri.parse(ContentResolver.SCHEME_ANDROID_RESOURCE
                 + "://" + getApplicationContext().getPackageName() + File.separator + R.raw.notify);
 
-        database = FirebaseDatabase.getInstance();
+        database = FirebaseSingleton.getFirebaseInstanse();
         mAuth = FirebaseAuth.getInstance();
         refToListeners = new HashMap<>();
         timeOut = new HashMap<>();

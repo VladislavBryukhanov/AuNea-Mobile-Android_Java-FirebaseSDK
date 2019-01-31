@@ -58,10 +58,8 @@ public class GlobalMenu extends AppCompatActivity {
         } catch (PackageManager.NameNotFoundException e) {
             e.printStackTrace();
         }
-//        Production only, need add paging (limitToLast)
-//        FirebaseDatabase.getInstance().setPersistenceEnabled(true);
         myVersion = pInfo.versionName;
-        database = FirebaseDatabase.getInstance();
+        database = FirebaseSingleton.getFirebaseInstanse();
         mAuth = FirebaseAuth.getInstance();
 
     }

@@ -18,6 +18,7 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 import com.example.nameless.autoupdating.asyncTasks.DownloadAvatarByUrl;
+import com.example.nameless.autoupdating.generalModules.FirebaseSingleton;
 import com.example.nameless.autoupdating.generalModules.GlobalMenu;
 import com.example.nameless.autoupdating.receivers.NetworkStateReceiver;
 import com.example.nameless.autoupdating.services.CallService;
@@ -161,7 +162,7 @@ public class UserList extends GlobalMenu implements NetworkStateReceiver.Network
 
     private void initialiseData() {
 
-        database = FirebaseDatabase.getInstance();
+        database = FirebaseSingleton.getFirebaseInstanse();
 
         myRef = database.getReference("Users");
 
@@ -217,7 +218,7 @@ public class UserList extends GlobalMenu implements NetworkStateReceiver.Network
     }
 
     public void signIn() {
-        FirebaseDatabase database = FirebaseDatabase.getInstance();
+        FirebaseDatabase database = FirebaseSingleton.getFirebaseInstanse();
         Query getUser = database.getReference("Users").orderByChild("uid").equalTo(mAuth.getUid());
         getUser.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override

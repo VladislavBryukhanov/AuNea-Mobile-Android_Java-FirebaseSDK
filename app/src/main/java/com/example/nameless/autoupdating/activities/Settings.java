@@ -24,6 +24,7 @@ import android.widget.Toast;
 
 import com.example.nameless.autoupdating.asyncTasks.DownloadAvatarByUrl;
 import com.example.nameless.autoupdating.R;
+import com.example.nameless.autoupdating.generalModules.FirebaseSingleton;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -216,7 +217,7 @@ public class Settings extends AppCompatActivity {
                     break;
                 }
 
-                final FirebaseDatabase database = FirebaseDatabase.getInstance();
+                final FirebaseDatabase database = FirebaseSingleton.getFirebaseInstanse();
                 final DatabaseReference myRef = database.getReference("Users");
 
                 Query getNickname = database.getReference("Users").orderByChild("nickname").equalTo(etNickname.getText().toString());

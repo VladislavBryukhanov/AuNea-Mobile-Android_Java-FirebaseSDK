@@ -14,6 +14,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.example.nameless.autoupdating.generalModules.FirebaseSingleton;
 import com.example.nameless.autoupdating.generalModules.GlobalMenu;
 import com.example.nameless.autoupdating.services.CallService;
 import com.example.nameless.autoupdating.services.NotifyService;
@@ -72,7 +73,7 @@ public class Authentification extends GlobalMenu {
         etLogin = findViewById(R.id.etLogin);
         btnSignIn = findViewById(R.id.btnSignIn);
 
-        database = FirebaseDatabase.getInstance();
+        database = FirebaseSingleton.getFirebaseInstanse();
 
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestIdToken(getString(R.string.default_web_client_id))
@@ -131,7 +132,7 @@ public class Authentification extends GlobalMenu {
         myRef = database.getReference("Users");
 
         if (UserList.myAcc.getLogin().trim().length() > 0) {
-            FirebaseDatabase database = FirebaseDatabase.getInstance();
+            FirebaseDatabase database = FirebaseSingleton.getFirebaseInstanse();
 
             Query getUser = database.getReference("Users").orderByChild("uid").equalTo(UserList.myAcc.getUid());
 
