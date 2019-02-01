@@ -32,6 +32,7 @@ import android.widget.Toast;
 
 import com.example.nameless.autoupdating.generalModules.AppCompatActivityWithInternetStatusListener;
 import com.example.nameless.autoupdating.asyncTasks.DownloadAvatarByUrl;
+import com.example.nameless.autoupdating.generalModules.FirebaseSingleton;
 import com.example.nameless.autoupdating.services.NotifyService;
 import com.example.nameless.autoupdating.R;
 import com.example.nameless.autoupdating.adapters.MessagesAdapter;
@@ -74,7 +75,8 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
     private MessagesAdapter adapter;
 
     private FirebaseDatabase database;
-    private DatabaseReference myRef;
+    private DatabaseReference messagesDb, dialogsDb;
+    private String dialogId;
 
     private ArrayList<Message> messages;
     private User toUser;
@@ -104,8 +106,9 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
         Intent intent = getIntent();
         toUser = (User)intent.getSerializableExtra("to");
         mAuth = FirebaseAuth.getInstance();
-        database = FirebaseDatabase.getInstance();
-        myRef = database.getReference("Messages");
+        database = FirebaseSingleton.getFirebaseInstanse();
+        dialogsDb = database.getReference("Dialogs");
+        messagesDb = database.getReference("Messages");
 
         setActionBar();
         lvMessages.setTranscriptMode(ListView.TRANSCRIPT_MODE_NORMAL);
@@ -124,43 +127,53 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
 // todo last online
 //todo media sending
 
-
-        myRef.addListenerForSingleValueEvent(new ValueEventListener() {
+        Query getChat = dialogsDb.orderByChild("speakers/" + mAuth.getUid());
+        getChat.addListenerForSingleValueEvent(new ValueEventListener() {
 
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
 
-                if (dataSnapshot.getChildrenCount() == 0) {
-                    myRef = myRef.push();
-                    myRef.child("listener1").setValue(mAuth.getUid());
-                    myRef.child("listener2").setValue(toUser.getUid());
-                    myRef = myRef.child("content");
-                } else {
-                    String myLogin = mAuth.getUid();
-                    for(DataSnapshot data : dataSnapshot.getChildren()) {
-                        String listener1 = (String)data.child("listener1").getValue();
-                        String listener2 = (String)data.child("listener2").getValue();
-                        if (((listener1.equals(myLogin)) && (listener2.equals(toUser.getUid())))
-                                || ((listener2).equals(myLogin) && (listener1).equals(toUser.getUid()))) {
-                            myRef = myRef.child(data.getKey()).child("content");
+                // Keep calm dialogs can cached and then will not sync with messages
+                dialogsDb.keepSynced(true);
+
+                for(DataSnapshot data : dataSnapshot.getChildren()) {
+                    Iterable<DataSnapshot> speakers = data.child("speakers").getChildren();
+                    speakers.forEach(item -> {
+                        if(item.getValue().equals(toUser.getUid())) {
+                            dialogId = data.getKey();
+                            dialogsDb = dialogsDb.child(dialogId);
+                            messagesDb = messagesDb.child(dialogId);
                             dialogFound = true;
                         }
-                    }
-                    if (!dialogFound) {
-                        myRef = myRef.push();
-                        myRef.child("listener1").setValue(mAuth.getUid());
-                        myRef.child("listener2").setValue(toUser.getUid());
-                        myRef = myRef.child("content");
-                    }
+                    });
                 }
 
-                adapter = new MessagesAdapter(getApplicationContext(), etMessage, messages, myRef);
+                if (!dialogFound) {
+                    dialogId = dialogsDb.push().getKey();
+                    dialogsDb = dialogsDb.child(dialogId);
+                    messagesDb = messagesDb.child(dialogId);
+                    dialogsDb.child("speakers").child(toUser.getUid()).setValue(toUser.getUid());
+                    dialogsDb.child("speakers").child(mAuth.getUid()).setValue(mAuth.getUid());
+                }
+
+                adapter = new MessagesAdapter(getApplicationContext(), etMessage, messages, messagesDb);
                 lvMessages.setAdapter(adapter);
 
                 btnSend.setEnabled(true);
                 btnStartRec.setEnabled(true);
 
-                myRef.addChildEventListener(new ChildEventListener() {
+                Query unreadedMessages = messagesDb.orderByChild("read").equalTo(false);
+                unreadedMessages.addValueEventListener(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                        dialogsDb.child("unreadCounter").setValue(dataSnapshot.getChildrenCount());
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError databaseError) {}
+                });
+
+                messagesDb.addChildEventListener(new ChildEventListener() {
                     @Override
                     public void onChildAdded(DataSnapshot dataSnapshot, String s) {
                         messages.add(new Message(dataSnapshot.getKey(), dataSnapshot.getValue(Message.class)));
@@ -534,12 +547,13 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
             String uid = message.getUid();
             message.setUid(null);
             //в базу записываем объект мессадж без uid  тк это поле является название узла в бд и не требуется
-            myRef.child(uid).setValue(message);
+            messagesDb.child(uid).setValue(message);
             message.setUid(uid);
             return;
         }
 
-        myRef.push().setValue(message);
+        messagesDb.push().setValue(message);
+        dialogsDb.child("lastMessage").setValue(message);
         etMessage.setText("");
     }
 

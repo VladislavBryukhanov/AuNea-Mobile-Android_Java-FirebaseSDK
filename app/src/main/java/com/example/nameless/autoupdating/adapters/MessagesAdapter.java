@@ -321,10 +321,13 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
         if(!message.isRead()) {
             if(message.getTo().equals(mAuth.getUid())) {
                 message.setRead(true);
-                myRef.child(message.getUid()).setValue(message);
+                String uid = message.getUid();
+                message.setUid(null);
+                myRef.child(uid).setValue(message);
                 notifyDataSetChanged();
             } else {
-                (convertView.findViewById(R.id.content)).setBackgroundResource(R.drawable.message_background_not_readed);
+                (convertView.findViewById(R.id.content))
+                        .setBackgroundResource(R.drawable.message_background_not_readed);
             }
         }
     }

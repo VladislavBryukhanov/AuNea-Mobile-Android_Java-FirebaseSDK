@@ -45,16 +45,15 @@ public class UsersAdapter extends ArrayAdapter<User>  implements Filterable{
     @Override
     public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
         if(filteredUserList.size() > 0) {
-//            (convertView.getLayoutParams()).height = 20;
             LayoutInflater li = (LayoutInflater)ma.getSystemService( Context.LAYOUT_INFLATER_SERVICE );
             convertView = li.inflate(R.layout.user_item, parent, false);
             ((TextView)convertView.findViewById(R.id.tvLogin)).setText(filteredUserList.get(position).getLogin());
-            if(filteredUserList.get(position).getNickname() != null  && filteredUserList.get(position).getNickname().length() > 0) {
+           /* if(filteredUserList.get(position).getNickname() != null  && filteredUserList.get(position).getNickname().length() > 0) {
                 ((TextView)convertView.findViewById(R.id.tvNickname)).setText('@'+filteredUserList.get(position).getNickname());
-            }
+            }*/
             if(filteredUserList.get(position).getAvatarUrl() != null) {
                 DownloadAvatarByUrl downloadTask = new DownloadAvatarByUrl(
-                        (ImageView)convertView.findViewById(R.id.profile_image),
+                        convertView.findViewById(R.id.profile_image),
                         filteredUserList.get(position),
                         ma,
                         BitmapFactory.decodeResource(getContext().getResources(), R.drawable.avatar));
