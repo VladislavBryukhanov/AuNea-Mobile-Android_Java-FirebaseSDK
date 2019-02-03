@@ -162,8 +162,31 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
                 btnSend.setEnabled(true);
                 btnStartRec.setEnabled(true);
 
-                Query unreadedMessages = messagesDb.orderByChild("read").equalTo(false);
-                unreadedMessages.addValueEventListener(new ValueEventListener() {
+                messagesDb.addValueEventListener(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+
+                        messagesDb.limitToLast(1).addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                                for(DataSnapshot data : dataSnapshot.getChildren()) {
+                                    dialogsDb.child("lastMessage").setValue(data.getValue());
+                                }
+                            }
+
+                            @Override
+                            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError databaseError) {}
+                });
+
+                Query unreadMessages = messagesDb.orderByChild("read").equalTo(false);
+                unreadMessages.addValueEventListener(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                         dialogsDb.child("unreadCounter").setValue(dataSnapshot.getChildrenCount());
@@ -212,11 +235,11 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
                 });
             }
 
-                @Override
-                public void onCancelled(DatabaseError databaseError) {
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
 
-                }
-            });
+            }
+        });
 
         btnAffixFile.setOnClickListener(v -> showPopupWindow(v));
 
@@ -553,7 +576,6 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
         }
 
         messagesDb.push().setValue(message);
-        dialogsDb.child("lastMessage").setValue(message);
         etMessage.setText("");
     }
 

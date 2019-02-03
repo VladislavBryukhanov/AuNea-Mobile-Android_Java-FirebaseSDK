@@ -57,11 +57,9 @@ import java.util.regex.Pattern;
  * Created by nameless on 07.04.18.
  */
 
-public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterable{
+public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterable {
 
     private Context ma;
-    private EditText etMessage;
-
     private Point screenSize;
     private DatabaseReference myRef;
     private FirebaseAuth mAuth;
@@ -81,7 +79,6 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
     public MessagesAdapter(Context ma, EditText etMessage, ArrayList<Message> messages, DatabaseReference myRef) {
         super(ma, 0, messages);
 //        mPicasso = Picasso.with(ma);
-        this.etMessage = etMessage;
         this.ma = ma;
         this.messages = messages;
         this.filteredMessageList = messages;

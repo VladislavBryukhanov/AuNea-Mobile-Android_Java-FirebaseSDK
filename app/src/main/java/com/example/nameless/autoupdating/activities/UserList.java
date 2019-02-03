@@ -4,28 +4,24 @@ import android.app.Activity;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.BitmapFactory;
 import android.os.Bundle;
-import android.os.Environment;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.Menu;
-import android.view.View;
-import android.widget.AdapterView;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.ListView;
-import android.widget.Toast;
 
-import com.example.nameless.autoupdating.asyncTasks.DownloadAvatarByUrl;
 import com.example.nameless.autoupdating.generalModules.FirebaseSingleton;
 import com.example.nameless.autoupdating.generalModules.GlobalMenu;
+import com.example.nameless.autoupdating.models.Dialog;
+import com.example.nameless.autoupdating.models.Message;
 import com.example.nameless.autoupdating.receivers.NetworkStateReceiver;
 import com.example.nameless.autoupdating.services.CallService;
 import com.example.nameless.autoupdating.services.NotifyService;
 import com.example.nameless.autoupdating.R;
 import com.example.nameless.autoupdating.adapters.UsersAdapter;
-import com.example.nameless.autoupdating.models.ClientToClient;
 import com.example.nameless.autoupdating.models.User;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -40,14 +36,11 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
 import java.io.File;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Locale;
-import java.util.concurrent.ExecutionException;
 
 public class UserList extends GlobalMenu implements NetworkStateReceiver.NetworkStateReceiverListener {
 
@@ -56,10 +49,11 @@ public class UserList extends GlobalMenu implements NetworkStateReceiver.Network
     private EditText etSearch;
     private ListView lvUsers;
     private ArrayList<User> users;
+    private ArrayList<Dialog> dialogs;
     private UsersAdapter adapter;
 
     private FirebaseDatabase database;
-    private DatabaseReference myRef;
+    private DatabaseReference dbUsers;
     private FirebaseAuth mAuth;
 
     private final int AUTH_SUCCESS = 789;
@@ -74,11 +68,15 @@ public class UserList extends GlobalMenu implements NetworkStateReceiver.Network
         lvUsers = findViewById(R.id.lvUsers);
 
         users = new ArrayList<>();
-        adapter = new UsersAdapter(this, users);
+        dialogs = new ArrayList<>();
+        adapter = new UsersAdapter(this, dialogs);
         lvUsers.setAdapter(adapter);
 
         mAuth = FirebaseAuth.getInstance();
         FirebaseUser currentUser = mAuth.getCurrentUser();
+
+        database = FirebaseSingleton.getFirebaseInstanse();
+        dbUsers = database.getReference("Users");
 
         if (currentUser != null) {
             signIn();
@@ -129,8 +127,8 @@ public class UserList extends GlobalMenu implements NetworkStateReceiver.Network
                         .getReference("Users")
                         .orderByChild("uid")
                         .equalTo(mAuth.getUid());
-                getUser.addListenerForSingleValueEvent(new ValueEventListener() {
 
+                getUser.addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
                         for(DataSnapshot data : dataSnapshot.getChildren()) {
@@ -162,10 +160,6 @@ public class UserList extends GlobalMenu implements NetworkStateReceiver.Network
 
     private void initialiseData() {
 
-        database = FirebaseSingleton.getFirebaseInstanse();
-
-        myRef = database.getReference("Users");
-
         if (!isMyServiceRunning(NotifyService.class, getApplicationContext())) {
             startService(new Intent(getApplicationContext(), NotifyService.class));
         }
@@ -176,22 +170,7 @@ public class UserList extends GlobalMenu implements NetworkStateReceiver.Network
 //        Intent broadcastIntent = new Intent("android.intent.action.startServices");
 //        sendBroadcast(broadcastIntent);
 
-        myRef.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                for (DataSnapshot user : dataSnapshot.getChildren()) {
-                    User newUserItem = user.getValue(User.class);
-                    if (!newUserItem.getUid().equals(myAcc.getUid())) {
-                        users.add(newUserItem);
-                    }
-                }
-                adapter.notifyDataSetChanged();
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-            }
-        });
+        getUsers();
 
         lvUsers.setOnItemClickListener((parent, view, position, id) -> {
             Intent intent = new Intent(getApplicationContext(), Chat.class);
@@ -218,8 +197,7 @@ public class UserList extends GlobalMenu implements NetworkStateReceiver.Network
     }
 
     public void signIn() {
-        FirebaseDatabase database = FirebaseSingleton.getFirebaseInstanse();
-        Query getUser = database.getReference("Users").orderByChild("uid").equalTo(mAuth.getUid());
+        Query getUser = dbUsers.orderByChild("uid").equalTo(mAuth.getUid());
         getUser.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -259,6 +237,91 @@ public class UserList extends GlobalMenu implements NetworkStateReceiver.Network
             }
             @Override
             public void onCancelled(DatabaseError databaseError) {}
+        });
+    }
+
+    public void getMessages() {
+        FirebaseDatabase database = FirebaseSingleton.getFirebaseInstanse();
+        DatabaseReference dialogsDb = database.getReference("Dialogs");
+
+        Query getChat = dialogsDb.orderByChild("speakers/" + mAuth.getUid());
+        getChat.addChildEventListener(new ChildEventListener() {
+            @Override
+            public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+                assocDialogWithUser(dataSnapshot);
+            }
+
+            @Override
+            public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+                for (int i = 0; i < dialogs.size(); i++) {
+                    if (((dialogs.get(i)).getUid()).equals(dataSnapshot.getKey())) {
+                        Dialog newDialog = dialogs.get(i);
+                        newDialog.setLastMessage(
+                            dataSnapshot.child("lastMessage").getValue(Message.class)
+                        );
+                        newDialog.setUnreadCounter(
+                            dataSnapshot.child("unreadCounter").getValue(Integer.class)
+                        );
+
+                        dialogs.set(i, newDialog);
+                        adapter.notifyDataSetChanged();
+                    }
+                }
+            }
+
+            @Override
+            public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {}
+
+            @Override
+            public void onChildMoved(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {}
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {}
+        });
+    }
+
+    public void assocDialogWithUser(DataSnapshot dataSnapshot) {
+        Iterable<DataSnapshot> speakers = dataSnapshot.child("speakers").getChildren();
+        speakers.forEach(item -> {
+            users.forEach(user -> {
+                if(user.getUid().equals(item.getValue())) {
+
+                    int unreadCounter = dataSnapshot.child("unreadCounter")
+                            .getValue(Integer.class);
+                    Message lastMessage = dataSnapshot.child("lastMessage")
+                            .getValue(Message.class);
+
+                    Dialog dialog = new Dialog(
+                            dataSnapshot.getKey(),
+                            lastMessage,
+                            unreadCounter,
+                            user
+                    );
+                    dialogs.add(dialog);
+                }
+            });
+        });
+        adapter.notifyDataSetChanged();
+    }
+
+    public void getUsers() {
+        dbUsers.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                for (DataSnapshot user : dataSnapshot.getChildren()) {
+                    User newUserItem = user.getValue(User.class);
+                    if (!newUserItem.getUid().equals(myAcc.getUid())) {
+                        users.add(newUserItem);
+                    }
+                }
+//                adapter.notifyDataSetChanged();
+                // TODO сделать нормально, а не делать выборку всех юзеров и привязывать их к месседжам
+                getMessages();
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+            }
         });
     }
 
