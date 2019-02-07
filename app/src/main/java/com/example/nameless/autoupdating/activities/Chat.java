@@ -14,6 +14,7 @@ import android.support.v7.app.ActionBar;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -127,119 +128,7 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
 // todo last online
 //todo media sending
 
-        Query getChat = dialogsDb.orderByChild("speakers/" + mAuth.getUid());
-        getChat.addListenerForSingleValueEvent(new ValueEventListener() {
-
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-
-                // Keep calm dialogs can cached and then will not sync with messages
-                dialogsDb.keepSynced(true);
-
-                for(DataSnapshot data : dataSnapshot.getChildren()) {
-                    Iterable<DataSnapshot> speakers = data.child("speakers").getChildren();
-                    speakers.forEach(item -> {
-                        if(item.getValue().equals(toUser.getUid())) {
-                            dialogId = data.getKey();
-                            dialogsDb = dialogsDb.child(dialogId);
-                            messagesDb = messagesDb.child(dialogId);
-                            dialogFound = true;
-                        }
-                    });
-                }
-
-                if (!dialogFound) {
-                    dialogId = dialogsDb.push().getKey();
-                    dialogsDb = dialogsDb.child(dialogId);
-                    messagesDb = messagesDb.child(dialogId);
-                    dialogsDb.child("speakers").child(toUser.getUid()).setValue(toUser.getUid());
-                    dialogsDb.child("speakers").child(mAuth.getUid()).setValue(mAuth.getUid());
-                }
-
-                adapter = new MessagesAdapter(getApplicationContext(), etMessage, messages, messagesDb);
-                lvMessages.setAdapter(adapter);
-
-                btnSend.setEnabled(true);
-                btnStartRec.setEnabled(true);
-
-                messagesDb.addValueEventListener(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-
-                        messagesDb.limitToLast(1).addListenerForSingleValueEvent(new ValueEventListener() {
-                            @Override
-                            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                                for(DataSnapshot data : dataSnapshot.getChildren()) {
-                                    dialogsDb.child("lastMessage").setValue(data.getValue());
-                                }
-                            }
-
-                            @Override
-                            public void onCancelled(@NonNull DatabaseError databaseError) {
-
-                            }
-                        });
-                    }
-
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError databaseError) {}
-                });
-
-                Query unreadMessages = messagesDb.orderByChild("read").equalTo(false);
-                unreadMessages.addValueEventListener(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                        dialogsDb.child("unreadCounter").setValue(dataSnapshot.getChildrenCount());
-                    }
-
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError databaseError) {}
-                });
-
-                messagesDb.addChildEventListener(new ChildEventListener() {
-                    @Override
-                    public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-                        messages.add(new Message(dataSnapshot.getKey(), dataSnapshot.getValue(Message.class)));
-                        adapter.notifyDataSetChanged();
-                    }
-
-                    @Override
-                    public void onChildChanged(DataSnapshot dataSnapshot, String s) {
-                        for (int i=0; i<messages.size(); i++) {
-                            if(((messages.get(i)).getUid()).equals(dataSnapshot.getKey())) {
-                                messages.set(i, new Message(dataSnapshot.getKey(), dataSnapshot.getValue(Message.class)));
-                                adapter.notifyDataSetChanged();
-                            }
-                        }
-                    }
-
-                    @Override
-                    public void onChildRemoved(DataSnapshot dataSnapshot) {
-                        Iterator<Message> itr = messages.iterator();
-                        while(itr.hasNext()) {
-                            Message message = itr.next();
-                            if(message.getUid().equals(dataSnapshot.getKey())) {
-                                itr.remove();
-                                adapter.notifyDataSetChanged();
-                            }
-                        }
-                    }
-
-                    @Override
-                    public void onChildMoved(DataSnapshot dataSnapshot, String s) {
-                    }
-
-                    @Override
-                    public void onCancelled(DatabaseError databaseError) {
-                    }
-                });
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-
-            }
-        });
+        setChatListeners();
 
         btnAffixFile.setOnClickListener(v -> showPopupWindow(v));
 
@@ -263,6 +152,16 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
         });
 
         btnSend.setOnClickListener(v -> {
+            if (!dialogFound) {
+                dialogId = dialogsDb.push().getKey();
+                dialogsDb = dialogsDb.child(dialogId);
+                messagesDb = messagesDb.child(dialogId);
+                dialogsDb.child("speakers").child(toUser.getUid()).setValue(toUser.getUid());
+                dialogsDb.child("speakers").child(mAuth.getUid()).setValue(mAuth.getUid());
+                dialogFound = true;
+                setChatListeners();
+            }
+
             if(messageForEditing != null) {
                 messageForEditing.setContent(String.valueOf(etMessage.getText()));
                 parseMessageContent(messageForEditing);
@@ -391,7 +290,124 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
                 uploadTask.addOnFailureListener(e -> Toast.makeText(Chat.this, ":c", Toast.LENGTH_SHORT).show());
             }
         }
+    }
 
+
+    public void setChatListeners() {
+        Query getChat = dialogsDb.orderByChild("speakers/" + mAuth.getUid());
+        getChat.addListenerForSingleValueEvent(new ValueEventListener() {
+
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+
+                // Keep calm dialogs can cached and then will not sync with messages
+                dialogsDb.keepSynced(true);
+
+                for(DataSnapshot data : dataSnapshot.getChildren()) {
+                    Iterable<DataSnapshot> speakers = data.child("speakers").getChildren();
+                    speakers.forEach(item -> {
+                        if(item.getValue().equals(toUser.getUid())) {
+                            dialogId = data.getKey();
+                            dialogsDb = dialogsDb.child(dialogId);
+                            messagesDb = messagesDb.child(dialogId);
+                            dialogFound = true;
+                        }
+                    });
+                }
+
+                // TODO animation and disabling
+                btnSend.setEnabled(true);
+                btnStartRec.setEnabled(true);
+
+                if (!dialogFound) {
+                    return;
+                }
+
+                adapter = new MessagesAdapter(getApplicationContext(), etMessage, messages, messagesDb);
+                lvMessages.setAdapter(adapter);
+
+                messagesDb.addValueEventListener(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+
+                        messagesDb.limitToLast(1).addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                                for(DataSnapshot data : dataSnapshot.getChildren()) {
+                                    dialogsDb.child("lastMessage").setValue(data.getValue());
+                                }
+                            }
+
+                            @Override
+                            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError databaseError) {}
+                });
+
+                Query unreadMessages = messagesDb.orderByChild("read").equalTo(false);
+                unreadMessages.addValueEventListener(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                        dialogsDb.child("unreadCounter").setValue(dataSnapshot.getChildrenCount());
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError databaseError) {}
+                });
+
+                messagesDb.addChildEventListener(new ChildEventListener() {
+                    @Override
+                    public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+                        messages.add(new Message(dataSnapshot.getKey(), dataSnapshot.getValue(Message.class)));
+                        adapter.notifyDataSetChanged();
+                    }
+
+                    @Override
+                    public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+                        for (int i=0; i<messages.size(); i++) {
+                            try {
+                                if(((messages.get(i)).getUid()).equals(dataSnapshot.getKey())) {
+                                    messages.set(i, new Message(dataSnapshot.getKey(), dataSnapshot.getValue(Message.class)));
+                                    adapter.notifyDataSetChanged();
+                                }
+                            } catch (Exception e) {
+                                Log.d("+++++++++",e.getMessage());
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onChildRemoved(DataSnapshot dataSnapshot) {
+                        Iterator<Message> itr = messages.iterator();
+                        while(itr.hasNext()) {
+                            Message message = itr.next();
+                            if(message.getUid().equals(dataSnapshot.getKey())) {
+                                itr.remove();
+                                adapter.notifyDataSetChanged();
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+                    }
+                });
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
     }
 
     public void startRecord() {

@@ -9,16 +9,22 @@
     android:orientation="vertical"
     tools:context="com.example.nameless.autoupdating.activities.UserList">
 
-    <EditText
-        android:id="@+id/etSearch"
+    <android.support.v4.app.FragmentTabHost
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/tabhost"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:ems="10"
-        android:hint="Search"
-        android:inputType="textPersonName" />
+        android:layout_height="match_parent">
+    </android.support.v4.app.FragmentTabHost>
 
-    <ListView
-        android:id="@+id/lvUsers"
+    <FrameLayout
+        android:id="@+id/tabcontent"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="5dp" />
+    <android.support.v4.view.ViewPager
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/pager"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
+
 </LinearLayout>

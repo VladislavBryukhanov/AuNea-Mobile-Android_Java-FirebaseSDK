@@ -8,7 +8,7 @@ public class FirebaseSingleton {
     public static FirebaseDatabase getFirebaseInstanse() {
         if (firebase == null) {
             firebase = firebase.getInstance();
-            firebase.setPersistenceEnabled(true);
+//            firebase.setPersistenceEnabled(true);
         }
         return firebase;
     }

@@ -28,6 +28,7 @@
             android:layout_alignParentTop="true"
             android:layout_margin="2dp"
             android:layout_weight="1"
+            android:visibility="gone"
             android:background="@drawable/message_counter"
             android:gravity="center_vertical|center"
             android:minWidth="26dp"
@@ -78,17 +79,18 @@
             android:layout_width="match_parent"
             android:layout_height="18dp"
             android:fontFamily="sans-serif"
+            android:visibility="gone"
             android:textSize="15sp"
             android:gravity="center_vertical"
             android:minHeight="50dp" />
 
-        <!--<TextView-->
-        <!--android:id="@+id/tvNickname"-->
-        <!--android:layout_width="wrap_content"-->
-        <!--android:layout_height="22dp"-->
-
-        <!--android:gravity="center_vertical"-->
-        <!--android:minHeight="50dp" />-->
+        <TextView
+            android:id="@+id/tvNickname"
+            android:layout_width="wrap_content"
+            android:layout_height="22dp"
+            android:visibility="gone"
+            android:gravity="center_vertical"
+            android:minHeight="50dp" />
 
     </LinearLayout>
 

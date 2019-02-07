@@ -5,27 +5,20 @@ import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.text.Editable;
-import android.text.TextWatcher;
+import android.support.v4.app.FragmentTabHost;
 import android.view.Menu;
-import android.widget.EditText;
-import android.widget.ListView;
 
+import com.example.nameless.autoupdating.fragments.DialogListFragment;
+import com.example.nameless.autoupdating.fragments.UsersListFragment;
 import com.example.nameless.autoupdating.generalModules.FirebaseSingleton;
 import com.example.nameless.autoupdating.generalModules.GlobalMenu;
-import com.example.nameless.autoupdating.models.Dialog;
-import com.example.nameless.autoupdating.models.Message;
 import com.example.nameless.autoupdating.receivers.NetworkStateReceiver;
 import com.example.nameless.autoupdating.services.CallService;
 import com.example.nameless.autoupdating.services.NotifyService;
 import com.example.nameless.autoupdating.R;
-import com.example.nameless.autoupdating.adapters.UsersAdapter;
 import com.example.nameless.autoupdating.models.User;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -38,43 +31,25 @@ import com.google.firebase.storage.StorageReference;
 import java.io.File;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.Locale;
 
 public class UserList extends GlobalMenu implements NetworkStateReceiver.NetworkStateReceiverListener {
 
     public static User myAcc;
-
-    private EditText etSearch;
-    private ListView lvUsers;
-    private ArrayList<User> users;
-    private ArrayList<Dialog> dialogs;
-    private UsersAdapter adapter;
-
+    private FirebaseAuth mAuth;
     private FirebaseDatabase database;
     private DatabaseReference dbUsers;
-    private FirebaseAuth mAuth;
 
     private final int AUTH_SUCCESS = 789;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_user_list);
 
-        etSearch = findViewById(R.id.etSearch);
-        lvUsers = findViewById(R.id.lvUsers);
-
-        users = new ArrayList<>();
-        dialogs = new ArrayList<>();
-        adapter = new UsersAdapter(this, dialogs);
-        lvUsers.setAdapter(adapter);
-
         mAuth = FirebaseAuth.getInstance();
         FirebaseUser currentUser = mAuth.getCurrentUser();
-
         database = FirebaseSingleton.getFirebaseInstanse();
         dbUsers = database.getReference("Users");
 
@@ -158,43 +133,7 @@ public class UserList extends GlobalMenu implements NetworkStateReceiver.Network
         });
     }
 
-    private void initialiseData() {
 
-        if (!isMyServiceRunning(NotifyService.class, getApplicationContext())) {
-            startService(new Intent(getApplicationContext(), NotifyService.class));
-        }
-        if (!isMyServiceRunning(CallService.class, getApplicationContext())) {
-            startService(new Intent(getApplicationContext(), CallService.class));
-        }
-
-//        Intent broadcastIntent = new Intent("android.intent.action.startServices");
-//        sendBroadcast(broadcastIntent);
-
-        getUsers();
-
-        lvUsers.setOnItemClickListener((parent, view, position, id) -> {
-            Intent intent = new Intent(getApplicationContext(), Chat.class);
-            intent.putExtra("to", users.get(position));
-            startActivity(intent);
-        });
-
-        etSearch.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
-            }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                adapter.getFilter().filter(s);
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-
-            }
-        });
-    }
 
     public void signIn() {
         Query getUser = dbUsers.orderByChild("uid").equalTo(mAuth.getUid());
@@ -240,89 +179,25 @@ public class UserList extends GlobalMenu implements NetworkStateReceiver.Network
         });
     }
 
-    public void getMessages() {
-        FirebaseDatabase database = FirebaseSingleton.getFirebaseInstanse();
-        DatabaseReference dialogsDb = database.getReference("Dialogs");
+    private void initialiseData() {
+        if (!UserList.isMyServiceRunning(NotifyService.class, this)) {
+            startService(new Intent(this, NotifyService.class));
+        }
+        if (!UserList.isMyServiceRunning(CallService.class, this)) {
+            startService(new Intent(this, CallService.class));
+        }
 
-        Query getChat = dialogsDb.orderByChild("speakers/" + mAuth.getUid());
-        getChat.addChildEventListener(new ChildEventListener() {
-            @Override
-            public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-                assocDialogWithUser(dataSnapshot);
-            }
+//        Intent broadcastIntent = new Intent("android.intent.action.startServices");
+//        sendBroadcast(broadcastIntent);
 
-            @Override
-            public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-                for (int i = 0; i < dialogs.size(); i++) {
-                    if (((dialogs.get(i)).getUid()).equals(dataSnapshot.getKey())) {
-                        Dialog newDialog = dialogs.get(i);
-                        newDialog.setLastMessage(
-                            dataSnapshot.child("lastMessage").getValue(Message.class)
-                        );
-                        newDialog.setUnreadCounter(
-                            dataSnapshot.child("unreadCounter").getValue(Integer.class)
-                        );
+        FragmentTabHost tabHost = findViewById(R.id.tabhost);
+        tabHost.setup(getApplicationContext(), getSupportFragmentManager(), R.id.tabcontent);
+        tabHost.addTab(tabHost.newTabSpec("Users").setIndicator("Users"),
+                UsersListFragment.class, null);
+        tabHost.addTab(tabHost.newTabSpec("Dialogs").setIndicator("Dialogs"),
+                DialogListFragment.class, null);
 
-                        dialogs.set(i, newDialog);
-                        adapter.notifyDataSetChanged();
-                    }
-                }
-            }
-
-            @Override
-            public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {}
-
-            @Override
-            public void onChildMoved(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {}
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {}
-        });
-    }
-
-    public void assocDialogWithUser(DataSnapshot dataSnapshot) {
-        Iterable<DataSnapshot> speakers = dataSnapshot.child("speakers").getChildren();
-        speakers.forEach(item -> {
-            users.forEach(user -> {
-                if(user.getUid().equals(item.getValue())) {
-
-                    int unreadCounter = dataSnapshot.child("unreadCounter")
-                            .getValue(Integer.class);
-                    Message lastMessage = dataSnapshot.child("lastMessage")
-                            .getValue(Message.class);
-
-                    Dialog dialog = new Dialog(
-                            dataSnapshot.getKey(),
-                            lastMessage,
-                            unreadCounter,
-                            user
-                    );
-                    dialogs.add(dialog);
-                }
-            });
-        });
-        adapter.notifyDataSetChanged();
-    }
-
-    public void getUsers() {
-        dbUsers.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                for (DataSnapshot user : dataSnapshot.getChildren()) {
-                    User newUserItem = user.getValue(User.class);
-                    if (!newUserItem.getUid().equals(myAcc.getUid())) {
-                        users.add(newUserItem);
-                    }
-                }
-//                adapter.notifyDataSetChanged();
-                // TODO сделать нормально, а не делать выборку всех юзеров и привязывать их к месседжам
-                getMessages();
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-            }
-        });
+        tabHost.setCurrentTab(0);
     }
 
     @Override
