@@ -82,8 +82,8 @@ public class Authentification extends GlobalMenu implements AuthActions {
         TabLayout tabLayout = findViewById(R.id.tabLayout);
 
         TabAdapter adapter = new TabAdapter(getSupportFragmentManager());
-        adapter.addFragment(new SignInFragment(), "Sign in");
         adapter.addFragment(new SignUpFragment(), "Sign up");
+        adapter.addFragment(new SignInFragment(), "Sign in");
         viewPager.setAdapter(adapter);
         tabLayout.setupWithViewPager(viewPager);
     }
