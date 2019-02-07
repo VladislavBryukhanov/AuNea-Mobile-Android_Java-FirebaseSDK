@@ -7,9 +7,13 @@
 
     <color name="black_overlay">#66000000</color>
     <color name="dialogBack">#c8000000</color>
+
     <color name="incomingMessage">#243443</color>
     <color name="outcomeMessage">#3772AB</color>
-
-
     <color name="lightBlue">#6B9BC2</color>
+
+    <color name="darkRed">#a43931</color>
+    <color name="lightIonic">#14aba8</color>
+    <color name="darkIonic">#00726a</color>
+    <!--<color name="darkIonic">#00aca2</color>-->
 </resources>
