@@ -11,7 +11,7 @@ import android.widget.EditText;
 
 import com.example.nameless.autoupdating.R;
 import com.example.nameless.autoupdating.activities.Authentification;
-import com.example.nameless.autoupdating.generalModules.AuthActions;
+import com.example.nameless.autoupdating.common.AuthActions;
 import com.example.nameless.autoupdating.models.User;
 
 public class SignUpFragment extends Fragment {

@@ -6,7 +6,7 @@
     android:layout_centerInParent="true"
     android:orientation="vertical"
     android:paddingHorizontal="20dp"
-    android:paddingTop="160dp">
+    android:paddingTop="142dp">
 
     <Button
         android:id="@+id/btnSignIn"

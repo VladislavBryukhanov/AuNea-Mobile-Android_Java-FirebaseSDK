@@ -5,7 +5,7 @@ import android.content.Intent;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import com.example.nameless.autoupdating.activities.VoiceCalling;
-import com.example.nameless.autoupdating.generalModules.FirebaseSingleton;
+import com.example.nameless.autoupdating.common.FirebaseSingleton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;

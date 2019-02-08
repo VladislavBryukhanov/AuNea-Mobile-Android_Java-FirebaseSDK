@@ -5,13 +5,16 @@ import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.design.widget.TabLayout;
 import android.support.v4.app.FragmentTabHost;
+import android.support.v4.view.ViewPager;
 import android.view.Menu;
 
-import com.example.nameless.autoupdating.fragments.DialogListFragment;
-import com.example.nameless.autoupdating.fragments.UsersListFragment;
-import com.example.nameless.autoupdating.generalModules.FirebaseSingleton;
-import com.example.nameless.autoupdating.generalModules.GlobalMenu;
+import com.example.nameless.autoupdating.adapters.TabAdapter;
+import com.example.nameless.autoupdating.common.FirebaseSingleton;
+import com.example.nameless.autoupdating.common.GlobalMenu;
+import com.example.nameless.autoupdating.fragments.dialogs.DialogListFragment;
+import com.example.nameless.autoupdating.fragments.dialogs.UsersListFragment;
 import com.example.nameless.autoupdating.receivers.NetworkStateReceiver;
 import com.example.nameless.autoupdating.services.CallService;
 import com.example.nameless.autoupdating.services.NotifyService;
@@ -190,6 +193,7 @@ public class UserList extends GlobalMenu implements NetworkStateReceiver.Network
 //        Intent broadcastIntent = new Intent("android.intent.action.startServices");
 //        sendBroadcast(broadcastIntent);
 
+/*
         FragmentTabHost tabHost = findViewById(R.id.tabhost);
         tabHost.setup(getApplicationContext(), getSupportFragmentManager(), R.id.tabcontent);
         tabHost.addTab(tabHost.newTabSpec("Users").setIndicator("Users"),
@@ -198,6 +202,18 @@ public class UserList extends GlobalMenu implements NetworkStateReceiver.Network
                 DialogListFragment.class, null);
 
         tabHost.setCurrentTab(0);
+*/
+
+        ViewPager viewPager = findViewById(R.id.pager);
+        TabLayout tabLayout = findViewById(R.id.tabLayout);
+
+        TabAdapter adapter = new TabAdapter(getSupportFragmentManager());
+        adapter.addFragment(new DialogListFragment(), "Dialogs");
+        adapter.addFragment(new UsersListFragment(), "Users");
+        viewPager.setAdapter(adapter);
+
+        viewPager.setCurrentItem(1);
+        tabLayout.setupWithViewPager(viewPager);
     }
 
     @Override

@@ -66,7 +66,7 @@
                 android:resource="@xml/provider_paths" />
         </provider>
 
-        <activity android:name=".generalModules.GlobalMenu" />
+        <activity android:name=".common.GlobalMenu" />
         <activity android:name=".activities.Authentification"
             android:theme="@style/BlackActionBar" />
         <activity

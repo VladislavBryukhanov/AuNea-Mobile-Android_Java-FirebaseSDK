@@ -1,4 +1,4 @@
-package com.example.nameless.autoupdating.fragments;
+package com.example.nameless.autoupdating.fragments.dialogs;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -16,7 +16,7 @@ import android.widget.ListView;
 import com.example.nameless.autoupdating.R;
 import com.example.nameless.autoupdating.activities.Chat;
 import com.example.nameless.autoupdating.adapters.UsersAdapter;
-import com.example.nameless.autoupdating.generalModules.FirebaseSingleton;
+import com.example.nameless.autoupdating.common.FirebaseSingleton;
 import com.example.nameless.autoupdating.models.User;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;

@@ -1,4 +1,4 @@
-package com.example.nameless.autoupdating.generalModules;
+package com.example.nameless.autoupdating.common;
 
 import com.example.nameless.autoupdating.models.User;
 
