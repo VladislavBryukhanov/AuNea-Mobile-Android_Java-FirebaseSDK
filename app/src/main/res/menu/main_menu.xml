@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
-    android:popupBackground="@android:drawable/dialog_holo_light_frame"
-    >
+    android:popupBackground="@android:drawable/dialog_holo_light_frame">
     <item android:title="Update app"
         android:id="@+id/mUpdate"></item>
     <item android:title="Current Version"

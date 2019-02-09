@@ -22,7 +22,6 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.Filter;
 import android.widget.Filterable;
 import android.widget.ImageView;
@@ -31,25 +30,20 @@ import android.widget.PopupWindow;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.example.nameless.autoupdating.activities.AudioTrackUI;
-import com.example.nameless.autoupdating.activities.Chat;
-import com.example.nameless.autoupdating.activities.UserList;
-import com.example.nameless.autoupdating.asyncTasks.DownloadMediaFIle;
 import com.example.nameless.autoupdating.R;
+import com.example.nameless.autoupdating.asyncTasks.DownloadMediaFIle;
+import com.example.nameless.autoupdating.common.ChatActions;
 import com.example.nameless.autoupdating.models.Message;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
-import com.squareup.picasso.Picasso;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -76,7 +70,7 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
 
 //    public static Picasso mPicasso;
 
-    public MessagesAdapter(Context ma, EditText etMessage, ArrayList<Message> messages, DatabaseReference myRef) {
+    public MessagesAdapter(Context ma, ArrayList<Message> messages, DatabaseReference myRef) {
         super(ma, 0, messages);
 //        mPicasso = Picasso.with(ma);
         this.ma = ma;
@@ -141,14 +135,14 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
             final String fileUrl = filteredMessageList.get(position).getFileUrl();
             if(fileUrl != null) {
 
-                ImageView image = convertView.findViewById(R.id.ivImage);
-                ProgressBar loading = convertView.findViewById(R.id.pbLoading);
-                LinearLayout audioUI = convertView.findViewById(R.id.audioUI);
+//                ImageView image = convertView.findViewById(R.id.ivImage);
+//                ProgressBar loading = convertView.findViewById(R.id.pbLoading);
+//                LinearLayout audioUI = convertView.findViewById(R.id.audioUI);
 
-                String fileMediaSides = filteredMessageList.get(position).getFileMediaSides();
-                if(fileMediaSides != null) {
-                    setMediaItemSize(fileMediaSides, loading, image);
-                }
+                LinearLayout layout = convertView.findViewById(R.id.content);
+                ImageView image;
+                ProgressBar loading ;
+                LinearLayout audioUI;
 
 //                Bitmap bitmap = MessagesAdapter.mMemoryCache.get(filteredMessageList.get(position).getFileUrl());
 //                if(bitmap != null) {
@@ -158,9 +152,11 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
 //                    loading.setVisibility(View.VISIBLE);
 //                }
 
-                if((filteredMessageList.get(position).getFileType()).equals("image")) {
-                    loading.setVisibility(View.VISIBLE);
-                } else if((filteredMessageList.get(position).getFileType()).equals("audio")) {
+                if((filteredMessageList.get(position).getFileType()).equals("audio")) {
+
+                    audioUI = new AudioTrackUI(ma, null);
+                    layout.addView(audioUI);
+
                     ImageView audioButton = audioUI.findViewById(R.id.audioButton);
                     ProgressBar audioPbLoading = audioUI.findViewById(R.id.pbLoading);
                     TextView timeDuration = audioUI.findViewById(R.id.tvTime);
@@ -169,8 +165,25 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
                     audioPbLoading.setVisibility(View.VISIBLE);
                     audioButton.setVisibility(View.GONE);
                     audioUI.setVisibility(View.VISIBLE);
-                }
 
+                    DownloadMediaFIle downloadTask = new DownloadMediaFIle(
+                            audioUI, getContext(),
+                            filteredMessageList.get(position).getFileType());
+                    downloadTask.execute(fileUrl);
+                } else if((filteredMessageList.get(position).getFileType()).equals("image")) {
+
+                    String fileMediaSides = filteredMessageList.get(position).getFileMediaSides();
+
+                    image = new ImageView(ma);
+                    image.setVisibility(View.GONE);
+                    image.setScaleType(ImageView.ScaleType.FIT_CENTER);
+
+                    loading = new ProgressBar(ma);
+                    loading.setIndeterminate(true);
+
+                    setMediaItemSize(fileMediaSides, loading, image);
+                    layout.addView(image);
+                    layout.addView(loading);
 
 //                if((filteredMessageList.get(position).getFileType()).equals("image")) {
 //                    mPicasso.load(fileUrl)
@@ -186,15 +199,12 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
                         image.setVisibility(View.VISIBLE);
                         image.setImageBitmap(bitmap);
                     }
-
                     DownloadMediaFIle downloadTask = new DownloadMediaFIle(
-                            image, loading, audioUI, getContext(),
+                            image, loading, getContext(),
                             filteredMessageList.get(position).getFileType());
                     downloadTask.execute(fileUrl);
-//                }
-
-
-                image.setAdjustViewBounds(true);
+                    image.setAdjustViewBounds(true);
+                }
             }
 
             parseMessageContent(filteredMessageList.get(position), convertView);
@@ -258,7 +268,7 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
         return filter;
     }
 
-    public void parseMessageContent(final Message message, View convertView) {
+    private void parseMessageContent(final Message message, View convertView) {
         String msg = message.getContent();
 
         if (message.getFileType() != null && (message.getFileType()).equals("Url")) {
@@ -329,7 +339,7 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
         }
     }
 
-    public void showPopupMenu(final View view, final Message msg) {
+    private void showPopupMenu(final View view, final Message msg) {
 
         LayoutInflater layoutInflater
                 = (LayoutInflater)ma.getApplicationContext()
@@ -353,8 +363,8 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
         btnEdit.setOnClickListener(v -> {
 //                FirebaseStorage storage = FirebaseStorage.getInstance();
 //                StorageReference edRef = storage.getReferenceFromUrl(msg.getFileUrl());
-
-            Chat.onEdit(msg);
+            ChatActions iChatActions = (ChatActions) ma;
+            iChatActions.onEdit(msg);
             popupWindow.dismiss();
         });
         btnDelete.setOnClickListener(v -> {

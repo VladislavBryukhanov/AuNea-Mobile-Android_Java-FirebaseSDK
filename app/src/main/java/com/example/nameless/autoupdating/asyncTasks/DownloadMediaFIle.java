@@ -72,12 +72,22 @@ public class DownloadMediaFIle extends AsyncTask<String, Void, Bitmap> {
     public DownloadMediaFIle(
             ImageView bmImage,
             ProgressBar pbLoading,
-            LinearLayout audioUI,
             Context parentContext,
             String fileType) {
 
         this.bmImage = bmImage;
         this.pbLoading = pbLoading;
+        this.parentContext = parentContext;
+        this.fileType = fileType;
+        formatter = new SimpleDateFormat("HH:mm:ss", Locale.US);
+        formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
+    }
+
+    public DownloadMediaFIle(
+            LinearLayout audioUI,
+            Context parentContext,
+            String fileType) {
+
         this.audioUI = audioUI;
         this.parentContext = parentContext;
         this.fileType = fileType;
@@ -179,20 +189,26 @@ public class DownloadMediaFIle extends AsyncTask<String, Void, Bitmap> {
             return bitmap;
         }
 
-        if (!file.exists()) {
+        if(type.equals(IMAGE_TYPE)) {
+            if (file.exists()) {
+                return setImageProperties(file.getPath(), url);
+            }
             fileReference.getFile(file).addOnSuccessListener(taskSnapshot -> {
                 DownloadMediaFIle downloadTask = new DownloadMediaFIle(
-                        bmImage, pbLoading, audioUI, parentContext, fileType);
+                        bmImage, pbLoading, parentContext, fileType);
                 downloadTask.execute(url);
             });
-            return null;
-        } else {
-            if(type.equals(IMAGE_TYPE)) {
-                return setImageProperties(file.getPath(), url);
-            } else {
+        } else if (type.equals(MUSIC_TYPE)) {
+            if (file.exists()) {
                 return setAudioProperties(file.getPath(), url);
             }
+            fileReference.getFile(file).addOnSuccessListener(taskSnapshot -> {
+                DownloadMediaFIle downloadTask = new DownloadMediaFIle(
+                        audioUI, parentContext, fileType);
+                downloadTask.execute(url);
+            });
         }
+        return null;
     }
 
     private Bitmap setImageProperties(final String path, String url) {

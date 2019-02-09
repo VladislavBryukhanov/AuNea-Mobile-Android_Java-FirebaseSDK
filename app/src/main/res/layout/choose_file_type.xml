@@ -11,7 +11,7 @@
         android:layout_height="wrap_content"
         android:layout_centerVertical="true"
         android:layout_centerHorizontal="true"
-        android:background="@color/darkTheme"
+        android:background="@color/whiteShadow"
         android:orientation="vertical">
 
 
@@ -22,7 +22,7 @@
             android:textAllCaps="false"
             android:textSize="16dp"
             android:layout_margin="0dip"
-            android:background="@android:drawable/menuitem_background"
+            android:background="@drawable/popup_style"
             android:gravity="left|center_horizontal"
             android:padding="18dip"
             android:text="Use camera" />
@@ -32,7 +32,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_margin="0dip"
-            android:background="@android:drawable/menuitem_background"
+            android:background="@drawable/popup_style"
             android:gravity="left|center_horizontal"
             android:padding="18dip"
             android:text="Load from gallery"
@@ -46,7 +46,7 @@
             android:textAllCaps="false"
             android:textSize="16dp"
             android:layout_margin="0dip"
-            android:background="@android:drawable/menuitem_background"
+            android:background="@drawable/popup_style"
             android:gravity="left|center_horizontal"
             android:padding="18dip"
             android:text="Load from device" />

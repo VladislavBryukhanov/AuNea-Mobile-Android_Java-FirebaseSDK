@@ -28,10 +28,10 @@ import android.widget.ListView;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
-//import android.widget.Toolbar;
 
 import com.example.nameless.autoupdating.common.AppCompatActivityWithInternetStatusListener;
 import com.example.nameless.autoupdating.asyncTasks.DownloadAvatarByUrl;
+import com.example.nameless.autoupdating.common.ChatActions;
 import com.example.nameless.autoupdating.common.FirebaseSingleton;
 import com.example.nameless.autoupdating.services.NotifyService;
 import com.example.nameless.autoupdating.R;
@@ -59,16 +59,16 @@ import java.util.Iterator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class Chat extends AppCompatActivityWithInternetStatusListener {
+public class Chat extends AppCompatActivityWithInternetStatusListener implements ChatActions {
 
 //    private static final int REQUEST_GALLERY = 100;
     public static final int PICKFILE_RESULT_CODE = 200;
     public static final int CAMERA_REQUEST = 10;
 
     private ImageButton btnSend, btnAffixFile, btnStartRec, btnStopRec;
-    private static EditText etMessage;
     private ListView lvMessages;
-    private static ImageView ivEdit;
+    private EditText etMessage;
+    private ImageView ivEdit;
     private static Message messageForEditing;
     private MessagesAdapter adapter;
 
@@ -136,8 +136,8 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 if (!(String.valueOf(etMessage.getText()).trim()).equals("")) {
-                    btnSend.setVisibility(View.VISIBLE);
                     btnStartRec.setVisibility(View.GONE);
+                    btnSend.setVisibility(View.VISIBLE);
                 } else {
                     btnSend.setVisibility(View.GONE);
                     btnStartRec.setVisibility(View.VISIBLE);
@@ -183,23 +183,17 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
         btnStopRec.setOnClickListener(v -> {
             cancelRecord();
             etMessage.setEnabled(true);
-            btnStartRec.setVisibility(View.VISIBLE);
             btnStopRec.setVisibility(View.GONE);
+            btnStartRec.setVisibility(View.VISIBLE);
         });
         btnStopRec.setOnLongClickListener(view -> {
             stopRecord();
             etMessage.setEnabled(true);
-            btnStartRec.setVisibility(View.VISIBLE);
             btnStopRec.setVisibility(View.GONE);
+            btnStartRec.setVisibility(View.VISIBLE);
             return true;
         });
     }
-
-//    @Override
-//    public boolean onCreateOptionsMenu(Menu menu) {
-//        getMenuInflater().inflate(R.menu.main_menu, menu);
-//        return super.onCreateOptionsMenu(menu);
-//    }
 
     @Override
     protected void onStop() {
@@ -290,7 +284,7 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
     }
 
 
-    public void setChatListeners() {
+    private void setChatListeners() {
         Query getChat = dialogsDb.orderByChild("speakers/" + mAuth.getUid());
         getChat.addListenerForSingleValueEvent(new ValueEventListener() {
 
@@ -320,7 +314,7 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
                     return;
                 }
 
-                adapter = new MessagesAdapter(getApplicationContext(), etMessage, messages, messagesDb);
+                adapter = new MessagesAdapter(Chat.this, messages, messagesDb);
                 lvMessages.setAdapter(adapter);
 
                 messagesDb.addValueEventListener(new ValueEventListener() {
@@ -407,7 +401,7 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
         });
     }
 
-    public void startRecord() {
+    private void startRecord() {
         mediaRecorder = new MediaRecorder();
         mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
         mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
@@ -422,7 +416,7 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
         mediaRecorder.start();
     }
 
-    public void stopRecord() {
+    private void stopRecord() {
         mediaRecorder.stop();
         mediaRecorder.release();
         mediaRecorder = null;
@@ -452,7 +446,7 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
         uploadTask.addOnFailureListener(e -> Toast.makeText(Chat.this, ":c", Toast.LENGTH_SHORT).show());
     }
 
-    public void cancelRecord() {
+    private void cancelRecord() {
         mediaRecorder.stop();
         mediaRecorder.release();
         mediaRecorder = null;
@@ -461,7 +455,7 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
         audioCahce.delete();
     }
 
-    public String getImageSides(Uri uri) {
+    private String getImageSides(Uri uri) {
         Bitmap image = null;
         try {
             image = MediaStore.Images.Media.getBitmap(this.getContentResolver(), uri);
@@ -475,7 +469,7 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
 //        Cursor cursor = getApplicationContext().getContentResolver().query(uri, {MediaStore.Images.Media.DATA}, null, null, null);
 //    }
 
-    public void setActionBar() {
+    private void setActionBar() {
         Query getUser = database.getReference("Users").orderByChild("uid").equalTo(toUser.getUid());
         getUser.addValueEventListener(new ValueEventListener() {
             @Override
@@ -519,8 +513,8 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
             startActivity(intent);
         });
     }
-    public void showPopupWindow(View view) {
 
+    private void showPopupWindow(View view) {
         LayoutInflater layoutInflater
                 = (LayoutInflater)getApplicationContext()
                 .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
@@ -567,7 +561,7 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
         });
     }
 
-    public void parseMessageContent(Message message) {
+    private void parseMessageContent(Message message) {
         String msg = message.getContent();
         Pattern urlPattern = Pattern.compile(
                 "((https?|ftp|gopher|telnet|file):((//)|(\\\\))+[\\w\\d" +
@@ -592,7 +586,8 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
         etMessage.setText("");
     }
 
-    public static void onEdit(Message message) {
+    @Override
+    public void onEdit(Message message) {
         messageForEditing = message;
         etMessage.setText(message.getContent());
         etMessage.setSelection(etMessage.getText().length());
