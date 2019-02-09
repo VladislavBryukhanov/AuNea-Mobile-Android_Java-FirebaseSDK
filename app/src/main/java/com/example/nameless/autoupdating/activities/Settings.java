@@ -135,8 +135,10 @@ public class Settings extends AppCompatActivity {
         avatar.setOnClickListener(v -> {
             Intent intent = new Intent();
             intent.setType("image/*");
-            intent.setAction(Intent.ACTION_GET_CONTENT);
-            startActivityForResult(Intent.createChooser(intent, "Select Picture"), Chat.PICKFILE_RESULT_CODE);
+            intent.setAction(Intent.ACTION_PICK);
+//            intent.setAction(Intent.ACTION_GET_CONTENT);
+            startActivityForResult(Intent.createChooser(
+                    intent, "Select Picture"), Chat.PICKFILE_RESULT_CODE);
         });
     }
 

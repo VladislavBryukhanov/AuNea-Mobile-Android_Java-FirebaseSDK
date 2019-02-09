@@ -66,6 +66,7 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
     public static Handler trackDurationHandler;
     public static Handler trackSeekBarHandler;
     public static LruCache<String, Bitmap> mMemoryCache;
+    public static ArrayList<String> filesLoadingInProgress;
     public static int trackDuration;
 
 //    public static Picasso mPicasso;
@@ -85,6 +86,7 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
 
         this.myRef = myRef;
         mAuth = FirebaseAuth.getInstance();
+        filesLoadingInProgress = new ArrayList<>();
         mediaPlayer = new MediaPlayer();
         trackDurationHandler = new Handler();
 
@@ -101,15 +103,14 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
         if(filteredMessageList.size() > 0) {
             LayoutInflater li = (LayoutInflater)ma.getSystemService( Context.LAYOUT_INFLATER_SERVICE );
             convertView = li.inflate(R.layout.message_item, parent, false);
+            LinearLayout layout = convertView.findViewById(R.id.content);
 
             if((filteredMessageList.get(position).getWho())
                     .equals(mAuth.getUid())) {
-                (convertView.findViewById(R.id.content))
-                        .setBackgroundResource(R.drawable.message_background_out);
+                layout.setBackgroundResource(R.drawable.message_background_out);
 
                 RelativeLayout.LayoutParams layoutParams =
-                        (RelativeLayout.LayoutParams) convertView.findViewById(
-                                R.id.content).getLayoutParams();
+                        (RelativeLayout.LayoutParams) layout.getLayoutParams();
                 layoutParams.addRule(RelativeLayout.ALIGN_PARENT_LEFT, 0);
                 layoutParams.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
 
@@ -117,12 +118,10 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
                                 R.id.tvDate).getLayoutParams();
                 layoutParams.addRule(RelativeLayout.LEFT_OF, R.id.content);
             } else {
-                (convertView.findViewById(R.id.content))
-                        .setBackgroundResource(R.drawable.message_background_in);
+                layout.setBackgroundResource(R.drawable.message_background_in);
 
                 RelativeLayout.LayoutParams layoutParams =
-                        (RelativeLayout.LayoutParams) convertView.findViewById(
-                                R.id.content).getLayoutParams();
+                        (RelativeLayout.LayoutParams) layout.getLayoutParams();
 
                 layoutParams.addRule(RelativeLayout.ALIGN_PARENT_RIGHT, 0);
                 layoutParams.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
@@ -135,11 +134,6 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
             final String fileUrl = filteredMessageList.get(position).getFileUrl();
             if(fileUrl != null) {
 
-//                ImageView image = convertView.findViewById(R.id.ivImage);
-//                ProgressBar loading = convertView.findViewById(R.id.pbLoading);
-//                LinearLayout audioUI = convertView.findViewById(R.id.audioUI);
-
-                LinearLayout layout = convertView.findViewById(R.id.content);
                 ImageView image;
                 ProgressBar loading ;
                 LinearLayout audioUI;
@@ -193,17 +187,29 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
 //                    loading.setVisibility(View.GONE);
 //                    image.setVisibility(View.VISIBLE);
 //                } else {
-                    Bitmap bitmap = MessagesAdapter.mMemoryCache.get(fileUrl);
-                    if(bitmap != null) {
-                        loading.setVisibility(View.GONE);
-                        image.setVisibility(View.VISIBLE);
-                        image.setImageBitmap(bitmap);
+
+                    // if this file already downloading prevent multiple downloading
+                    if (MessagesAdapter.filesLoadingInProgress.indexOf(fileUrl) == -1) {
+
+                        // При скролле все равно происходят мерцния из за времени требуемого на создание потока
+                        // и поиска битмапа в нем, избежать по этой причине быстрее сделать так,
+                        // чтобы избежвать мерцаний
+
+                        // Но в прицнипе мерцание слабое и очень слабо влияет на юзер экспириенс,
+                        // так что можно и без этого
+                        Bitmap bitmap = MessagesAdapter.mMemoryCache.get(fileUrl);
+                        if(bitmap != null) {
+                            loading.setVisibility(View.GONE);
+                            image.setVisibility(View.VISIBLE);
+                            image.setImageBitmap(bitmap);
+                        }
+
+                        DownloadMediaFIle downloadTask = new DownloadMediaFIle(
+                                image, loading, getContext(),
+                                filteredMessageList.get(position).getFileType());
+                        downloadTask.execute(fileUrl);
+                        image.setAdjustViewBounds(true);
                     }
-                    DownloadMediaFIle downloadTask = new DownloadMediaFIle(
-                            image, loading, getContext(),
-                            filteredMessageList.get(position).getFileType());
-                    downloadTask.execute(fileUrl);
-                    image.setAdjustViewBounds(true);
                 }
             }
 

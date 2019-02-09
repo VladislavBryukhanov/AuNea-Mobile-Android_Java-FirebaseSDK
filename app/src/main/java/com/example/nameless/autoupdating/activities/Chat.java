@@ -367,6 +367,7 @@ public class Chat extends AppCompatActivityWithInternetStatusListener implements
                                     adapter.notifyDataSetChanged();
                                 }
                             } catch (Exception e) {
+                // TODO Эта хрень кидает эксепшены, но тк не крашится, то работает, на вид нормально
                                 Log.d("+++++++++",e.getMessage());
                             }
                         }
@@ -542,13 +543,10 @@ public class Chat extends AppCompatActivityWithInternetStatusListener implements
         btnGallery.setOnClickListener(v -> {
             Intent intent = new Intent();
             intent.setType("image/*");
+//            intent.setAction(Intent.ACTION_PICK);
             intent.setAction(Intent.ACTION_GET_CONTENT);
-            startActivityForResult(Intent.createChooser(intent, "Select Picture"), PICKFILE_RESULT_CODE);
-
-    //             Intent intent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-    //            Intent intent = new Intent(Intent.ACTION_GET_CONTENT, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-    //            intent.setType("image/*");
-    //            startActivityForResult(Intent.createChooser(intent, "Select Picture"), PICKFILE_RESULT_CODE);
+            startActivityForResult(Intent.createChooser(
+                    intent, "Select Picture"), PICKFILE_RESULT_CODE);
             popupWindow.dismiss();
         });
 

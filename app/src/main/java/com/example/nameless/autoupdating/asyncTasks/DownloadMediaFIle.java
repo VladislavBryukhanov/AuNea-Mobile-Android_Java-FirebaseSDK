@@ -68,6 +68,7 @@ public class DownloadMediaFIle extends AsyncTask<String, Void, Bitmap> {
     private int trackDuration;
     private Boolean isTrackPlaying = false;
     private DateFormat formatter;
+    private String fileUrl;
 
     public DownloadMediaFIle(
             ImageView bmImage,
@@ -126,10 +127,12 @@ public class DownloadMediaFIle extends AsyncTask<String, Void, Bitmap> {
                 bmImage.setVisibility(View.VISIBLE);
             }
         }
-
+        MessagesAdapter.filesLoadingInProgress.remove(fileUrl);
     }
 
     private Bitmap setFileProperties(String url) {
+        this.fileUrl = url;
+
         switch (fileType) {
             case IMAGE_TYPE: {
                 return  downloadFileByUrl(url, IMAGE_TYPE);
@@ -188,6 +191,7 @@ public class DownloadMediaFIle extends AsyncTask<String, Void, Bitmap> {
             setImageOnClickListener(file.getPath());
             return bitmap;
         }
+        MessagesAdapter.filesLoadingInProgress.add(fileUrl);
 
         if(type.equals(IMAGE_TYPE)) {
             if (file.exists()) {
