@@ -7,13 +7,13 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.media.MediaRecorder;
 import android.net.Uri;
-import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.v7.app.ActionBar;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -28,19 +28,18 @@ import android.widget.ListView;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
-//import android.widget.Toolbar;
 
-import com.example.nameless.autoupdating.generalModules.AppCompatActivityWithInternetStatusListener;
+import com.example.nameless.autoupdating.common.AppCompatActivityWithInternetStatusListener;
 import com.example.nameless.autoupdating.asyncTasks.DownloadAvatarByUrl;
-import com.example.nameless.autoupdating.generalModules.FirebaseSingleton;
+import com.example.nameless.autoupdating.common.ChatActions;
+import com.example.nameless.autoupdating.common.FirebaseSingleton;
+import com.example.nameless.autoupdating.models.Dialog;
 import com.example.nameless.autoupdating.services.NotifyService;
 import com.example.nameless.autoupdating.R;
 import com.example.nameless.autoupdating.adapters.MessagesAdapter;
 import com.example.nameless.autoupdating.models.ClientToClient;
 import com.example.nameless.autoupdating.models.Message;
 import com.example.nameless.autoupdating.models.User;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
@@ -57,32 +56,33 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class Chat extends AppCompatActivityWithInternetStatusListener {
+public class Chat extends AppCompatActivityWithInternetStatusListener implements ChatActions {
 
 //    private static final int REQUEST_GALLERY = 100;
     public static final int PICKFILE_RESULT_CODE = 200;
     public static final int CAMERA_REQUEST = 10;
 
     private ImageButton btnSend, btnAffixFile, btnStartRec, btnStopRec;
-    private static EditText etMessage;
     private ListView lvMessages;
-    private static ImageView ivEdit;
+    private EditText etMessage;
+    private ImageView ivEdit;
     private static Message messageForEditing;
     private MessagesAdapter adapter;
 
     private FirebaseDatabase database;
-    private DatabaseReference messagesDb, dialogsDb;
+    private DatabaseReference messagesDb, dialogsDb, dialogsRef, messagesRef;
     private String dialogId;
 
     private ArrayList<Message> messages;
     private User toUser;
 
     private boolean keyboardListenerLocker = false;
-    private boolean dialogFound = false;
+    private boolean dialogFound;
     private FirebaseAuth mAuth;
     private Uri imgUri;
     private MediaRecorder mediaRecorder;
@@ -100,6 +100,7 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
         lvMessages = findViewById(R.id.lvMessages);
         ivEdit = findViewById(R.id.ivEdit);
 
+        dialogFound = false;
         btnSend.setEnabled(false);
         btnStartRec.setEnabled(false);
         messages = new ArrayList<>();
@@ -127,96 +128,7 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
 // todo last online
 //todo media sending
 
-        Query getChat = dialogsDb.orderByChild("speakers/" + mAuth.getUid());
-        getChat.addListenerForSingleValueEvent(new ValueEventListener() {
-
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-
-                // Keep calm dialogs can cached and then will not sync with messages
-                dialogsDb.keepSynced(true);
-
-                for(DataSnapshot data : dataSnapshot.getChildren()) {
-                    Iterable<DataSnapshot> speakers = data.child("speakers").getChildren();
-                    speakers.forEach(item -> {
-                        if(item.getValue().equals(toUser.getUid())) {
-                            dialogId = data.getKey();
-                            dialogsDb = dialogsDb.child(dialogId);
-                            messagesDb = messagesDb.child(dialogId);
-                            dialogFound = true;
-                        }
-                    });
-                }
-
-                if (!dialogFound) {
-                    dialogId = dialogsDb.push().getKey();
-                    dialogsDb = dialogsDb.child(dialogId);
-                    messagesDb = messagesDb.child(dialogId);
-                    dialogsDb.child("speakers").child(toUser.getUid()).setValue(toUser.getUid());
-                    dialogsDb.child("speakers").child(mAuth.getUid()).setValue(mAuth.getUid());
-                }
-
-                adapter = new MessagesAdapter(getApplicationContext(), etMessage, messages, messagesDb);
-                lvMessages.setAdapter(adapter);
-
-                btnSend.setEnabled(true);
-                btnStartRec.setEnabled(true);
-
-                Query unreadedMessages = messagesDb.orderByChild("read").equalTo(false);
-                unreadedMessages.addValueEventListener(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                        dialogsDb.child("unreadCounter").setValue(dataSnapshot.getChildrenCount());
-                    }
-
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError databaseError) {}
-                });
-
-                messagesDb.addChildEventListener(new ChildEventListener() {
-                    @Override
-                    public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-                        messages.add(new Message(dataSnapshot.getKey(), dataSnapshot.getValue(Message.class)));
-                        adapter.notifyDataSetChanged();
-                    }
-
-                    @Override
-                    public void onChildChanged(DataSnapshot dataSnapshot, String s) {
-                        for (int i=0; i<messages.size(); i++) {
-                            if(((messages.get(i)).getUid()).equals(dataSnapshot.getKey())) {
-                                messages.set(i, new Message(dataSnapshot.getKey(), dataSnapshot.getValue(Message.class)));
-                                adapter.notifyDataSetChanged();
-                            }
-                        }
-                    }
-
-                    @Override
-                    public void onChildRemoved(DataSnapshot dataSnapshot) {
-                        Iterator<Message> itr = messages.iterator();
-                        while(itr.hasNext()) {
-                            Message message = itr.next();
-                            if(message.getUid().equals(dataSnapshot.getKey())) {
-                                itr.remove();
-                                adapter.notifyDataSetChanged();
-                            }
-                        }
-                    }
-
-                    @Override
-                    public void onChildMoved(DataSnapshot dataSnapshot, String s) {
-                    }
-
-                    @Override
-                    public void onCancelled(DatabaseError databaseError) {
-                    }
-                });
-            }
-
-                @Override
-                public void onCancelled(DatabaseError databaseError) {
-
-                }
-            });
+        setChatListeners();
 
         btnAffixFile.setOnClickListener(v -> showPopupWindow(v));
 
@@ -227,8 +139,8 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 if (!(String.valueOf(etMessage.getText()).trim()).equals("")) {
-                    btnSend.setVisibility(View.VISIBLE);
                     btnStartRec.setVisibility(View.GONE);
+                    btnSend.setVisibility(View.VISIBLE);
                 } else {
                     btnSend.setVisibility(View.GONE);
                     btnStartRec.setVisibility(View.VISIBLE);
@@ -264,23 +176,17 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
         btnStopRec.setOnClickListener(v -> {
             cancelRecord();
             etMessage.setEnabled(true);
-            btnStartRec.setVisibility(View.VISIBLE);
             btnStopRec.setVisibility(View.GONE);
+            btnStartRec.setVisibility(View.VISIBLE);
         });
         btnStopRec.setOnLongClickListener(view -> {
             stopRecord();
             etMessage.setEnabled(true);
-            btnStartRec.setVisibility(View.VISIBLE);
             btnStopRec.setVisibility(View.GONE);
+            btnStartRec.setVisibility(View.VISIBLE);
             return true;
         });
     }
-
-//    @Override
-//    public boolean onCreateOptionsMenu(Menu menu) {
-//        getMenuInflater().inflate(R.menu.main_menu, menu);
-//        return super.onCreateOptionsMenu(menu);
-//    }
 
     @Override
     protected void onStop() {
@@ -352,7 +258,6 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
                     fMS = getImageSides(file);
                 }
                 final String fileMediaSides = fMS;
-//                Toast.makeText(this, fileType, Toast.LENGTH_SHORT).show();
 
 
                 StorageReference riversRef = gsReference.child(mAuth.getCurrentUser()
@@ -368,10 +273,130 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
                 uploadTask.addOnFailureListener(e -> Toast.makeText(Chat.this, ":c", Toast.LENGTH_SHORT).show());
             }
         }
-
     }
 
-    public void startRecord() {
+
+    private void setChatListeners() {
+        Query getChat = dialogsDb.orderByChild("speakers/" + mAuth.getUid());
+        getChat.addValueEventListener(new ValueEventListener() {
+
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+
+                // Триггери или один раз или на добавление, плодишь листенеры при каждом изменении - т к ласт месседж меняется
+                // но в дальнейщем появятся чаты и в них будут динамически появляться юзера и это нужно учитывать
+                // сделаю для этого отдельную реализацию и отдельную привязку, так что игнор
+                if(dialogFound) {
+                    getChat.removeEventListener(this);
+                    return;
+                }
+                // Keep calm dialogs can cached and then will not sync with messages
+                dialogsDb.keepSynced(true);
+
+                for(DataSnapshot data : dataSnapshot.getChildren()) {
+                    Iterable<DataSnapshot> speakers = data.child("speakers").getChildren();
+                    speakers.forEach(item -> {
+                        if(item.getValue().equals(toUser.getUid())) {
+                            dialogId = data.getKey();
+                            dialogsRef = dialogsDb.child(dialogId);
+                            messagesRef = messagesDb.child(dialogId);
+                            dialogFound = true;
+                        }
+                    });
+                }
+
+                // TODO animation and disabling
+                btnSend.setEnabled(true);
+                btnStartRec.setEnabled(true);
+
+                if (!dialogFound) {
+                    return;
+                }
+
+                adapter = new MessagesAdapter(Chat.this, messages, messagesRef);
+                lvMessages.setAdapter(adapter);
+
+                messagesRef.addValueEventListener(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+
+                        messagesRef.limitToLast(1).addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                                for(DataSnapshot data : dataSnapshot.getChildren()) {
+                                    dialogsRef.child("lastMessage").setValue(data.getValue());
+                                }
+                            }
+
+                            @Override
+                            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError databaseError) {}
+                });
+
+                Query unreadMessages = messagesRef.orderByChild("read").equalTo(false);
+                unreadMessages.addValueEventListener(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                        dialogsRef.child("unreadCounter").setValue(dataSnapshot.getChildrenCount());
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError databaseError) {}
+                });
+
+                messagesRef.addChildEventListener(new ChildEventListener() {
+                    @Override
+                    public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+                        messages.add(new Message(dataSnapshot.getKey(), dataSnapshot.getValue(Message.class)));
+                        adapter.notifyDataSetChanged();
+                    }
+
+                    @Override
+                    public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+                        for (int i=0; i<messages.size(); i++) {
+                            if(((messages.get(i)).getUid()).equals(dataSnapshot.getKey())) {
+                                messages.set(i, new Message(dataSnapshot.getKey(), dataSnapshot.getValue(Message.class)));
+                                adapter.notifyDataSetChanged();
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onChildRemoved(DataSnapshot dataSnapshot) {
+                        Iterator<Message> itr = messages.iterator();
+                        while(itr.hasNext()) {
+                            Message message = itr.next();
+                            if(message.getUid().equals(dataSnapshot.getKey())) {
+                                itr.remove();
+                                adapter.notifyDataSetChanged();
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+                    }
+                });
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+    }
+
+    private void startRecord() {
         mediaRecorder = new MediaRecorder();
         mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
         mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
@@ -386,7 +411,7 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
         mediaRecorder.start();
     }
 
-    public void stopRecord() {
+    private void stopRecord() {
         mediaRecorder.stop();
         mediaRecorder.release();
         mediaRecorder = null;
@@ -416,7 +441,7 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
         uploadTask.addOnFailureListener(e -> Toast.makeText(Chat.this, ":c", Toast.LENGTH_SHORT).show());
     }
 
-    public void cancelRecord() {
+    private void cancelRecord() {
         mediaRecorder.stop();
         mediaRecorder.release();
         mediaRecorder = null;
@@ -425,7 +450,7 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
         audioCahce.delete();
     }
 
-    public String getImageSides(Uri uri) {
+    private String getImageSides(Uri uri) {
         Bitmap image = null;
         try {
             image = MediaStore.Images.Media.getBitmap(this.getContentResolver(), uri);
@@ -439,7 +464,7 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
 //        Cursor cursor = getApplicationContext().getContentResolver().query(uri, {MediaStore.Images.Media.DATA}, null, null, null);
 //    }
 
-    public void setActionBar() {
+    private void setActionBar() {
         Query getUser = database.getReference("Users").orderByChild("uid").equalTo(toUser.getUid());
         getUser.addValueEventListener(new ValueEventListener() {
             @Override
@@ -483,8 +508,8 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
             startActivity(intent);
         });
     }
-    public void showPopupWindow(View view) {
 
+    private void showPopupWindow(View view) {
         LayoutInflater layoutInflater
                 = (LayoutInflater)getApplicationContext()
                 .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
@@ -512,13 +537,10 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
         btnGallery.setOnClickListener(v -> {
             Intent intent = new Intent();
             intent.setType("image/*");
+//            intent.setAction(Intent.ACTION_PICK);
             intent.setAction(Intent.ACTION_GET_CONTENT);
-            startActivityForResult(Intent.createChooser(intent, "Select Picture"), PICKFILE_RESULT_CODE);
-
-    //             Intent intent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-    //            Intent intent = new Intent(Intent.ACTION_GET_CONTENT, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-    //            intent.setType("image/*");
-    //            startActivityForResult(Intent.createChooser(intent, "Select Picture"), PICKFILE_RESULT_CODE);
+            startActivityForResult(Intent.createChooser(
+                    intent, "Select Picture"), PICKFILE_RESULT_CODE);
             popupWindow.dismiss();
         });
 
@@ -531,7 +553,7 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
         });
     }
 
-    public void parseMessageContent(Message message) {
+    private void parseMessageContent(Message message) {
         String msg = message.getContent();
         Pattern urlPattern = Pattern.compile(
                 "((https?|ftp|gopher|telnet|file):((//)|(\\\\))+[\\w\\d" +
@@ -547,17 +569,30 @@ public class Chat extends AppCompatActivityWithInternetStatusListener {
             String uid = message.getUid();
             message.setUid(null);
             //в базу записываем объект мессадж без uid  тк это поле является название узла в бд и не требуется
-            messagesDb.child(uid).setValue(message);
+            messagesRef.child(uid).setValue(message);
             message.setUid(uid);
             return;
         }
 
-        messagesDb.push().setValue(message);
-        dialogsDb.child("lastMessage").setValue(message);
+        if (!dialogFound) {
+            dialogId = dialogsDb.push().getKey();
+            dialogsRef = dialogsDb.child(dialogId);
+            messagesRef = messagesDb.child(dialogId);
+
+            HashMap<String, String> speakers = new HashMap<>();
+            speakers.put(toUser.getUid(), toUser.getUid());
+            speakers.put(mAuth.getUid(), mAuth.getUid());
+            Dialog dialog = new Dialog(message, 1, speakers);
+            dialogsRef.setValue(dialog);
+//            dialogFound = true;
+        }
+
+        messagesRef.push().setValue(message);
         etMessage.setText("");
     }
 
-    public static void onEdit(Message message) {
+    @Override
+    public void onEdit(Message message) {
         messageForEditing = message;
         etMessage.setText(message.getContent());
         etMessage.setSelection(etMessage.getText().length());

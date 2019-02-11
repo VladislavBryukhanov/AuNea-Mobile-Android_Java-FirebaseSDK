@@ -16,7 +16,7 @@ import android.view.View;
 import android.widget.Toast;
 
 import com.example.nameless.autoupdating.R;
-import com.example.nameless.autoupdating.generalModules.FirebaseSingleton;
+import com.example.nameless.autoupdating.common.FirebaseSingleton;
 import com.example.nameless.autoupdating.voip.ListenVoiceStream;
 import com.example.nameless.autoupdating.voip.UDPClient;
 import com.example.nameless.autoupdating.voip.WriteVoiceStream;
@@ -26,7 +26,6 @@ import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
@@ -135,11 +134,11 @@ public class VoiceCalling extends AppCompatActivity {
                         .child("voiceCall");
 
                 if(action.equals(VoiceCalling.OUTGOING_CALL_ACTION)) {
+                    btnAccept.setVisibility(View.GONE);
                     ClientToClient ctc = (ClientToClient)intent.getSerializableExtra("dialog");
                     CoordinatorLayout.LayoutParams lp = (CoordinatorLayout.LayoutParams) btnReject.getLayoutParams();
                     lp.anchorGravity = Gravity.CENTER;
                     btnReject.setLayoutParams(lp);
-                    btnAccept.setVisibility(View.GONE);
 
                     createConnection(ctc.getSecondUser());
 

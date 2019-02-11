@@ -24,27 +24,6 @@
             android:textColor="#ffffff"
             android:textSize="16sp" />
 
-        <ProgressBar
-            android:id="@+id/pbLoading"
-            android:layout_width="45dp"
-            android:layout_height="45dp"
-            android:indeterminate="true"
-            android:indeterminateTint="@color/lightBlue"
-            android:visibility="gone" />
-
-        <ImageView
-            android:id="@+id/ivImage"
-            android:layout_width="240dp"
-            android:layout_height="45dp"
-            android:scaleType="fitCenter"
-            android:visibility="gone" />
-
-        <com.example.nameless.autoupdating.activities.AudioTrackUI
-            android:id="@+id/audioUI"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:visibility="gone" />
-
     </LinearLayout>
 
     <TextView

@@ -1,4 +1,4 @@
-package com.example.nameless.autoupdating.generalModules;
+package com.example.nameless.autoupdating.common;
 
 import com.google.firebase.database.FirebaseDatabase;
 
@@ -8,7 +8,7 @@ public class FirebaseSingleton {
     public static FirebaseDatabase getFirebaseInstanse() {
         if (firebase == null) {
             firebase = firebase.getInstance();
-            firebase.setPersistenceEnabled(true);
+//            firebase.setPersistenceEnabled(true);
         }
         return firebase;
     }

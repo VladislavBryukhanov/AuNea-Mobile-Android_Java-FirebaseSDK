@@ -7,6 +7,7 @@
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.CAPTURE_AUDIO_OUTPUT" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
 
     <application
         android:allowBackup="true"
@@ -66,7 +67,7 @@
                 android:resource="@xml/provider_paths" />
         </provider>
 
-        <activity android:name=".generalModules.GlobalMenu" />
+        <activity android:name=".common.GlobalMenu" />
         <activity android:name=".activities.Authentification"
             android:theme="@style/BlackActionBar" />
         <activity

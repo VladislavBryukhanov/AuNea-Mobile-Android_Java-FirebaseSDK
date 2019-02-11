@@ -24,8 +24,7 @@ import android.widget.Toast;
 
 import com.example.nameless.autoupdating.asyncTasks.DownloadAvatarByUrl;
 import com.example.nameless.autoupdating.R;
-import com.example.nameless.autoupdating.generalModules.FirebaseSingleton;
-import com.google.android.gms.tasks.OnSuccessListener;
+import com.example.nameless.autoupdating.common.FirebaseSingleton;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -118,12 +117,7 @@ public class Settings extends AppCompatActivity {
                                     R.style.AppTheme));
                     builder.setTitle("Storage will be changed");
                     builder.setMessage("Your files will be saved in AUMessanger directory at root of storage");
-                    builder.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialogInterface, int i) {
-                            dialogInterface.cancel();
-                        }
-                    });
+                    builder.setPositiveButton("Ok", (dialogInterface, i1) -> dialogInterface.cancel());
                     AlertDialog dialog = builder.create();
                     dialog.setCancelable(true);
                     dialog.show();
@@ -141,8 +135,10 @@ public class Settings extends AppCompatActivity {
         avatar.setOnClickListener(v -> {
             Intent intent = new Intent();
             intent.setType("image/*");
-            intent.setAction(Intent.ACTION_GET_CONTENT);
-            startActivityForResult(Intent.createChooser(intent, "Select Picture"), Chat.PICKFILE_RESULT_CODE);
+            intent.setAction(Intent.ACTION_PICK);
+//            intent.setAction(Intent.ACTION_GET_CONTENT);
+            startActivityForResult(Intent.createChooser(
+                    intent, "Select Picture"), Chat.PICKFILE_RESULT_CODE);
         });
     }
 
