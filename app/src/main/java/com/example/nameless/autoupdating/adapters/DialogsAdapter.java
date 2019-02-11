@@ -1,6 +1,7 @@
 package com.example.nameless.autoupdating.adapters;
 
 import android.content.Context;
+import android.graphics.Typeface;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
@@ -68,6 +69,12 @@ public class DialogsAdapter  extends ArrayAdapter<Dialog> implements Filterable 
                 msgCounter.setVisibility(View.VISIBLE);
             }
 
+            if (dialog.getLastMessage().getFileType() != null) {
+                lastMsg.setText(dialog.getLastMessage().getFileType());
+                lastMsg.setTypeface(null, Typeface.ITALIC);
+            } else {
+                lastMsg.setText(dialog.getLastMessage().getContent());
+            }
             if (!sender.equals(mAuth.getUid())) {
                 lastMsg.setTextColor(ContextCompat.getColor(ma, R.color.outcomeMessage));
                 lastMsg.setVisibility(View.VISIBLE);
@@ -75,7 +82,6 @@ public class DialogsAdapter  extends ArrayAdapter<Dialog> implements Filterable 
                 lastMsg.setTextColor(ContextCompat.getColor(ma, R.color.black_overlay));
                 lastMsg.setVisibility(View.VISIBLE);
             }
-            lastMsg.setText(dialog.getLastMessage().getContent());
 
             Date dateOfSend = dialog.getLastMessage().getDateOfSend();
             DateFormat dateFormat = (new SimpleDateFormat("HH:mm:ss"));

@@ -134,11 +134,11 @@ public class VoiceCalling extends AppCompatActivity {
                         .child("voiceCall");
 
                 if(action.equals(VoiceCalling.OUTGOING_CALL_ACTION)) {
+                    btnAccept.setVisibility(View.GONE);
                     ClientToClient ctc = (ClientToClient)intent.getSerializableExtra("dialog");
                     CoordinatorLayout.LayoutParams lp = (CoordinatorLayout.LayoutParams) btnReject.getLayoutParams();
                     lp.anchorGravity = Gravity.CENTER;
                     btnReject.setLayoutParams(lp);
-                    btnAccept.setVisibility(View.GONE);
 
                     createConnection(ctc.getSecondUser());
 

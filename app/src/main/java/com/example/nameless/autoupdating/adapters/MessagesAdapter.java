@@ -333,10 +333,11 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
 
         if(!message.isRead()) {
             if(message.getTo().equals(mAuth.getUid())) {
-                message.setRead(true);
                 String uid = message.getUid();
+                message.setRead(true);
                 message.setUid(null);
                 myRef.child(uid).setValue(message);
+                message.setUid(uid);
                 notifyDataSetChanged();
             } else {
                 (convertView.findViewById(R.id.content))

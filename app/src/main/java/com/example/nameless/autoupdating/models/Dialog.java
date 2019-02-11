@@ -1,10 +1,13 @@
 package com.example.nameless.autoupdating.models;
 
+import java.util.HashMap;
+
 public class Dialog {
     public String uid;
     public Message lastMessage;
     public int unreadCounter;
     public User speaker;
+    public HashMap speakers;
 
     public Message getLastMessage() {
         return lastMessage;
@@ -43,5 +46,11 @@ public class Dialog {
         this.lastMessage = lastMessage;
         this.unreadCounter = unreadCounter;
         this.speaker = speaker;
+    }
+
+    public Dialog(Message lastMessage, int unreadCounter, HashMap speakers) {
+        this.lastMessage = lastMessage;
+        this.unreadCounter = unreadCounter;
+        this.speakers = speakers;
     }
 }

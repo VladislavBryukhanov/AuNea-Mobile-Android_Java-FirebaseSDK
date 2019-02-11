@@ -77,7 +77,7 @@
         <TextView
             android:id="@+id/tvLastMsg"
             android:layout_width="match_parent"
-            android:layout_height="18dp"
+            android:layout_height="20dp"
             android:fontFamily="sans-serif"
             android:visibility="gone"
             android:textSize="15sp"

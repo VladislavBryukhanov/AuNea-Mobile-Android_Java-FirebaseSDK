@@ -29,19 +29,17 @@ import com.example.nameless.autoupdating.activities.Settings;
 import com.example.nameless.autoupdating.models.Message;
 import com.example.nameless.autoupdating.models.User;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Created by nameless on 11.04.18.
@@ -56,20 +54,18 @@ public class NotifyService extends Service implements NetworkStateReceiver.Netwo
     private Uri notifySoundUri;
 
     private FirebaseDatabase database;
-    private DatabaseReference myRef;
-    private HashMap<String, Boolean> timeOut; //первым childAdded всегда будет последнее отправленное нам сообщение во время диалога, пропускаем его
-
-    private ChildEventListener newMsgListener;
-    private Query refToListener;
-    private HashMap<Query, ChildEventListener> refToListeners;
+    private Query dbMyDialogs;
+    private ValueEventListener dialogsListener;
     private FirebaseAuth mAuth;
+
+    private ArrayList<String> timeOut; //первым childAdded всегда будет последнее отправленное нам сообщение во время диалога, пропускаем его
+    private HashMap<String, Integer> usersId;
 
     private NetworkStateReceiver networkStateReceiver;
     private boolean isDisconnected;
     private String interlocutor; //собеседник
     private Date disconnectTime;
 
-    private HashMap<String, Integer> usersId;
 
     @Nullable
     @Override
@@ -84,8 +80,7 @@ public class NotifyService extends Service implements NetworkStateReceiver.Netwo
 
         database = FirebaseSingleton.getFirebaseInstanse();
         mAuth = FirebaseAuth.getInstance();
-        refToListeners = new HashMap<>();
-        timeOut = new HashMap<>();
+        timeOut = new ArrayList<>();
         usersId = new HashMap<>();
 
         interlocutor = "";
@@ -97,86 +92,6 @@ public class NotifyService extends Service implements NetworkStateReceiver.Netwo
         createListeners();
     }
 
-    private void createListeners() {
-        myRef = database.getReference("Messages");
-        myRef.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-
-                timeOut = new HashMap<>();
-                refToListeners = new HashMap<>();
-
-                for (DataSnapshot dlg : dataSnapshot.getChildren()) {
-                    String myListener = String.valueOf(dlg.child("listener1").getValue());
-                    String foreignListener = String.valueOf(dlg.child("listener2").getValue());
-
-                    if (myListener.equals(mAuth.getUid())
-                            || foreignListener.equals(mAuth.getUid())) {
-
-                        if (!myListener.equals(mAuth.getUid()) ) {
-                            foreignListener = myListener;
-                        }
-
-                        final String foreignListenerTmp = foreignListener;
-
-                        refToListener = myRef.child(dlg.getKey()).child("content");
-                        refToListener.limitToLast(1).addChildEventListener(newMsgListener = new ChildEventListener() {
-                            @Override
-                            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-
-                                Message newMsg = dataSnapshot.getValue(Message.class);
-                                if(!timeOut.get(foreignListenerTmp)) {
-                                    timeOut.put(foreignListenerTmp, true);
-                                } else {
-                                    if (!(newMsg.getWho()).equals(interlocutor)
-                                            && (newMsg.getTo()).equals(mAuth.getUid())) {
-                                        sendNotify(newMsg);
-                                    }
-                                }
-                            }
-                            @Override
-                            public void onChildChanged(DataSnapshot dataSnapshot, String s) {}
-                            @Override
-                            public void onChildRemoved(DataSnapshot dataSnapshot) {}
-                            @Override
-                            public void onChildMoved(DataSnapshot dataSnapshot, String s) {}
-                            @Override
-                            public void onCancelled(DatabaseError databaseError) {}
-                        });
-                        refToListeners.put(refToListener, newMsgListener);
-                        timeOut.put(foreignListener, false);
-                    }
-                }
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-
-            }
-        });
-    }
-
-    private void getMissedNotifications() {
-        for(Map.Entry<Query, ChildEventListener> entry : refToListeners.entrySet()) {
-            entry.getKey().orderByChild("read").equalTo(false).limitToLast(1).addListenerForSingleValueEvent(new ValueEventListener() {
-                @Override
-                public void onDataChange(DataSnapshot dataSnapshot) {
-                    for (DataSnapshot data : dataSnapshot.getChildren()) {
-                        Message newMsg = data.getValue(Message.class);
-                        if((newMsg.getDateOfSend()).compareTo(disconnectTime) > 0) {
-                            if (!(newMsg.getWho()).equals(interlocutor)
-                                    && (newMsg.getTo()).equals(mAuth.getUid())) {
-                                sendNotify(newMsg);
-                            }
-                        }
-                    }
-                }
-
-                @Override
-                public void onCancelled(DatabaseError databaseError) {}
-            });
-        }
-    }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
@@ -194,15 +109,61 @@ public class NotifyService extends Service implements NetworkStateReceiver.Netwo
     public void onDestroy() {
         networkStateReceiver.removeListener(this);
         this.unregisterReceiver(networkStateReceiver);
-        for(Map.Entry<Query, ChildEventListener> entry : refToListeners.entrySet()) {
-            (entry.getKey()).removeEventListener(entry.getValue());
-        }
+        dbMyDialogs.removeEventListener(dialogsListener);
 //        disconnectTime = new Date();
 
 //        Intent broadcastIntent = new Intent("android.intent.action.RestartNotificationService");
 //        sendBroadcast(broadcastIntent);
     }
 
+    private void createListeners() {
+        dbMyDialogs = database.getReference("Dialogs").orderByChild("speakers/" + mAuth.getUid());
+        dbMyDialogs.addValueEventListener(dialogsListener = new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+
+                //Todo триггери на добаление
+                for (DataSnapshot dlg : dataSnapshot.getChildren()) {
+                    Message lastMessage = dlg.child("lastMessage").getValue(Message.class);
+                    String sender = lastMessage.getWho();
+
+                    // TODO remove message.to field
+                    if(timeOut.indexOf(sender) == -1) {
+                        timeOut.add(sender);
+                    } else if (!(lastMessage.getWho()).equals(interlocutor)
+                            && (lastMessage.getTo()).equals(mAuth.getUid())) {
+                        sendNotify(lastMessage);
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {}
+        });
+    }
+
+    private void getMissedNotifications() {
+        dbMyDialogs.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+
+                for (DataSnapshot dlg : dataSnapshot.getChildren()) {
+                    Message lastMessage = dlg.child("lastMessage").getValue(Message.class);
+                    String sender = lastMessage.getWho();
+
+                    if(!lastMessage.isRead() && (lastMessage.getDateOfSend()).compareTo(disconnectTime) > 0) {
+                        timeOut.add(sender);
+                    } else if (!(lastMessage.getWho()).equals(interlocutor)
+                            && (lastMessage.getTo()).equals(mAuth.getUid())) {
+                        sendNotify(lastMessage);
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {}
+        });
+    }
 
     public void sendNotify(final Message msg) {
         Query getUser = database.getReference("Users").orderByChild("uid").equalTo(msg.getWho());

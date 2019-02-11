@@ -33,6 +33,7 @@ import com.example.nameless.autoupdating.common.AppCompatActivityWithInternetSta
 import com.example.nameless.autoupdating.asyncTasks.DownloadAvatarByUrl;
 import com.example.nameless.autoupdating.common.ChatActions;
 import com.example.nameless.autoupdating.common.FirebaseSingleton;
+import com.example.nameless.autoupdating.models.Dialog;
 import com.example.nameless.autoupdating.services.NotifyService;
 import com.example.nameless.autoupdating.R;
 import com.example.nameless.autoupdating.adapters.MessagesAdapter;
@@ -55,6 +56,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -73,14 +75,14 @@ public class Chat extends AppCompatActivityWithInternetStatusListener implements
     private MessagesAdapter adapter;
 
     private FirebaseDatabase database;
-    private DatabaseReference messagesDb, dialogsDb;
+    private DatabaseReference messagesDb, dialogsDb, dialogsRef, messagesRef;
     private String dialogId;
 
     private ArrayList<Message> messages;
     private User toUser;
 
     private boolean keyboardListenerLocker = false;
-    private boolean dialogFound = false;
+    private boolean dialogFound;
     private FirebaseAuth mAuth;
     private Uri imgUri;
     private MediaRecorder mediaRecorder;
@@ -98,6 +100,7 @@ public class Chat extends AppCompatActivityWithInternetStatusListener implements
         lvMessages = findViewById(R.id.lvMessages);
         ivEdit = findViewById(R.id.ivEdit);
 
+        dialogFound = false;
         btnSend.setEnabled(false);
         btnStartRec.setEnabled(false);
         messages = new ArrayList<>();
@@ -149,16 +152,6 @@ public class Chat extends AppCompatActivityWithInternetStatusListener implements
         });
 
         btnSend.setOnClickListener(v -> {
-            if (!dialogFound) {
-                dialogId = dialogsDb.push().getKey();
-                dialogsDb = dialogsDb.child(dialogId);
-                messagesDb = messagesDb.child(dialogId);
-                dialogsDb.child("speakers").child(toUser.getUid()).setValue(toUser.getUid());
-                dialogsDb.child("speakers").child(mAuth.getUid()).setValue(mAuth.getUid());
-                dialogFound = true;
-                setChatListeners();
-            }
-
             if(messageForEditing != null) {
                 messageForEditing.setContent(String.valueOf(etMessage.getText()));
                 parseMessageContent(messageForEditing);
@@ -265,7 +258,6 @@ public class Chat extends AppCompatActivityWithInternetStatusListener implements
                     fMS = getImageSides(file);
                 }
                 final String fileMediaSides = fMS;
-//                Toast.makeText(this, fileType, Toast.LENGTH_SHORT).show();
 
 
                 StorageReference riversRef = gsReference.child(mAuth.getCurrentUser()
@@ -286,11 +278,18 @@ public class Chat extends AppCompatActivityWithInternetStatusListener implements
 
     private void setChatListeners() {
         Query getChat = dialogsDb.orderByChild("speakers/" + mAuth.getUid());
-        getChat.addListenerForSingleValueEvent(new ValueEventListener() {
+        getChat.addValueEventListener(new ValueEventListener() {
 
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
 
+                // Триггери или один раз или на добавление, плодишь листенеры при каждом изменении - т к ласт месседж меняется
+                // но в дальнейщем появятся чаты и в них будут динамически появляться юзера и это нужно учитывать
+                // сделаю для этого отдельную реализацию и отдельную привязку, так что игнор
+                if(dialogFound) {
+                    getChat.removeEventListener(this);
+                    return;
+                }
                 // Keep calm dialogs can cached and then will not sync with messages
                 dialogsDb.keepSynced(true);
 
@@ -299,8 +298,8 @@ public class Chat extends AppCompatActivityWithInternetStatusListener implements
                     speakers.forEach(item -> {
                         if(item.getValue().equals(toUser.getUid())) {
                             dialogId = data.getKey();
-                            dialogsDb = dialogsDb.child(dialogId);
-                            messagesDb = messagesDb.child(dialogId);
+                            dialogsRef = dialogsDb.child(dialogId);
+                            messagesRef = messagesDb.child(dialogId);
                             dialogFound = true;
                         }
                     });
@@ -314,18 +313,18 @@ public class Chat extends AppCompatActivityWithInternetStatusListener implements
                     return;
                 }
 
-                adapter = new MessagesAdapter(Chat.this, messages, messagesDb);
+                adapter = new MessagesAdapter(Chat.this, messages, messagesRef);
                 lvMessages.setAdapter(adapter);
 
-                messagesDb.addValueEventListener(new ValueEventListener() {
+                messagesRef.addValueEventListener(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
 
-                        messagesDb.limitToLast(1).addListenerForSingleValueEvent(new ValueEventListener() {
+                        messagesRef.limitToLast(1).addListenerForSingleValueEvent(new ValueEventListener() {
                             @Override
                             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                                 for(DataSnapshot data : dataSnapshot.getChildren()) {
-                                    dialogsDb.child("lastMessage").setValue(data.getValue());
+                                    dialogsRef.child("lastMessage").setValue(data.getValue());
                                 }
                             }
 
@@ -340,18 +339,18 @@ public class Chat extends AppCompatActivityWithInternetStatusListener implements
                     public void onCancelled(@NonNull DatabaseError databaseError) {}
                 });
 
-                Query unreadMessages = messagesDb.orderByChild("read").equalTo(false);
+                Query unreadMessages = messagesRef.orderByChild("read").equalTo(false);
                 unreadMessages.addValueEventListener(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                        dialogsDb.child("unreadCounter").setValue(dataSnapshot.getChildrenCount());
+                        dialogsRef.child("unreadCounter").setValue(dataSnapshot.getChildrenCount());
                     }
 
                     @Override
                     public void onCancelled(@NonNull DatabaseError databaseError) {}
                 });
 
-                messagesDb.addChildEventListener(new ChildEventListener() {
+                messagesRef.addChildEventListener(new ChildEventListener() {
                     @Override
                     public void onChildAdded(DataSnapshot dataSnapshot, String s) {
                         messages.add(new Message(dataSnapshot.getKey(), dataSnapshot.getValue(Message.class)));
@@ -361,14 +360,9 @@ public class Chat extends AppCompatActivityWithInternetStatusListener implements
                     @Override
                     public void onChildChanged(DataSnapshot dataSnapshot, String s) {
                         for (int i=0; i<messages.size(); i++) {
-                            try {
-                                if(((messages.get(i)).getUid()).equals(dataSnapshot.getKey())) {
-                                    messages.set(i, new Message(dataSnapshot.getKey(), dataSnapshot.getValue(Message.class)));
-                                    adapter.notifyDataSetChanged();
-                                }
-                            } catch (Exception e) {
-                // TODO Эта хрень кидает эксепшены, но тк не крашится, то работает, на вид нормально
-                                Log.d("+++++++++",e.getMessage());
+                            if(((messages.get(i)).getUid()).equals(dataSnapshot.getKey())) {
+                                messages.set(i, new Message(dataSnapshot.getKey(), dataSnapshot.getValue(Message.class)));
+                                adapter.notifyDataSetChanged();
                             }
                         }
                     }
@@ -575,12 +569,25 @@ public class Chat extends AppCompatActivityWithInternetStatusListener implements
             String uid = message.getUid();
             message.setUid(null);
             //в базу записываем объект мессадж без uid  тк это поле является название узла в бд и не требуется
-            messagesDb.child(uid).setValue(message);
+            messagesRef.child(uid).setValue(message);
             message.setUid(uid);
             return;
         }
 
-        messagesDb.push().setValue(message);
+        if (!dialogFound) {
+            dialogId = dialogsDb.push().getKey();
+            dialogsRef = dialogsDb.child(dialogId);
+            messagesRef = messagesDb.child(dialogId);
+
+            HashMap<String, String> speakers = new HashMap<>();
+            speakers.put(toUser.getUid(), toUser.getUid());
+            speakers.put(mAuth.getUid(), mAuth.getUid());
+            Dialog dialog = new Dialog(message, 1, speakers);
+            dialogsRef.setValue(dialog);
+//            dialogFound = true;
+        }
+
+        messagesRef.push().setValue(message);
         etMessage.setText("");
     }
 
