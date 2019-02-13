@@ -104,12 +104,11 @@ public class DialogListFragment  extends Fragment {
         });
     }
 
-
     public void getMessages() {
         FirebaseDatabase database = FirebaseSingleton.getFirebaseInstanse();
         DatabaseReference dialogsDb = database.getReference("Dialogs");
 
-        Query getChat = dialogsDb.orderByChild("speakers/" + mAuth.getUid());
+        Query getChat = dialogsDb.orderByChild("speakers/" + mAuth.getUid()).equalTo(mAuth.getUid());
         getChat.keepSynced(true);
         getChat.addChildEventListener(new ChildEventListener() {
             @Override
@@ -123,11 +122,9 @@ public class DialogListFragment  extends Fragment {
                     if (((dialogs.get(i)).getUid()).equals(dataSnapshot.getKey())) {
                         Dialog newDialog = dialogs.get(i);
                         newDialog.setLastMessage(
-                                dataSnapshot.child("lastMessage").getValue(Message.class)
-                        );
+                                dataSnapshot.child("lastMessage").getValue(Message.class));
                         newDialog.setUnreadCounter(
-                                dataSnapshot.child("unreadCounter").getValue(Integer.class)
-                        );
+                                dataSnapshot.child("unreadCounter").getValue(Integer.class));
 
                         dialogs.set(i, newDialog);
                         adapter.notifyDataSetChanged();
@@ -151,7 +148,6 @@ public class DialogListFragment  extends Fragment {
         speakers.forEach(item -> {
             users.forEach(user -> {
                 if(user.getUid().equals(item.getValue())) {
-
                     int unreadCounter = dataSnapshot.child("unreadCounter")
                             .getValue(Integer.class);
                     Message lastMessage = dataSnapshot.child("lastMessage")

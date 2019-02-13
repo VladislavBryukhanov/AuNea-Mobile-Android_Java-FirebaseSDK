@@ -277,7 +277,7 @@ public class Chat extends AppCompatActivityWithInternetStatusListener implements
 
 
     private void setChatListeners() {
-        Query getChat = dialogsDb.orderByChild("speakers/" + mAuth.getUid());
+        Query getChat = dialogsDb.orderByChild("speakers/" + mAuth.getUid()).equalTo(mAuth.getUid());
         getChat.addValueEventListener(new ValueEventListener() {
 
             @Override
@@ -325,6 +325,7 @@ public class Chat extends AppCompatActivityWithInternetStatusListener implements
                             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                                 for(DataSnapshot data : dataSnapshot.getChildren()) {
                                     dialogsRef.child("lastMessage").setValue(data.getValue());
+                                    dialogsRef.child("notify").setValue(true);
                                 }
                             }
 
@@ -582,7 +583,7 @@ public class Chat extends AppCompatActivityWithInternetStatusListener implements
             HashMap<String, String> speakers = new HashMap<>();
             speakers.put(toUser.getUid(), toUser.getUid());
             speakers.put(mAuth.getUid(), mAuth.getUid());
-            Dialog dialog = new Dialog(message, 1, speakers);
+            Dialog dialog = new Dialog(message, 1, speakers, true);
             dialogsRef.setValue(dialog);
 //            dialogFound = true;
         }

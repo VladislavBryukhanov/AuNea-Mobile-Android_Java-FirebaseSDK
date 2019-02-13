@@ -8,6 +8,7 @@ public class Dialog {
     public int unreadCounter;
     public User speaker;
     public HashMap speakers;
+    public boolean notify;
 
     public Message getLastMessage() {
         return lastMessage;
@@ -41,6 +42,16 @@ public class Dialog {
         this.uid = uid;
     }
 
+    public boolean isNotify() {
+        return notify;
+    }
+
+    public void setNotify(boolean notify) {
+        this.notify = notify;
+    }
+
+    public Dialog() {}
+
     public Dialog(String uid, Message lastMessage, int unreadCounter, User speaker) {
         this.uid = uid;
         this.lastMessage = lastMessage;
@@ -48,9 +59,10 @@ public class Dialog {
         this.speaker = speaker;
     }
 
-    public Dialog(Message lastMessage, int unreadCounter, HashMap speakers) {
+    public Dialog(Message lastMessage, int unreadCounter, HashMap speakers, boolean notify) {
         this.lastMessage = lastMessage;
         this.unreadCounter = unreadCounter;
         this.speakers = speakers;
+        this.notify = notify;
     }
 }
