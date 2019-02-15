@@ -8,7 +8,6 @@ import android.app.Service;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
@@ -22,7 +21,6 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.SimpleTarget;
 import com.bumptech.glide.request.transition.Transition;
 import com.example.nameless.autoupdating.common.FirebaseSingleton;
-import com.example.nameless.autoupdating.receivers.NetworkStateReceiver;
 import com.example.nameless.autoupdating.R;
 import com.example.nameless.autoupdating.activities.Chat;
 import com.example.nameless.autoupdating.activities.Settings;
@@ -36,16 +34,14 @@ import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.HashMap;
 
 /**
  * Created by nameless on 11.04.18.
  */
 
-public class NotifyService extends Service implements NetworkStateReceiver.NetworkStateReceiverListener {
+public class NotifyService extends Service {
 
     private final String NOTIFY_CHANNEL_NAME = "NOTIFY_CHANNEL_ID";
     private final String DEFAULT_SOUND_CHANNEL = "DEFAULT_SOUND_CHANNEL";
@@ -58,13 +54,9 @@ public class NotifyService extends Service implements NetworkStateReceiver.Netwo
     private ValueEventListener dialogsListener;
     private FirebaseAuth mAuth;
 
-    private ArrayList<String> timeOut; //первым childAdded всегда будет последнее отправленное нам сообщение во время диалога, пропускаем его
     private HashMap<String, Integer> usersId;
 
-    private NetworkStateReceiver networkStateReceiver;
-    private boolean isDisconnected;
     private String interlocutor; //собеседник
-    private Date disconnectTime;
 
 
     @Nullable
@@ -80,15 +72,9 @@ public class NotifyService extends Service implements NetworkStateReceiver.Netwo
 
         database = FirebaseSingleton.getFirebaseInstanse();
         mAuth = FirebaseAuth.getInstance();
-        timeOut = new ArrayList<>();
         usersId = new HashMap<>();
 
         interlocutor = "";
-        isDisconnected = false;
-        networkStateReceiver = new NetworkStateReceiver();
-        networkStateReceiver.addListener(this);
-        this.registerReceiver(networkStateReceiver, new IntentFilter(android.net.ConnectivityManager.CONNECTIVITY_ACTION));
-
         createListeners();
     }
 
@@ -107,8 +93,6 @@ public class NotifyService extends Service implements NetworkStateReceiver.Netwo
 
     @Override
     public void onDestroy() {
-        networkStateReceiver.removeListener(this);
-        this.unregisterReceiver(networkStateReceiver);
         dbMyDialogs.removeEventListener(dialogsListener);
 //        disconnectTime = new Date();
 
@@ -117,45 +101,19 @@ public class NotifyService extends Service implements NetworkStateReceiver.Netwo
     }
 
     private void createListeners() {
-        dbMyDialogs = database.getReference("Dialogs").orderByChild("speakers/" + mAuth.getUid());
+        dbMyDialogs = database.getReference("Dialogs").orderByChild("speakers/" + mAuth.getUid()).equalTo(mAuth.getUid());
         dbMyDialogs.addValueEventListener(dialogsListener = new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
 
-                //Todo триггери на добаление
                 for (DataSnapshot dlg : dataSnapshot.getChildren()) {
                     Message lastMessage = dlg.child("lastMessage").getValue(Message.class);
                     String sender = lastMessage.getWho();
-
-                    // TODO remove message.to field
-                    if(timeOut.indexOf(sender) == -1) {
-                        timeOut.add(sender);
-                    } else if (!(lastMessage.getWho()).equals(interlocutor)
-                            && (lastMessage.getTo()).equals(mAuth.getUid())) {
-                        sendNotify(lastMessage);
-                    }
-                }
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {}
-        });
-    }
-
-    private void getMissedNotifications() {
-        dbMyDialogs.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-
-                for (DataSnapshot dlg : dataSnapshot.getChildren()) {
-                    Message lastMessage = dlg.child("lastMessage").getValue(Message.class);
-                    String sender = lastMessage.getWho();
-
-                    if(!lastMessage.isRead() && (lastMessage.getDateOfSend()).compareTo(disconnectTime) > 0) {
-                        timeOut.add(sender);
-                    } else if (!(lastMessage.getWho()).equals(interlocutor)
-                            && (lastMessage.getTo()).equals(mAuth.getUid())) {
-                        sendNotify(lastMessage);
+                    if (!lastMessage.isRead() && dlg.child("notify").getValue(Boolean.class)) {
+                        if (!sender.equals(interlocutor) && (lastMessage.getTo()).equals(mAuth.getUid())) {
+                            sendNotify(lastMessage);
+                            dlg.child("notify").getRef().setValue(false);
+                        }
                     }
                 }
             }
@@ -253,20 +211,5 @@ public class NotifyService extends Service implements NetworkStateReceiver.Netwo
 //        notification.flags = Notification.FLAG_ONGOING_EVENT | Notification.FLAG_SHOW_LIGHTS | Notification.FLAG_INSISTENT;
 //        notification.flags |= Notification.FLAG_AUTO_CANCEL;
         notificationManager.notify(usersId.get(who.getUid()) , notification);
-    }
-
-    @Override
-    public void networkAvailable() {
-        if(isDisconnected) {
-            isDisconnected = false;
-//            stopSelf();
-            getMissedNotifications();
-        }
-    }
-
-    @Override
-    public void networkUnavailable() {
-        isDisconnected = true;
-        disconnectTime = new Date();
     }
 }
