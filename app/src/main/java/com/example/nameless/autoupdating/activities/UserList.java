@@ -5,17 +5,18 @@ import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.design.widget.TabLayout;
-import android.support.v4.app.FragmentTabHost;
 import android.support.v4.view.ViewPager;
 import android.view.Menu;
 
 import com.example.nameless.autoupdating.adapters.TabAdapter;
+import com.example.nameless.autoupdating.common.ConnectivityNetworkListener;
 import com.example.nameless.autoupdating.common.FirebaseSingleton;
 import com.example.nameless.autoupdating.common.GlobalMenu;
+import com.example.nameless.autoupdating.common.NetworkUtil;
 import com.example.nameless.autoupdating.fragments.dialogs.DialogListFragment;
 import com.example.nameless.autoupdating.fragments.dialogs.UsersListFragment;
-import com.example.nameless.autoupdating.receivers.NetworkStateReceiver;
 import com.example.nameless.autoupdating.services.CallService;
 import com.example.nameless.autoupdating.services.NotifyService;
 import com.example.nameless.autoupdating.R;
@@ -32,12 +33,8 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
 import java.io.File;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
 
-public class UserList extends GlobalMenu implements NetworkStateReceiver.NetworkStateReceiverListener {
+public class UserList extends GlobalMenu {
 
     public static User myAcc;
     private FirebaseAuth mAuth;
@@ -92,52 +89,6 @@ public class UserList extends GlobalMenu implements NetworkStateReceiver.Network
         return false;
     }
 
-    public void setStatus() {
-        final DatabaseReference connectedRef = FirebaseDatabase
-                .getInstance()
-                .getReference(".info/connected");
-        connectedRef.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(final DataSnapshot snapshot) {
-
-                final Query getUser = FirebaseDatabase
-                        .getInstance()
-                        .getReference("Users")
-                        .orderByChild("uid")
-                        .equalTo(mAuth.getUid());
-
-                getUser.addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(DataSnapshot dataSnapshot) {
-                        for(DataSnapshot data : dataSnapshot.getChildren()) {
-
-                            final DatabaseReference userRef = getUser.getRef()
-                                    .child(data.getKey()).child("status");
-                            DateFormat dateFormat = (new SimpleDateFormat(" HH:mm dd MMM", Locale.ENGLISH));
-                            final String lastSeen = "last seen at" + dateFormat.format(new Date());
-
-                            boolean connected = snapshot.getValue(Boolean.class);
-                            if (connected) {
-                                userRef.onDisconnect().setValue(lastSeen);
-                                userRef.setValue("online");
-                            } else { //Вроде как else никогда не отрабатывает
-                                userRef.setValue(lastSeen);
-                            }
-                        }
-                    }
-                    @Override
-                    public void onCancelled(DatabaseError databaseError) {}
-                });
-            }
-
-            @Override
-            public void onCancelled(DatabaseError error) {
-            }
-        });
-    }
-
-
-
     public void signIn() {
         Query getUser = dbUsers.orderByChild("uid").equalTo(mAuth.getUid());
         getUser.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -173,7 +124,7 @@ public class UserList extends GlobalMenu implements NetworkStateReceiver.Network
                         }
                         myAcc.setAvatar(imgFile.getPath());
                     }
-                    setStatus();
+
                     initialiseData();
                 }
             }
@@ -189,6 +140,10 @@ public class UserList extends GlobalMenu implements NetworkStateReceiver.Network
         if (!UserList.isMyServiceRunning(CallService.class, this)) {
             startService(new Intent(this, CallService.class));
         }
+
+//        ConnectivityNetworkListener con = new ConnectivityNetworkListener(UserList.this);
+        //TODO |reactive| update from main app instance
+        NetworkUtil.setNetworkStatus();
 
 //        Intent broadcastIntent = new Intent("android.intent.action.startServices");
 //        sendBroadcast(broadcastIntent);
@@ -212,17 +167,19 @@ public class UserList extends GlobalMenu implements NetworkStateReceiver.Network
         adapter.addFragment(new UsersListFragment(), "Users");
         viewPager.setAdapter(adapter);
 
-        viewPager.setCurrentItem(1);
         tabLayout.setupWithViewPager(viewPager);
-    }
 
-    @Override
-    public void networkAvailable() {
-        setStatus();
-    }
-
-    @Override
-    public void networkUnavailable() {
-
+        DatabaseReference dialogsDb = database.getReference("Dialogs");
+        Query getChat = dialogsDb.orderByChild("speakers/" + mAuth.getUid()).equalTo(mAuth.getUid());
+        getChat.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                if (dataSnapshot.getChildrenCount() == 0) {
+                    runOnUiThread(() -> viewPager.setCurrentItem(1));
+                }
+            }
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {}
+        });
     }
 }

@@ -11,9 +11,9 @@ import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.v7.app.ActionBar;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -29,10 +29,10 @@ import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.nameless.autoupdating.common.AppCompatActivityWithInternetStatusListener;
 import com.example.nameless.autoupdating.asyncTasks.DownloadAvatarByUrl;
 import com.example.nameless.autoupdating.common.ChatActions;
 import com.example.nameless.autoupdating.common.FirebaseSingleton;
+import com.example.nameless.autoupdating.common.NetworkUtil;
 import com.example.nameless.autoupdating.models.Dialog;
 import com.example.nameless.autoupdating.services.NotifyService;
 import com.example.nameless.autoupdating.R;
@@ -61,7 +61,7 @@ import java.util.Iterator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class Chat extends AppCompatActivityWithInternetStatusListener implements ChatActions {
+public class Chat extends AppCompatActivity implements ChatActions {
 
 //    private static final int REQUEST_GALLERY = 100;
     public static final int PICKFILE_RESULT_CODE = 200;
@@ -277,6 +277,7 @@ public class Chat extends AppCompatActivityWithInternetStatusListener implements
 
 
     private void setChatListeners() {
+
         Query getChat = dialogsDb.orderByChild("speakers/" + mAuth.getUid()).equalTo(mAuth.getUid());
         getChat.addValueEventListener(new ValueEventListener() {
 
@@ -325,7 +326,6 @@ public class Chat extends AppCompatActivityWithInternetStatusListener implements
                             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                                 for(DataSnapshot data : dataSnapshot.getChildren()) {
                                     dialogsRef.child("lastMessage").setValue(data.getValue());
-                                    dialogsRef.child("notify").setValue(true);
                                 }
                             }
 
@@ -589,6 +589,7 @@ public class Chat extends AppCompatActivityWithInternetStatusListener implements
         }
 
         messagesRef.push().setValue(message);
+        dialogsRef.child("notify").setValue(true);
         etMessage.setText("");
     }
 

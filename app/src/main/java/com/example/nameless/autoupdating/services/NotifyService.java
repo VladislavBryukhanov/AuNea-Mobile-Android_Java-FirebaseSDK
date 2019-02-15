@@ -21,7 +21,6 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.SimpleTarget;
 import com.bumptech.glide.request.transition.Transition;
 import com.example.nameless.autoupdating.common.FirebaseSingleton;
-import com.example.nameless.autoupdating.receivers.NetworkStateReceiver;
 import com.example.nameless.autoupdating.R;
 import com.example.nameless.autoupdating.activities.Chat;
 import com.example.nameless.autoupdating.activities.Settings;

@@ -30,6 +30,7 @@ import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
+import java.util.Optional;
 
 public class DialogListFragment  extends Fragment {
 
@@ -104,67 +105,6 @@ public class DialogListFragment  extends Fragment {
         });
     }
 
-    public void getMessages() {
-        FirebaseDatabase database = FirebaseSingleton.getFirebaseInstanse();
-        DatabaseReference dialogsDb = database.getReference("Dialogs");
-
-        Query getChat = dialogsDb.orderByChild("speakers/" + mAuth.getUid()).equalTo(mAuth.getUid());
-        getChat.keepSynced(true);
-        getChat.addChildEventListener(new ChildEventListener() {
-            @Override
-            public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-                assocDialogWithUser(dataSnapshot);
-            }
-
-            @Override
-            public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-                for (int i = 0; i < dialogs.size(); i++) {
-                    if (((dialogs.get(i)).getUid()).equals(dataSnapshot.getKey())) {
-                        Dialog newDialog = dialogs.get(i);
-                        newDialog.setLastMessage(
-                                dataSnapshot.child("lastMessage").getValue(Message.class));
-                        newDialog.setUnreadCounter(
-                                dataSnapshot.child("unreadCounter").getValue(Integer.class));
-
-                        dialogs.set(i, newDialog);
-                        adapter.notifyDataSetChanged();
-                    }
-                }
-            }
-
-            @Override
-            public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {}
-
-            @Override
-            public void onChildMoved(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {}
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {}
-        });
-    }
-
-    public void assocDialogWithUser(DataSnapshot dataSnapshot) {
-        Iterable<DataSnapshot> speakers = dataSnapshot.child("speakers").getChildren();
-        speakers.forEach(item -> {
-            users.forEach(user -> {
-                if(user.getUid().equals(item.getValue())) {
-                    int unreadCounter = dataSnapshot.child("unreadCounter")
-                            .getValue(Integer.class);
-                    Message lastMessage = dataSnapshot.child("lastMessage")
-                            .getValue(Message.class);
-
-                    Dialog dialog = new Dialog(
-                            dataSnapshot.getKey(),
-                            lastMessage,
-                            unreadCounter,
-                            user
-                    );
-                    dialogs.add(dialog);
-                }
-            });
-        });
-        adapter.notifyDataSetChanged();
-    }
 
     public void fetchData() {
         dbUsers.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -185,5 +125,76 @@ public class DialogListFragment  extends Fragment {
             public void onCancelled(DatabaseError databaseError) {
             }
         });
+    }
+
+    public void getMessages() {
+        FirebaseDatabase database = FirebaseSingleton.getFirebaseInstanse();
+        DatabaseReference dialogsDb = database.getReference("Dialogs");
+
+        Query getChat = dialogsDb.orderByChild("speakers/" + mAuth.getUid()).equalTo(mAuth.getUid());
+        getChat.keepSynced(true);
+        getChat.addChildEventListener(new ChildEventListener() {
+            @Override
+            public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+                assocDialogWithUser(dataSnapshot);
+            }
+
+            @Override
+            public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+                Optional<Dialog> dialogSearch = dialogs.stream().filter(d ->
+                        d.getUid().equals(dataSnapshot.getKey())).findFirst();
+
+                    if (dialogSearch.isPresent()) {
+
+                        Dialog newDialog = dialogSearch.get();
+                        int index = dialogs.indexOf(newDialog);
+
+                        newDialog.setLastMessage(
+                                dataSnapshot.child("lastMessage").getValue(Message.class));
+                        newDialog.setUnreadCounter(
+                                dataSnapshot.child("unreadCounter").getValue(Integer.class));
+
+                        dialogs.set(index, newDialog);
+                        adapter.notifyDataSetChanged();
+                    }
+            }
+
+            @Override
+            public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {}
+
+            @Override
+            public void onChildMoved(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {}
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {}
+        });
+    }
+
+    public void assocDialogWithUser(DataSnapshot dataSnapshot) {
+        Iterable<DataSnapshot> speakers = dataSnapshot.child("speakers").getChildren();
+        speakers.forEach(item -> {
+
+            Optional<User> userSearch = users.stream().filter(u ->
+                    u.getUid().equals(item.getValue())).findFirst();
+
+            if (userSearch.isPresent()) {
+                User user =  userSearch.get();
+
+                int unreadCounter = dataSnapshot.child("unreadCounter")
+                        .getValue(Integer.class);
+
+                Message lastMessage = dataSnapshot.child("lastMessage")
+                        .getValue(Message.class);
+
+                Dialog dialog = new Dialog(
+                        dataSnapshot.getKey(),
+                        lastMessage,
+                        unreadCounter,
+                        user
+                );
+                dialogs.add(dialog);
+            }
+        });
+        adapter.notifyDataSetChanged();
     }
 }
