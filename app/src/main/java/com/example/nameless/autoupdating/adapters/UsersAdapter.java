@@ -15,16 +15,11 @@ import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
-import com.example.nameless.autoupdating.asyncTasks.DownloadAvatarByUrl;
 import com.example.nameless.autoupdating.R;
-import com.example.nameless.autoupdating.models.Dialog;
+import com.example.nameless.autoupdating.common.NetworkUtil;
 import com.example.nameless.autoupdating.models.User;
-import com.google.firebase.auth.FirebaseAuth;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
@@ -46,25 +41,39 @@ public class UsersAdapter extends ArrayAdapter<User>  implements Filterable{
     }
 
 
+    // TODO Dialogs adapter must extends user adapter
     @NonNull
     @Override
     public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
         if(filteredUserList.size() > 0) {
             LayoutInflater li = (LayoutInflater)ma.getSystemService( Context.LAYOUT_INFLATER_SERVICE );
             convertView = li.inflate(R.layout.user_item, parent, false);
+            User currentUser = filteredUserList.get(position);
 
             ((TextView)convertView.findViewById(R.id.tvLogin))
-                    .setText(filteredUserList.get(position).getLogin());
+                    .setText(currentUser.getLogin());
 
-            if(filteredUserList.get(position).getNickname() != null
-                    && filteredUserList.get(position).getNickname().length() > 0) {
+            if(currentUser.getNickname() != null && currentUser.getNickname().length() > 0) {
                 TextView nickname = convertView.findViewById(R.id.tvNickname);
                 nickname.setVisibility(View.VISIBLE);
-                nickname.setText('@'+filteredUserList.get(position).getNickname());
+                nickname.setText('@'+currentUser.getNickname());
+            }
+
+            String userStatus = currentUser.getStatus();
+            if (userStatus.contains(NetworkUtil.ONLINE_STATUS)) {
+                convertView.findViewById(R.id.onlineStatus)
+                        .setBackground(ContextCompat.getDrawable(getContext(), R.drawable.network_status_online));
+            } else if (userStatus.contains(NetworkUtil.AFK_STATUS)) {
+                convertView.findViewById(R.id.onlineStatus)
+                        .setBackground(ContextCompat.getDrawable(getContext(), R.drawable.network_status_afk));
+            //AFK contains OFFLINE_STATUS contains, but OFFLINE_STATUS contains not AFK_STATUS
+            } else if (userStatus.contains(NetworkUtil.OFFLINE_STATUS)) {
+                convertView.findViewById(R.id.onlineStatus)
+                        .setBackground(ContextCompat.getDrawable(getContext(), R.drawable.network_status_offline));
             }
 
             // Прекратить пересечивание
-            if(filteredUserList.get(position).getAvatarUrl() != null) {
+            if(currentUser.getAvatarUrl() != null) {
            /*     DownloadAvatarByUrl downloadTask = new DownloadAvatarByUrl(
                         convertView.findViewById(R.id.profile_image),
                         filteredUserList.get(position).getSpeaker(),
@@ -77,7 +86,7 @@ public class UsersAdapter extends ArrayAdapter<User>  implements Filterable{
                 }*/
                 CircleImageView avatar = convertView.findViewById(R.id.profile_image);
                 Glide.with(getContext())
-                        .load(filteredUserList.get(position).getAvatarUrl())
+                        .load(currentUser.getAvatarUrl())
                         .apply(new RequestOptions()
                                 .placeholder(R.drawable.avatar))
                         .into(avatar);

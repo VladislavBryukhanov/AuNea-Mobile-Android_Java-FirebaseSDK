@@ -10,6 +10,11 @@
     <color name="black_overlay">#66000000</color>
     <color name="dialogBack">#c8000000</color>
 
+    <color name="borderColor">#C8464646</color>
+    <color name="onlineColor">#558DC4</color>
+    <color name="offlineColor">#ffffff</color>
+    <color name="afkColor">#A0A0A0</color>
+
     <color name="incomingMessage">#243443</color>
     <color name="outcomeMessage">#3772AB</color>
     <color name="lightBlue">#6B9BC2</color>

@@ -9,13 +9,21 @@ import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
 import java.text.DateFormat;
+import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
 public class NetworkUtil {
 
-    private final static String ONLINE_STATUS = "Online";
+    public final static String ONLINE_STATUS = "Online";
+    public final static String OFFLINE_STATUS  = "Last seen at";
+    public final static String AFK_STATUS  = "AFK";
+
+    private interface callbackAction {
+        void doAction();
+    }
+
     private static final NetworkUtil instance = new NetworkUtil();
     private static String currentStatus;
 
@@ -28,7 +36,7 @@ public class NetworkUtil {
     }
 
     public static void setAfkStatus() {
-        currentStatus = "AFK (" + instance.getLastSeen() + ")";
+        currentStatus = MessageFormat.format(AFK_STATUS  + "({0})", instance.getLastSeen());
         instance.getInstance(() -> instance.userRef.setValue(currentStatus));
     }
 
@@ -43,7 +51,7 @@ public class NetworkUtil {
     }
 
     private String getLastSeen() {
-        return "last seen at" + dateFormat.format(new Date());
+        return OFFLINE_STATUS  + dateFormat.format(new Date());
     }
 
     private void getInstance(callbackAction action) {
@@ -99,9 +107,5 @@ public class NetworkUtil {
             public void onCancelled(DatabaseError error) {
             }
         });
-    }
-
-    private interface callbackAction {
-        void doAction();
     }
 }

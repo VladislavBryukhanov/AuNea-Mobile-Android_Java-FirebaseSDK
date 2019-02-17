@@ -19,6 +19,7 @@ import com.example.nameless.autoupdating.adapters.UsersAdapter;
 import com.example.nameless.autoupdating.common.FirebaseSingleton;
 import com.example.nameless.autoupdating.models.User;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -99,21 +100,36 @@ public class UsersListFragment extends Fragment {
     }
 
     public void fetchData() {
-        dbUsers.addListenerForSingleValueEvent(new ValueEventListener() {
+        dbUsers.addChildEventListener(new ChildEventListener() {
+
             @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                for (DataSnapshot user : dataSnapshot.getChildren()) {
-                    User newUserItem = user.getValue(User.class);
-                    if (!newUserItem.getUid().equals(mAuth.getUid())) {
-                        users.add(newUserItem);
+            public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+                User newUserItem = dataSnapshot.getValue(User.class);
+                if (!newUserItem.getUid().equals(mAuth.getUid())) {
+                    users.add(newUserItem);
+                }
+                adapter.notifyDataSetChanged();
+            }
+
+            @Override
+            public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+                User newUserItem = dataSnapshot.getValue(User.class);
+                for (int i = 0; i < users.size(); i++) {
+                    if (users.get(i).getUid().equals(newUserItem.getUid())) {
+                        users.set(i, newUserItem);
                     }
                 }
                 adapter.notifyDataSetChanged();
             }
 
             @Override
-            public void onCancelled(DatabaseError databaseError) {
-            }
+            public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {}
+
+            @Override
+            public void onChildMoved(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {}
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {}
         });
     }
 }

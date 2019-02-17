@@ -71,12 +71,13 @@ public class Chat extends AppCompatActivity implements ChatActions {
     private ListView lvMessages;
     private EditText etMessage;
     private ImageView ivEdit;
-    private static Message messageForEditing;
+    private Message messageForEditing;
     private MessagesAdapter adapter;
 
     private FirebaseDatabase database;
     private DatabaseReference messagesDb, dialogsDb, dialogsRef, messagesRef;
     private String dialogId;
+    private int firstUnreadMessageIndex = -1;
 
     private ArrayList<Message> messages;
     private User toUser;
@@ -354,7 +355,13 @@ public class Chat extends AppCompatActivity implements ChatActions {
                 messagesRef.addChildEventListener(new ChildEventListener() {
                     @Override
                     public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-                        messages.add(new Message(dataSnapshot.getKey(), dataSnapshot.getValue(Message.class)));
+                        Message message = new Message(dataSnapshot.getKey(), dataSnapshot.getValue(Message.class));
+                        messages.add(message);
+                        //TODO invalid for infinite scroll
+                        if (firstUnreadMessageIndex == -1 && !message.isRead()) {
+                            firstUnreadMessageIndex = messages.size() - 1;
+                            lvMessages.setSelection(firstUnreadMessageIndex);
+                        }
                         adapter.notifyDataSetChanged();
                     }
 
@@ -538,8 +545,8 @@ public class Chat extends AppCompatActivity implements ChatActions {
         btnGallery.setOnClickListener(v -> {
             Intent intent = new Intent();
             intent.setType("image/*");
-//            intent.setAction(Intent.ACTION_PICK);
-            intent.setAction(Intent.ACTION_GET_CONTENT);
+            intent.setAction(Intent.ACTION_PICK);
+//            intent.setAction(Intent.ACTION_GET_CONTENT);
             startActivityForResult(Intent.createChooser(
                     intent, "Select Picture"), PICKFILE_RESULT_CODE);
             popupWindow.dismiss();

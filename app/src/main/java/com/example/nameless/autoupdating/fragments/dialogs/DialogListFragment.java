@@ -116,14 +116,39 @@ public class DialogListFragment  extends Fragment {
                         users.add(newUserItem);
                     }
                 }
-//                adapter.notifyDataSetChanged();
                 // TODO сделать нормально, а не делать выборку всех юзеров и привязывать их к месседжам
                 getMessages();
             }
 
             @Override
-            public void onCancelled(DatabaseError databaseError) {
+            public void onCancelled(DatabaseError databaseError) {}
+        });
+
+        dbUsers.addChildEventListener(new ChildEventListener() {
+
+            @Override
+            public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+                User newUserItem = dataSnapshot.getValue(User.class);
+
+                for (Dialog dialog: dialogs) {
+                    if (dialog.getSpeaker().getUid().equals(newUserItem.getUid())) {
+                        int index = dialogs.indexOf(dialog);
+                        dialog.setSpeaker(newUserItem);
+
+                        dialogs.set(index, dialog);
+                        adapter.notifyDataSetChanged();
+                    }
+                }
             }
+
+            @Override
+            public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {}
+            @Override
+            public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {}
+            @Override
+            public void onChildMoved(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {}
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {}
         });
     }
 
@@ -144,19 +169,19 @@ public class DialogListFragment  extends Fragment {
                 Optional<Dialog> dialogSearch = dialogs.stream().filter(d ->
                         d.getUid().equals(dataSnapshot.getKey())).findFirst();
 
-                    if (dialogSearch.isPresent()) {
+                if (dialogSearch.isPresent()) {
 
-                        Dialog newDialog = dialogSearch.get();
-                        int index = dialogs.indexOf(newDialog);
+                    Dialog newDialog = dialogSearch.get();
+                    int index = dialogs.indexOf(newDialog);
 
-                        newDialog.setLastMessage(
-                                dataSnapshot.child("lastMessage").getValue(Message.class));
-                        newDialog.setUnreadCounter(
-                                dataSnapshot.child("unreadCounter").getValue(Integer.class));
+                    newDialog.setLastMessage(
+                            dataSnapshot.child("lastMessage").getValue(Message.class));
+                    newDialog.setUnreadCounter(
+                            dataSnapshot.child("unreadCounter").getValue(Integer.class));
 
-                        dialogs.set(index, newDialog);
-                        adapter.notifyDataSetChanged();
-                    }
+                    dialogs.set(index, newDialog);
+                    adapter.notifyDataSetChanged();
+                }
             }
 
             @Override

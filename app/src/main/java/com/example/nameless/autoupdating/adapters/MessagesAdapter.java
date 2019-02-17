@@ -103,42 +103,35 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
         if(filteredMessageList.size() > 0) {
             LayoutInflater li = (LayoutInflater)ma.getSystemService( Context.LAYOUT_INFLATER_SERVICE );
             convertView = li.inflate(R.layout.message_item, parent, false);
+
             LinearLayout layout = convertView.findViewById(R.id.content);
+            RelativeLayout.LayoutParams layoutParams =
+                    (RelativeLayout.LayoutParams) layout.getLayoutParams();
+            RelativeLayout.LayoutParams timeLayoutParams =
+                    (RelativeLayout.LayoutParams) convertView.findViewById(R.id.tvDate).getLayoutParams();
 
-            if((filteredMessageList.get(position).getWho())
-                    .equals(mAuth.getUid())) {
+            Message currentMessage = filteredMessageList.get(position);
+            final String fileUrl = currentMessage.getFileUrl();
+
+            if((currentMessage.getWho()).equals(mAuth.getUid())) {
                 layout.setBackgroundResource(R.drawable.message_background_out);
-
-                RelativeLayout.LayoutParams layoutParams =
-                        (RelativeLayout.LayoutParams) layout.getLayoutParams();
                 layoutParams.addRule(RelativeLayout.ALIGN_PARENT_LEFT, 0);
                 layoutParams.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
-
-                layoutParams = (RelativeLayout.LayoutParams) convertView.findViewById(
-                                R.id.tvDate).getLayoutParams();
-                layoutParams.addRule(RelativeLayout.LEFT_OF, R.id.content);
+                timeLayoutParams.addRule(RelativeLayout.LEFT_OF, R.id.content);
             } else {
                 layout.setBackgroundResource(R.drawable.message_background_in);
-
-                RelativeLayout.LayoutParams layoutParams =
-                        (RelativeLayout.LayoutParams) layout.getLayoutParams();
-
                 layoutParams.addRule(RelativeLayout.ALIGN_PARENT_RIGHT, 0);
                 layoutParams.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
-
-                layoutParams = (RelativeLayout.LayoutParams) convertView.findViewById(
-                        R.id.tvDate).getLayoutParams();
-                layoutParams.addRule(RelativeLayout.RIGHT_OF, R.id.content);
+                timeLayoutParams.addRule(RelativeLayout.RIGHT_OF, R.id.content);
             }
 
-            final String fileUrl = filteredMessageList.get(position).getFileUrl();
             if(fileUrl != null) {
 
                 ImageView image;
                 ProgressBar loading ;
                 LinearLayout audioUI;
 
-//                Bitmap bitmap = MessagesAdapter.mMemoryCache.get(filteredMessageList.get(position).getFileUrl());
+//                Bitmap bitmap = MessagesAdapter.mMemoryCache.get(currentMessage.getFileUrl());
 //                if(bitmap != null) {
 //                    image.setImageBitmap(bitmap);
 //                    image.setVisibility(View.VISIBLE);
@@ -146,7 +139,7 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
 //                    loading.setVisibility(View.VISIBLE);
 //                }
 
-                if((filteredMessageList.get(position).getFileType()).equals("audio")) {
+                if((currentMessage.getFileType()).equals("audio")) {
 
                     audioUI = new AudioTrackUI(ma, null);
                     layout.addView(audioUI);
@@ -162,11 +155,11 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
 
                     DownloadMediaFIle downloadTask = new DownloadMediaFIle(
                             audioUI, getContext(),
-                            filteredMessageList.get(position).getFileType());
+                            currentMessage.getFileType());
                     downloadTask.execute(fileUrl);
-                } else if((filteredMessageList.get(position).getFileType()).equals("image")) {
+                } else if ((currentMessage.getFileType()).equals("image")) {
 
-                    String fileMediaSides = filteredMessageList.get(position).getFileMediaSides();
+                    String fileMediaSides = currentMessage.getFileMediaSides();
 
                     image = new ImageView(ma);
                     image.setVisibility(View.GONE);
@@ -179,7 +172,7 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
                     layout.addView(image);
                     layout.addView(loading);
 
-//                if((filteredMessageList.get(position).getFileType()).equals("image")) {
+//                if((currentMessage.getFileType()).equals("image")) {
 //                    mPicasso.load(fileUrl)
 //                            .resize(200, 200)
 //                            . centerInside()
@@ -190,7 +183,6 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
 
                     // if this file already downloading prevent multiple downloading
                     if (MessagesAdapter.filesLoadingInProgress.indexOf(fileUrl) == -1) {
-
                         // При скролле все равно происходят мерцния из за времени требуемого на создание потока
                         // и поиска битмапа в нем, избежать по этой причине быстрее сделать так,
                         // чтобы избежвать мерцаний
@@ -206,18 +198,18 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
 
                         DownloadMediaFIle downloadTask = new DownloadMediaFIle(
                                 image, loading, getContext(),
-                                filteredMessageList.get(position).getFileType());
+                                currentMessage.getFileType());
                         downloadTask.execute(fileUrl);
                         image.setAdjustViewBounds(true);
                     }
                 }
             }
 
-            parseMessageContent(filteredMessageList.get(position), convertView);
+            parseMessageContent(currentMessage, convertView);
 
             DateFormat dateFormat = (new SimpleDateFormat("HH:mm:ss \n dd MMM"));
             ((TextView)convertView.findViewById(R.id.tvDate)).setText(dateFormat
-                    .format(filteredMessageList.get(position).getDateOfSend()));
+                    .format(currentMessage.getDateOfSend()));
         }
         return convertView;
     }
@@ -338,7 +330,7 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
                 message.setUid(null);
                 myRef.child(uid).setValue(message);
                 message.setUid(uid);
-                notifyDataSetChanged();
+//                notifyDataSetChanged();
             } else {
                 (convertView.findViewById(R.id.content))
                         .setBackgroundResource(R.drawable.message_background_not_readed);

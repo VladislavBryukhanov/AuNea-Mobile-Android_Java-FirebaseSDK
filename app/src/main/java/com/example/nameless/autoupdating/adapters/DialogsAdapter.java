@@ -16,8 +16,8 @@ import android.widget.TextView;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
 import com.example.nameless.autoupdating.R;
+import com.example.nameless.autoupdating.common.NetworkUtil;
 import com.example.nameless.autoupdating.models.Dialog;
-import com.example.nameless.autoupdating.models.User;
 import com.google.firebase.auth.FirebaseAuth;
 
 import java.text.DateFormat;
@@ -63,6 +63,19 @@ public class DialogsAdapter  extends ArrayAdapter<Dialog> implements Filterable 
             TextView msgCounter = (convertView.findViewById(R.id.msgCounter));
             TextView lastMsg = (convertView.findViewById(R.id.tvLastMsg));
             TextView tvLastMsgTime = (convertView.findViewById(R.id.tvLastMsgTime));
+
+            String userStatus = dialog.getSpeaker().getStatus();
+            if (userStatus.contains(NetworkUtil.ONLINE_STATUS)) {
+                convertView.findViewById(R.id.onlineStatus)
+                        .setBackground(ContextCompat.getDrawable(getContext(), R.drawable.network_status_online));
+            } else if (userStatus.contains(NetworkUtil.AFK_STATUS)) {
+                convertView.findViewById(R.id.onlineStatus)
+                        .setBackground(ContextCompat.getDrawable(getContext(), R.drawable.network_status_afk));
+                //AFK contains OFFLINE_STATUS contains, but OFFLINE_STATUS contains not AFK_STATUS
+            } else if (userStatus.contains(NetworkUtil.OFFLINE_STATUS)) {
+                convertView.findViewById(R.id.onlineStatus)
+                        .setBackground(ContextCompat.getDrawable(getContext(), R.drawable.network_status_offline));
+            }
 
             if (dialog.getUnreadCounter() > 0 && !sender.equals(mAuth.getUid())) {
                 msgCounter.setText(String.valueOf(messageCounter));
