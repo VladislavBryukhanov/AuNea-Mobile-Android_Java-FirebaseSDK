@@ -1,6 +1,5 @@
-package com.example.nameless.autoupdating.generalModules;
+package com.example.nameless.autoupdating.common;
 
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -58,10 +57,8 @@ public class GlobalMenu extends AppCompatActivity {
         } catch (PackageManager.NameNotFoundException e) {
             e.printStackTrace();
         }
-//        Production only, need add paging (limitToLast)
-//        FirebaseDatabase.getInstance().setPersistenceEnabled(true);
         myVersion = pInfo.versionName;
-        database = FirebaseDatabase.getInstance();
+        database = FirebaseSingleton.getFirebaseInstanse();
         mAuth = FirebaseAuth.getInstance();
 
     }

@@ -11,7 +11,7 @@
     android:background="#121617"
     android:orientation="vertical"
     tools:context="com.example.nameless.autoupdating.activities.Chat">
-    <!--android:background="@color/darkTheme"-->
+    <!--android:background="@color/whiteShadow"-->
     <!--android:background="#17181a"-->
     <!--android:background="#121617"-->
 
@@ -20,9 +20,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_weight="1"
-        android:divider="@null">
-
-    </ListView>
+        android:divider="@null" />
 
     <View
         android:layout_width="match_parent"

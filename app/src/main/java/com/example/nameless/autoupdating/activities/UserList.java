@@ -4,31 +4,25 @@ import android.app.Activity;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.BitmapFactory;
 import android.os.Bundle;
-import android.os.Environment;
-import android.text.Editable;
-import android.text.TextWatcher;
+import android.support.annotation.NonNull;
+import android.support.design.widget.TabLayout;
+import android.support.v4.view.ViewPager;
 import android.view.Menu;
-import android.view.View;
-import android.widget.AdapterView;
-import android.widget.EditText;
-import android.widget.ImageView;
-import android.widget.ListView;
-import android.widget.Toast;
 
-import com.example.nameless.autoupdating.asyncTasks.DownloadAvatarByUrl;
-import com.example.nameless.autoupdating.generalModules.GlobalMenu;
-import com.example.nameless.autoupdating.receivers.NetworkStateReceiver;
+import com.example.nameless.autoupdating.adapters.TabAdapter;
+import com.example.nameless.autoupdating.common.ConnectivityNetworkListener;
+import com.example.nameless.autoupdating.common.FirebaseSingleton;
+import com.example.nameless.autoupdating.common.GlobalMenu;
+import com.example.nameless.autoupdating.common.NetworkUtil;
+import com.example.nameless.autoupdating.fragments.dialogs.DialogListFragment;
+import com.example.nameless.autoupdating.fragments.dialogs.UsersListFragment;
 import com.example.nameless.autoupdating.services.CallService;
 import com.example.nameless.autoupdating.services.NotifyService;
 import com.example.nameless.autoupdating.R;
-import com.example.nameless.autoupdating.adapters.UsersAdapter;
-import com.example.nameless.autoupdating.models.ClientToClient;
 import com.example.nameless.autoupdating.models.User;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -39,45 +33,25 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
 import java.io.File;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Locale;
-import java.util.concurrent.ExecutionException;
 
-public class UserList extends GlobalMenu implements NetworkStateReceiver.NetworkStateReceiverListener {
+public class UserList extends GlobalMenu {
 
     public static User myAcc;
-
-    private EditText etSearch;
-    private ListView lvUsers;
-    private ArrayList<User> users;
-    private UsersAdapter adapter;
-
-    private FirebaseDatabase database;
-    private DatabaseReference myRef;
     private FirebaseAuth mAuth;
+    private FirebaseDatabase database;
+    private DatabaseReference dbUsers;
 
     private final int AUTH_SUCCESS = 789;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_user_list);
 
-        etSearch = findViewById(R.id.etSearch);
-        lvUsers = findViewById(R.id.lvUsers);
-
-        users = new ArrayList<>();
-        adapter = new UsersAdapter(this, users);
-        lvUsers.setAdapter(adapter);
-
         mAuth = FirebaseAuth.getInstance();
         FirebaseUser currentUser = mAuth.getCurrentUser();
+        database = FirebaseSingleton.getFirebaseInstanse();
+        dbUsers = database.getReference("Users");
 
         if (currentUser != null) {
             signIn();
@@ -115,110 +89,8 @@ public class UserList extends GlobalMenu implements NetworkStateReceiver.Network
         return false;
     }
 
-    public void setStatus() {
-        final DatabaseReference connectedRef = FirebaseDatabase
-                .getInstance()
-                .getReference(".info/connected");
-        connectedRef.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(final DataSnapshot snapshot) {
-
-                final Query getUser = FirebaseDatabase
-                        .getInstance()
-                        .getReference("Users")
-                        .orderByChild("uid")
-                        .equalTo(mAuth.getUid());
-                getUser.addListenerForSingleValueEvent(new ValueEventListener() {
-
-                    @Override
-                    public void onDataChange(DataSnapshot dataSnapshot) {
-                        for(DataSnapshot data : dataSnapshot.getChildren()) {
-
-                            final DatabaseReference userRef = getUser.getRef()
-                                    .child(data.getKey()).child("status");
-                            DateFormat dateFormat = (new SimpleDateFormat(" HH:mm dd MMM", Locale.ENGLISH));
-                            final String lastSeen = "last seen at" + dateFormat.format(new Date());
-
-                            boolean connected = snapshot.getValue(Boolean.class);
-                            if (connected) {
-                                userRef.onDisconnect().setValue(lastSeen);
-                                userRef.setValue("online");
-                            } else { //Вроде как else никогда не отрабатывает
-                                userRef.setValue(lastSeen);
-                            }
-                        }
-                    }
-                    @Override
-                    public void onCancelled(DatabaseError databaseError) {}
-                });
-            }
-
-            @Override
-            public void onCancelled(DatabaseError error) {
-            }
-        });
-    }
-
-    private void initialiseData() {
-
-        database = FirebaseDatabase.getInstance();
-
-        myRef = database.getReference("Users");
-
-        if (!isMyServiceRunning(NotifyService.class, getApplicationContext())) {
-            startService(new Intent(getApplicationContext(), NotifyService.class));
-        }
-        if (!isMyServiceRunning(CallService.class, getApplicationContext())) {
-            startService(new Intent(getApplicationContext(), CallService.class));
-        }
-
-//        Intent broadcastIntent = new Intent("android.intent.action.startServices");
-//        sendBroadcast(broadcastIntent);
-
-        myRef.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                for (DataSnapshot user : dataSnapshot.getChildren()) {
-                    User newUserItem = user.getValue(User.class);
-                    if (!newUserItem.getUid().equals(myAcc.getUid())) {
-                        users.add(newUserItem);
-                    }
-                }
-                adapter.notifyDataSetChanged();
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-            }
-        });
-
-        lvUsers.setOnItemClickListener((parent, view, position, id) -> {
-            Intent intent = new Intent(getApplicationContext(), Chat.class);
-            intent.putExtra("to", users.get(position));
-            startActivity(intent);
-        });
-
-        etSearch.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
-            }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                adapter.getFilter().filter(s);
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-
-            }
-        });
-    }
-
     public void signIn() {
-        FirebaseDatabase database = FirebaseDatabase.getInstance();
-        Query getUser = database.getReference("Users").orderByChild("uid").equalTo(mAuth.getUid());
+        Query getUser = dbUsers.orderByChild("uid").equalTo(mAuth.getUid());
         getUser.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -252,7 +124,7 @@ public class UserList extends GlobalMenu implements NetworkStateReceiver.Network
                         }
                         myAcc.setAvatar(imgFile.getPath());
                     }
-                    setStatus();
+
                     initialiseData();
                 }
             }
@@ -261,13 +133,53 @@ public class UserList extends GlobalMenu implements NetworkStateReceiver.Network
         });
     }
 
-    @Override
-    public void networkAvailable() {
-        setStatus();
-    }
+    private void initialiseData() {
+        if (!UserList.isMyServiceRunning(NotifyService.class, this)) {
+            startService(new Intent(this, NotifyService.class));
+        }
+        if (!UserList.isMyServiceRunning(CallService.class, this)) {
+            startService(new Intent(this, CallService.class));
+        }
 
-    @Override
-    public void networkUnavailable() {
+//        ConnectivityNetworkListener con = new ConnectivityNetworkListener(UserList.this);
+        //TODO |reactive| update from main app instance
+        NetworkUtil.setNetworkStatus();
 
+//        Intent broadcastIntent = new Intent("android.intent.action.startServices");
+//        sendBroadcast(broadcastIntent);
+
+/*
+        FragmentTabHost tabHost = findViewById(R.id.tabhost);
+        tabHost.setup(getApplicationContext(), getSupportFragmentManager(), R.id.tabcontent);
+        tabHost.addTab(tabHost.newTabSpec("Users").setIndicator("Users"),
+                UsersListFragment.class, null);
+        tabHost.addTab(tabHost.newTabSpec("Dialogs").setIndicator("Dialogs"),
+                DialogListFragment.class, null);
+
+        tabHost.setCurrentTab(0);
+*/
+
+        ViewPager viewPager = findViewById(R.id.pager);
+        TabLayout tabLayout = findViewById(R.id.tabLayout);
+
+        TabAdapter adapter = new TabAdapter(getSupportFragmentManager());
+        adapter.addFragment(new DialogListFragment(), "Dialogs");
+        adapter.addFragment(new UsersListFragment(), "Users");
+        viewPager.setAdapter(adapter);
+
+        tabLayout.setupWithViewPager(viewPager);
+
+        DatabaseReference dialogsDb = database.getReference("Dialogs");
+        Query getChat = dialogsDb.orderByChild("speakers/" + mAuth.getUid()).equalTo(mAuth.getUid());
+        getChat.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                if (dataSnapshot.getChildrenCount() == 0) {
+                    runOnUiThread(() -> viewPager.setCurrentItem(1));
+                }
+            }
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {}
+        });
     }
 }

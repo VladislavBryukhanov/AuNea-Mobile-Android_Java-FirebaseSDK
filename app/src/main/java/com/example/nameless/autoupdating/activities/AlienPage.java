@@ -4,13 +4,11 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.Menu;
-import android.view.View;
 import android.widget.TextView;
 
-import com.example.nameless.autoupdating.generalModules.AppCompatActivityWithInternetStatusListener;
 import com.example.nameless.autoupdating.asyncTasks.DownloadAvatarByUrl;
 import com.example.nameless.autoupdating.R;
-import com.example.nameless.autoupdating.generalModules.GlobalMenu;
+import com.example.nameless.autoupdating.common.GlobalMenu;
 import com.example.nameless.autoupdating.models.User;
 
 import java.util.concurrent.ExecutionException;
