@@ -71,8 +71,12 @@ public class DialogsAdapter  extends ArrayAdapter<Dialog> implements Filterable 
             } else if (userStatus.contains(NetworkUtil.AFK_STATUS)) {
                 convertView.findViewById(R.id.onlineStatus)
                         .setBackground(ContextCompat.getDrawable(getContext(), R.drawable.network_status_afk));
-                //AFK contains OFFLINE_STATUS contains, but OFFLINE_STATUS contains not AFK_STATUS
+            //AFK contains OFFLINE_STATUS contains, but OFFLINE_STATUS contains not AFK_STATUS
             } else if (userStatus.contains(NetworkUtil.OFFLINE_STATUS)) {
+                convertView.findViewById(R.id.onlineStatus)
+                        .setBackground(ContextCompat.getDrawable(getContext(), R.drawable.network_status_offline));
+            } else {
+            // Exception - may be able if user use old app version
                 convertView.findViewById(R.id.onlineStatus)
                         .setBackground(ContextCompat.getDrawable(getContext(), R.drawable.network_status_offline));
             }

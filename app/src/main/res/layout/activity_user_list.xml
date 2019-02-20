@@ -49,6 +49,7 @@
         app:tabBackground="@drawable/dialogs_tab_theme"
         app:tabSelectedTextColor="@color/lightBlue"
         app:tabIndicatorColor="@color/lightBlue"
+        app:tabMaxWidth="0dp"
         app:tabGravity="fill"
         app:tabIndicatorHeight="4dp"
         app:tabMode="fixed"/>

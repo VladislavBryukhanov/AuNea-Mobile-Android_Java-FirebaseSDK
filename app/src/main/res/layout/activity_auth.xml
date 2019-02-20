@@ -18,6 +18,7 @@
         app:tabSelectedTextColor="@color/lightBlue"
         app:tabIndicatorColor="@color/lightBlue"
         app:tabGravity="fill"
+        app:tabMaxWidth="0dp"
         app:tabIndicatorHeight="4dp"
         app:tabMode="fixed"/>
     <android.support.v4.view.ViewPager

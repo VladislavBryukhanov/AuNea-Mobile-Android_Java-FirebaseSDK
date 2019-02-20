@@ -13,7 +13,7 @@
     <color name="borderColor">#C8464646</color>
     <color name="onlineColor">#558DC4</color>
     <color name="offlineColor">#ffffff</color>
-    <color name="afkColor">#A0A0A0</color>
+    <color name="afkColor">#FFF171</color>
 
     <color name="incomingMessage">#243443</color>
     <color name="outcomeMessage">#3772AB</color>

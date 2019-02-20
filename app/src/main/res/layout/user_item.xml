@@ -104,6 +104,8 @@
             android:visibility="gone"
             android:textSize="15sp"
             android:gravity="center_vertical"
+            android:ellipsize="end"
+            android:singleLine="true"
             android:minHeight="50dp" />
 
         <TextView
