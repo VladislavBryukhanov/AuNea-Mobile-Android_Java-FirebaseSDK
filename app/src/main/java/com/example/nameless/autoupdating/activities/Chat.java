@@ -358,7 +358,7 @@ public class Chat extends AppCompatActivity implements ChatActions {
                         Message message = new Message(dataSnapshot.getKey(), dataSnapshot.getValue(Message.class));
                         messages.add(message);
                         //TODO invalid for infinite scroll
-                        if (firstUnreadMessageIndex == -1 && !message.isRead()) {
+                        if (firstUnreadMessageIndex == -1 && !message.isRead() && !message.getWho().equals(mAuth.getUid())) {
                             firstUnreadMessageIndex = messages.size() - 1;
                             lvMessages.setSelection(firstUnreadMessageIndex);
                         }

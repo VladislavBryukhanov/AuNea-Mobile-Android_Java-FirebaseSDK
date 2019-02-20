@@ -33,8 +33,8 @@ import android.widget.TextView;
 
 import com.example.nameless.autoupdating.activities.AudioTrackUI;
 import com.example.nameless.autoupdating.R;
-import com.example.nameless.autoupdating.asyncTasks.DownloadMediaFIle;
 import com.example.nameless.autoupdating.common.ChatActions;
+import com.example.nameless.autoupdating.common.MediaFileUtils.MediaFileDownloader;
 import com.example.nameless.autoupdating.models.Message;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
@@ -153,10 +153,9 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
                     audioButton.setVisibility(View.GONE);
                     audioUI.setVisibility(View.VISIBLE);
 
-                    DownloadMediaFIle downloadTask = new DownloadMediaFIle(
-                            audioUI, getContext(),
-                            currentMessage.getFileType());
-                    downloadTask.execute(fileUrl);
+                    MediaFileDownloader downloadTask = new MediaFileDownloader(
+                            audioUI, getContext(), currentMessage.getFileType(), fileUrl);
+                    downloadTask.downloadFileByUrl();
                 } else if ((currentMessage.getFileType()).equals("image")) {
 
                     String fileMediaSides = currentMessage.getFileMediaSides();
@@ -180,28 +179,10 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
 //                    loading.setVisibility(View.GONE);
 //                    image.setVisibility(View.VISIBLE);
 //                } else {
-
-                    // if this file already downloading prevent multiple downloading
-                    if (MessagesAdapter.filesLoadingInProgress.indexOf(fileUrl) == -1) {
-                        // При скролле все равно происходят мерцния из за времени требуемого на создание потока
-                        // и поиска битмапа в нем, избежать по этой причине быстрее сделать так,
-                        // чтобы избежвать мерцаний
-
-                        // Но в прицнипе мерцание слабое и очень слабо влияет на юзер экспириенс,
-                        // так что можно и без этого
-                        Bitmap bitmap = MessagesAdapter.mMemoryCache.get(fileUrl);
-                        if(bitmap != null) {
-                            loading.setVisibility(View.GONE);
-                            image.setVisibility(View.VISIBLE);
-                            image.setImageBitmap(bitmap);
-                        }
-
-                        DownloadMediaFIle downloadTask = new DownloadMediaFIle(
-                                image, loading, getContext(),
-                                currentMessage.getFileType());
-                        downloadTask.execute(fileUrl);
+                        MediaFileDownloader downloadTask = new MediaFileDownloader(
+                                image, loading, getContext(), currentMessage.getFileType(), fileUrl);
+                        downloadTask.downloadFileByUrl();
                         image.setAdjustViewBounds(true);
-                    }
                 }
             }
 
