@@ -1,8 +1,7 @@
-package com.example.nameless.autoupdating.asyncTasks;
+package com.example.nameless.autoupdating.common.MediaFileUtils;
 
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -11,10 +10,8 @@ import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.AsyncTask;
-import android.os.Environment;
 import android.os.Handler;
 import android.support.v4.content.res.ResourcesCompat;
-import android.util.Log;
 import android.util.Pair;
 import android.view.View;
 import android.widget.ImageView;
@@ -22,34 +19,20 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.SeekBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.example.nameless.autoupdating.R;
 import com.example.nameless.autoupdating.activities.ImageViewer;
-import com.example.nameless.autoupdating.activities.Settings;
-import com.example.nameless.autoupdating.activities.UserList;
-import com.example.nameless.autoupdating.activities.VideoPlayer;
 import com.example.nameless.autoupdating.adapters.MessagesAdapter;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.firebase.storage.FileDownloadTask;
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
 
 import java.io.File;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
-import java.util.Map;
 import java.util.TimeZone;
 
-/**
- * Created by nameless on 13.06.18.
- */
-
-public class DownloadMediaFIle extends AsyncTask<String, Void, Bitmap> {
+public class MediaFileHandler extends AsyncTask<File, Void, Bitmap> {
 
     public static final String MUSIC_TYPE = "audio";
     public static final String IMAGE_TYPE = "image";
@@ -57,6 +40,7 @@ public class DownloadMediaFIle extends AsyncTask<String, Void, Bitmap> {
 
     private Context parentContext;
     private String fileType;
+    private String fileUrl;
     private ImageView bmImage;
     private ProgressBar pbLoading;
 
@@ -68,14 +52,15 @@ public class DownloadMediaFIle extends AsyncTask<String, Void, Bitmap> {
     private int trackDuration;
     private Boolean isTrackPlaying = false;
     private DateFormat formatter;
-    private String fileUrl;
 
-    public DownloadMediaFIle(
-            ImageView bmImage,
-            ProgressBar pbLoading,
+    public MediaFileHandler(
             Context parentContext,
-            String fileType) {
+            String fileType,
+            String fileUrl,
+            ImageView bmImage,
+            ProgressBar pbLoading) {
 
+        this.fileUrl = fileUrl;
         this.bmImage = bmImage;
         this.pbLoading = pbLoading;
         this.parentContext = parentContext;
@@ -84,11 +69,13 @@ public class DownloadMediaFIle extends AsyncTask<String, Void, Bitmap> {
         formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
     }
 
-    public DownloadMediaFIle(
-            LinearLayout audioUI,
+    public MediaFileHandler(
             Context parentContext,
-            String fileType) {
+            String fileType,
+            String fileUrl,
+            LinearLayout audioUI) {
 
+        this.fileUrl = fileUrl;
         this.audioUI = audioUI;
         this.parentContext = parentContext;
         this.fileType = fileType;
@@ -101,49 +88,58 @@ public class DownloadMediaFIle extends AsyncTask<String, Void, Bitmap> {
     }
 
     @Override
-    protected Bitmap doInBackground(String... strings) {
-        return setFileProperties(strings[0]);
+    protected Bitmap doInBackground(File... file) {
+        return setFileProperties(file[0]);
     }
 
     @Override
     protected void onPostExecute(Bitmap bmp) {
         if(bmp != null) {
-            if (fileType.equals(MUSIC_TYPE)) {
-                String time = milisecondToTimeString(trackDuration);
-
-                audioTime.setText(time);
-                audioButton.setImageBitmap(bmp);
-//                pbLoading.setVisibility(View.GONE);
-//                audioUI.setVisibility(View.VISIBLE);
-                audioPbLoading.setVisibility(View.GONE);
-                audioButton.setVisibility(View.VISIBLE);
-
-                if(isTrackPlaying) {
-                    setDurationSeek();
+            switch (fileType) {
+                case IMAGE_TYPE: {
+                    bmImage.setImageBitmap(bmp);
+                    pbLoading.setVisibility(View.GONE);
+                    bmImage.setVisibility(View.VISIBLE);
+                    break;
                 }
-            } else {
-                bmImage.setImageBitmap(bmp);
-                pbLoading.setVisibility(View.GONE);
-                bmImage.setVisibility(View.VISIBLE);
+                case MUSIC_TYPE: {
+                    String time = milisecondToTimeString(trackDuration);
+
+                    audioTime.setText(time);
+                    audioButton.setImageBitmap(bmp);
+                    audioPbLoading.setVisibility(View.GONE);
+                    audioButton.setVisibility(View.VISIBLE);
+
+                    if(isTrackPlaying) {
+                        setDurationSeek();
+                    }
+                    break;
+                }
+        /*        case VIDEO_TYPE: {
+                    return setVideoFile(url);
+                }
+                default: {
+
+                }*/
             }
+            MessagesAdapter.filesLoadingInProgress.remove(fileUrl);
+
         }
-        MessagesAdapter.filesLoadingInProgress.remove(fileUrl);
     }
 
-    private Bitmap setFileProperties(String url) {
-        this.fileUrl = url;
+    private Bitmap setFileProperties(File file) {
 
         switch (fileType) {
             case IMAGE_TYPE: {
-                return  downloadFileByUrl(url, IMAGE_TYPE);
+                return setImageProperties(file.getPath(), fileUrl);
             }
             case MUSIC_TYPE: {
-                return  downloadFileByUrl(url, MUSIC_TYPE);
+                return setAudioProperties(file.getPath(), fileUrl);
 //                return setAudioFile(url);
             }
-            case VIDEO_TYPE: {
+/*            case VIDEO_TYPE: {
                 return setVideoFile(url);
-            }
+            }*/
             default: {
                 return Bitmap.createScaledBitmap(BitmapFactory.decodeResource(
                         parentContext.getResources(),
@@ -152,78 +148,13 @@ public class DownloadMediaFIle extends AsyncTask<String, Void, Bitmap> {
         }
     }
 
-    private Bitmap downloadFileByUrl(final String url, String type) {
+    private Bitmap setImageProperties(String path, String url) {
 
-/*        if (imageCollection.get(audioFile.png) != null) {
-            iv.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-*//*                    Intent intent = new Intent();
-                    intent.setAction(Intent.ACTION_VIEW);
-                    intent.setDataAndType(uriForIntentCollection.get(audioFile.png), "image*//**//*");
-                    ma.startActivity(intent);*//*
-                    Intent intent = new Intent(ma, ImageViewer.class);
-                    intent.putExtra("bitmap", uriForIntentCollection.get(audioFile.png));
-                    ma.startActivity(intent);
-                }
-            });
-            return imageCollection.get(audioFile.png);
-        }*/
-
-        FirebaseStorage storage = FirebaseStorage.getInstance();
-        StorageReference fileReference = storage.getReferenceFromUrl(url);
-
-        File path = parentContext.getCacheDir();
-
-        SharedPreferences settings = parentContext.getSharedPreferences(Settings.APP_PREFERENCES, Context.MODE_PRIVATE);
-        if (settings.getString(Settings.STORAGE_MODE, Settings.CACHE_STORAGE).equals(Settings.LOCAL_STORAGE)) {
-            path = new File(Environment.getExternalStorageDirectory()
-                    + "/AUMessanger/");
-            if(!path.exists()) {
-                path.mkdirs();
-            }
+        Bitmap image = MessagesAdapter.mMemoryCache.get(fileUrl);
+        if (image == null) {
+            image = BitmapFactory.decodeFile(path);
+            MessagesAdapter.mMemoryCache.put(url, image);
         }
-
-        final File file = new File(path, fileReference.getName());
-
-        Bitmap bitmap = MessagesAdapter.mMemoryCache.get(url);
-        if(bitmap != null) {
-            setImageOnClickListener(file.getPath());
-            return bitmap;
-        }
-        MessagesAdapter.filesLoadingInProgress.add(fileUrl);
-
-        if(type.equals(IMAGE_TYPE)) {
-            if (file.exists()) {
-                return setImageProperties(file.getPath(), url);
-            }
-            fileReference.getFile(file).addOnSuccessListener(taskSnapshot -> {
-                DownloadMediaFIle downloadTask = new DownloadMediaFIle(
-                        bmImage, pbLoading, parentContext, fileType);
-                downloadTask.execute(url);
-            });
-        } else if (type.equals(MUSIC_TYPE)) {
-            if (file.exists()) {
-                return setAudioProperties(file.getPath(), url);
-            }
-            fileReference.getFile(file).addOnSuccessListener(taskSnapshot -> {
-                DownloadMediaFIle downloadTask = new DownloadMediaFIle(
-                        audioUI, parentContext, fileType);
-                downloadTask.execute(url);
-            });
-        }
-        return null;
-    }
-
-    private Bitmap setImageProperties(final String path, String url) {
-
-        //TODO если файл поврежден - перекачать (файл с одинаковым именем но разным размером
-        Bitmap image = BitmapFactory.decodeFile(path);
-//        if(path == null) {
-        if(image == null) {
-                return null;
-        }
-        MessagesAdapter.mMemoryCache.put(url, image);
 
         setImageOnClickListener(path);
         return image;
@@ -241,7 +172,7 @@ public class DownloadMediaFIle extends AsyncTask<String, Void, Bitmap> {
         MediaMetadataRetriever mmr = new MediaMetadataRetriever();
 //        mmr.setDataSource(parentContext.getApplicationContext(), Uri.parse(path));
         mmr.setDataSource(path);
-        
+
         String durationStr = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
         trackDuration = Integer.parseInt(durationStr);
 
@@ -279,7 +210,7 @@ public class DownloadMediaFIle extends AsyncTask<String, Void, Bitmap> {
             isTrackPlaying = false;
             return drawableItemToBitmap(R.drawable.audio_play_button);
         }
-     }
+    }
 
     private void setDurationSeek() {
         MessagesAdapter.trackSeekBarHandler = new Handler();
@@ -358,19 +289,6 @@ public class DownloadMediaFIle extends AsyncTask<String, Void, Bitmap> {
 
             MessagesAdapter.runningAudio = null;
         }
-    }
-
-
-    private Bitmap setVideoFile(final String url) {
-        bmImage.setOnClickListener(v -> {
-            Intent intent = new Intent(parentContext, VideoPlayer.class);
-            intent.putExtra("videoUrl", url);
-            parentContext.startActivity(intent);
-        });
-//        Bitmap img = ThumbnailUtils.createVideoThumbnail(url, MediaStore.Video.Thumbnails.MINI_KIND);
-
-        return Bitmap.createScaledBitmap(BitmapFactory.decodeResource(parentContext.getResources(),
-                R.drawable.file), 100, 100, true);
     }
 
     private Bitmap drawableItemToBitmap(int img) {

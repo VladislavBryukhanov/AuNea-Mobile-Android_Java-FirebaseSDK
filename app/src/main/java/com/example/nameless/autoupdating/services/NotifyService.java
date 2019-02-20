@@ -155,6 +155,11 @@ public class NotifyService extends Service {
     }
 
     private void buildNotify(User who, Message msg, Bitmap largeIconBitmap) {
+        String messageContent = msg.getContent();
+        if (msg.getFileType() != null && messageContent.length() == 0) {
+            messageContent = msg.getFileType();
+        }
+
         if(usersId.get(who.getUid()) == null) {
             usersId.put(who.getUid(), usersId.size() + 1);
         }
@@ -190,7 +195,7 @@ public class NotifyService extends Service {
         }
 
         builder .setContentTitle(who.getLogin())
-                .setContentText(msg.getContent())
+                .setContentText(messageContent)
                 .setContentIntent(intent)
                 .setAutoCancel(true)
                 .setLargeIcon(largeIconBitmap)
