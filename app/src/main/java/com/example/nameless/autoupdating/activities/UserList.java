@@ -175,7 +175,7 @@ public class UserList extends GlobalMenu {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 if (dataSnapshot.getChildrenCount() == 0) {
-                    runOnUiThread(() -> viewPager.setCurrentItem(1));
+                    viewPager.setCurrentItem(1);
                 }
             }
             @Override
