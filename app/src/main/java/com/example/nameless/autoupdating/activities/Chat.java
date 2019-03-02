@@ -32,9 +32,8 @@ import android.widget.Toast;
 import com.example.nameless.autoupdating.asyncTasks.DownloadAvatarByUrl;
 import com.example.nameless.autoupdating.common.ChatActions;
 import com.example.nameless.autoupdating.common.FirebaseSingleton;
-import com.example.nameless.autoupdating.common.NetworkUtil;
 import com.example.nameless.autoupdating.models.Dialog;
-import com.example.nameless.autoupdating.services.NotifyService;
+import com.example.nameless.autoupdating.common.FCMManager;
 import com.example.nameless.autoupdating.R;
 import com.example.nameless.autoupdating.adapters.MessagesAdapter;
 import com.example.nameless.autoupdating.models.ClientToClient;
@@ -122,12 +121,7 @@ public class Chat extends AppCompatActivity implements ChatActions {
 //todo paging/cache
 //todo authorise, cookie, security for dialogs
 //todo оптимизация алгоритма выборки, разобраться какой расход трафика при выборке, что такое датаснэпшот, является ли он полностью готовым пришедшим с сервера пакетом данных или делает динамические запросы на выборку
-//todo сохранение состояниея при повороте экрана
 //todo каскадное удаление
-//todo add services
-//todo add message notify
-// todo last online
-//todo media sending
 
         setChatListeners();
 
@@ -191,29 +185,15 @@ public class Chat extends AppCompatActivity implements ChatActions {
 
     @Override
     protected void onStop() {
-//        if (!UserList.isMyServiceRunning(NotifyService.class, this)) {
-//            startService(new Intent(this, NotifyService.class));
-//        }
-        Intent i = new Intent(this, NotifyService.class);
-        i.putExtra("dialog", "");
-        startService(i);
+        FCMManager.setInterlocutor("");
         super.onStop();
     }
 
     @Override
     protected void onStart() {
-//        stopService(new Intent(this, NotifyService.class));
-        Intent i = new Intent(this, NotifyService.class);
-        i.putExtra("dialog", toUser.getUid());
-        startService(i);
+        FCMManager.setInterlocutor(toUser.getUid());
         super.onStart();
     }
-
-//    @Override
-//    protected void onResume() {
-//        stopService(new Intent(getApplicationContext(), NotifyService.class));
-//        super.onResume();
-//    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {

@@ -79,16 +79,6 @@ public class UserList extends GlobalMenu {
         }
     }
 
-    public static boolean isMyServiceRunning(Class<?> serviceClass, Context c) {
-        ActivityManager manager = (ActivityManager) c.getSystemService(Context.ACTIVITY_SERVICE);
-        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
-            if (serviceClass.getName().equals(service.service.getClassName())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     public void signIn() {
         Query getUser = dbUsers.orderByChild("uid").equalTo(mAuth.getUid());
         getUser.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -134,12 +124,6 @@ public class UserList extends GlobalMenu {
     }
 
     private void initialiseData() {
-        if (!UserList.isMyServiceRunning(NotifyService.class, this)) {
-            startService(new Intent(this, NotifyService.class));
-        }
-        if (!UserList.isMyServiceRunning(CallService.class, this)) {
-            startService(new Intent(this, CallService.class));
-        }
 
 //        ConnectivityNetworkListener con = new ConnectivityNetworkListener(UserList.this);
         //TODO |reactive| update from main app instance

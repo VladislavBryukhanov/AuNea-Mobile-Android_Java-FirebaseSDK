@@ -36,7 +36,7 @@ public class NetworkUtil {
     }
 
     public static void setAfkStatus() {
-        currentStatus = MessageFormat.format(AFK_STATUS  + "({0})", instance.getLastSeen());
+        currentStatus = MessageFormat.format(AFK_STATUS  + ", {0}", instance.getLastSeen());
         instance.getInstance(() -> instance.userRef.setValue(currentStatus));
     }
 
