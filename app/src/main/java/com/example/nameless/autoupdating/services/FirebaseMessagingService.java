@@ -11,6 +11,7 @@ import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.AudioAttributes;
+import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
 
@@ -18,6 +19,7 @@ import com.bumptech.glide.Glide;
 import com.example.nameless.autoupdating.R;
 import com.example.nameless.autoupdating.activities.Chat;
 import com.example.nameless.autoupdating.activities.Settings;
+import com.example.nameless.autoupdating.activities.VoiceCalling;
 import com.example.nameless.autoupdating.models.Message;
 import com.example.nameless.autoupdating.models.User;
 import com.example.nameless.autoupdating.common.FCMManager;
@@ -41,6 +43,9 @@ public class FirebaseMessagingService extends com.google.firebase.messaging.Fire
     private final String DEFAULT_SOUND_CHANNEL = "DEFAULT_SOUND_CHANNEL";
     private final String CUSTOM_SOUND_CHANNEL = "CUSTOM_SOUND_CHANNEL";
 
+    private final String NOTIFICATION_TAG = "NOTIFICATION_TAG";
+    private final String VOICE_CALLING_TAG = "VOICE_CALLING_TAG";
+
     private Uri notifySoundUri;
     private HashMap<String, Integer> usersId;
 
@@ -49,33 +54,33 @@ public class FirebaseMessagingService extends com.google.firebase.messaging.Fire
         notifySoundUri = Uri.parse(ContentResolver.SCHEME_ANDROID_RESOURCE
                 + "://" + getApplicationContext().getPackageName() + File.separator + R.raw.notify);
         FirebaseAuth mAuth = FirebaseAuth.getInstance();
-
         usersId = new HashMap<>();
 
-/*        NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        Notification notification = new Notification.Builder(getApplicationContext())
-                        .setSound(Uri.parse("android.resource://" + this.getApplicationContext()
-                        .getPackageName() + "/" + R.raw.notify))
-                        .setSmallIcon(R.mipmap.logo)
-                        .setContentTitle(remoteMessage.getNotification().getTitle() + " (Stable)")
-                        .setContentText(remoteMessage.getNotification().getBody()).build();
-        notificationManager.notify(1, notification);*/
-
-        //TODO Broadcat notification
-        //TODO Calling notification -> activity
-
         if (remoteMessage.getData().size() > 0) {
-            Message msg = new Message();
-            msg.setContent(remoteMessage.getData().get("content"));
+            switch(remoteMessage.getData().get("tag")) {
 
-            Gson gson = new GsonBuilder().create();
-            String json = remoteMessage.getData().get("sender");
-            User sender = gson.fromJson(json, User.class);
+                case NOTIFICATION_TAG: {
+                    Message msg = new Message();
+                    msg.setContent(remoteMessage.getData().get("content"));
 
-            if (!sender.getUid().equals(mAuth.getUid()) &&
-                    !sender.getUid().equals(FCMManager.getInterlocutor())) {
-                sendNotify(msg, sender);
+                    Gson gson = new GsonBuilder().create();
+                    String json = remoteMessage.getData().get("sender");
+                    User sender = gson.fromJson(json, User.class);
+
+                    if (!sender.getUid().equals(mAuth.getUid()) &&
+                            !sender.getUid().equals(FCMManager.getInterlocutor())) {
+                        sendNotify(msg, sender);
+                    }
+                    break;
+                }
+
+                case VOICE_CALLING_TAG: {
+                    openCallingActivity(remoteMessage.getData().get("privateRoomPort"));
+                    break;
+                }
             }
+        } else {
+            sendBroadcastNotification(remoteMessage);
         }
     }
 
@@ -85,6 +90,22 @@ public class FirebaseMessagingService extends com.google.firebase.messaging.Fire
         FCMManager.sendTokenToServer(token);
     }
 
+
+    private void sendBroadcastNotification(RemoteMessage remoteMessage) {
+        NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        Notification notification = new Notification.Builder(getApplicationContext())
+                .setSmallIcon(R.mipmap.logo)
+                .setContentTitle(remoteMessage.getNotification().getTitle())
+                .setContentText(remoteMessage.getNotification().getBody()).build();
+        notificationManager.notify(1, notification);
+    }
+
+    private void openCallingActivity(String privateRoomPort) {
+        Intent intent = new Intent(getApplicationContext(), VoiceCalling.class);
+        intent.putExtra("action", VoiceCalling.INCOMING_CALL_ACTION);
+        intent.putExtra("privateRoomPort", privateRoomPort);
+        startActivity(intent);
+    }
 
     private void sendNotify(Message msg, User user) {
         Bitmap largeIconBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.avatar);
@@ -107,21 +128,21 @@ public class FirebaseMessagingService extends com.google.firebase.messaging.Fire
         buildNotify(user, msg, largeIconBitmap);
     }
 
-    private void buildNotify(User who, Message msg, Bitmap largeIconBitmap) {
+    private void buildNotify(User sender, Message msg, Bitmap largeIconBitmap) {
         String messageContent = msg.getContent();
         if (msg.getFileType() != null && messageContent.length() == 0) {
             messageContent = msg.getFileType();
         }
 
-        if(usersId.get(who.getUid()) == null) {
-            usersId.put(who.getUid(), usersId.size() + 1);
+        if(usersId.get(sender.getUid()) == null) {
+            usersId.put(sender.getUid(), usersId.size() + 1);
         }
         SharedPreferences settings = getSharedPreferences(Settings.APP_PREFERENCES, Context.MODE_PRIVATE);
         boolean isSoundEnabled = settings.getBoolean(Settings.IS_NOTIFY_ENABLED, false);
         String channelId = isSoundEnabled ? CUSTOM_SOUND_CHANNEL : DEFAULT_SOUND_CHANNEL;
 
         Intent notificationIntent = new Intent(getApplicationContext(), Chat.class);
-        notificationIntent.putExtra("to", who);
+        notificationIntent.putExtra("to", sender);
         notificationIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP
                 | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         PendingIntent intent = PendingIntent.getActivity(getApplicationContext(), 0,
@@ -147,7 +168,7 @@ public class FirebaseMessagingService extends com.google.firebase.messaging.Fire
             builder.setChannelId(channelId);
         }
 
-        builder .setContentTitle(who.getLogin())
+        builder .setContentTitle(sender.getLogin())
                 .setContentText(messageContent)
                 .setContentIntent(intent)
                 .setAutoCancel(true)
@@ -168,6 +189,6 @@ public class FirebaseMessagingService extends com.google.firebase.messaging.Fire
         Notification notification = builder.build();
 //        notification.flags = Notification.FLAG_ONGOING_EVENT | Notification.FLAG_SHOW_LIGHTS | Notification.FLAG_INSISTENT;
 //        notification.flags |= Notification.FLAG_AUTO_CANCEL;
-        notificationManager.notify(usersId.get(who.getUid()) , notification);
+        notificationManager.notify(usersId.get(sender.getUid()) , notification);
     }
 }

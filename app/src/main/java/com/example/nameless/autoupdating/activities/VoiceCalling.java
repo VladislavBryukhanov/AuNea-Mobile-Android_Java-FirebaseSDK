@@ -133,7 +133,7 @@ public class VoiceCalling extends AppCompatActivity {
                         .child(dataSnapshot.getKey())
                         .child("voiceCall");
 
-                if(action.equals(VoiceCalling.OUTGOING_CALL_ACTION)) {
+                if (action.equals(VoiceCalling.OUTGOING_CALL_ACTION)) {
                     btnAccept.setVisibility(View.GONE);
                     ClientToClient ctc = (ClientToClient)intent.getSerializableExtra("dialog");
                     CoordinatorLayout.LayoutParams lp = (CoordinatorLayout.LayoutParams) btnReject.getLayoutParams();
@@ -176,7 +176,7 @@ public class VoiceCalling extends AppCompatActivity {
                 try {
                     client = new UDPClient(voiceStreamServerIpAddress, port);
                     if (isConnection) {
-                            client.connectToPrivateStream("newConnection");
+                        client.connectToPrivateStream("newConnection");
                     } else {
                         privateRoomPort = client.createPrivateStream("init");
                     }

@@ -1,8 +1,6 @@
 package com.example.nameless.autoupdating.activities;
 
 import android.app.Activity;
-import android.app.ActivityManager;
-import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -11,14 +9,11 @@ import android.support.v4.view.ViewPager;
 import android.view.Menu;
 
 import com.example.nameless.autoupdating.adapters.TabAdapter;
-import com.example.nameless.autoupdating.common.ConnectivityNetworkListener;
 import com.example.nameless.autoupdating.common.FirebaseSingleton;
 import com.example.nameless.autoupdating.common.GlobalMenu;
 import com.example.nameless.autoupdating.common.NetworkUtil;
 import com.example.nameless.autoupdating.fragments.dialogs.DialogListFragment;
 import com.example.nameless.autoupdating.fragments.dialogs.UsersListFragment;
-import com.example.nameless.autoupdating.services.CallService;
-import com.example.nameless.autoupdating.services.NotifyService;
 import com.example.nameless.autoupdating.R;
 import com.example.nameless.autoupdating.models.User;
 import com.google.firebase.auth.FirebaseAuth;
