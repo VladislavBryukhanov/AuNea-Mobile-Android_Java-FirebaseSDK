@@ -70,6 +70,10 @@ public class UsersAdapter extends ArrayAdapter<User>  implements Filterable{
             } else if (userStatus.contains(NetworkUtil.OFFLINE_STATUS)) {
                 convertView.findViewById(R.id.onlineStatus)
                         .setBackground(ContextCompat.getDrawable(getContext(), R.drawable.network_status_offline));
+            } else {
+            // Exception - may be able if user use old app version
+                convertView.findViewById(R.id.onlineStatus)
+                        .setBackground(ContextCompat.getDrawable(getContext(), R.drawable.network_status_offline));
             }
 
             // Прекратить пересечивание

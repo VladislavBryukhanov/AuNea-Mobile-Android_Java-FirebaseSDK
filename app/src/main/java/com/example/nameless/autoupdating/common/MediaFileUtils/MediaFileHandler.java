@@ -41,6 +41,7 @@ public class MediaFileHandler extends AsyncTask<File, Void, Bitmap> {
     private Context parentContext;
     private String fileType;
     private String fileUrl;
+    private File mediaFile;
     private ImageView bmImage;
     private ProgressBar pbLoading;
 
@@ -89,7 +90,8 @@ public class MediaFileHandler extends AsyncTask<File, Void, Bitmap> {
 
     @Override
     protected Bitmap doInBackground(File... file) {
-        return setFileProperties(file[0]);
+        this.mediaFile = file[0];
+        return setFileProperties();
     }
 
     @Override
@@ -97,12 +99,14 @@ public class MediaFileHandler extends AsyncTask<File, Void, Bitmap> {
         if(bmp != null) {
             switch (fileType) {
                 case IMAGE_TYPE: {
+                    setImageOnClickListener();
                     bmImage.setImageBitmap(bmp);
                     pbLoading.setVisibility(View.GONE);
                     bmImage.setVisibility(View.VISIBLE);
                     break;
                 }
                 case MUSIC_TYPE: {
+                    setAudioOnClickListener();
                     String time = milisecondToTimeString(trackDuration);
 
                     audioTime.setText(time);
@@ -127,14 +131,14 @@ public class MediaFileHandler extends AsyncTask<File, Void, Bitmap> {
         }
     }
 
-    private Bitmap setFileProperties(File file) {
+    private Bitmap setFileProperties() {
 
         switch (fileType) {
             case IMAGE_TYPE: {
-                return setImageProperties(file.getPath(), fileUrl);
+                return setImageProperties();
             }
             case MUSIC_TYPE: {
-                return setAudioProperties(file.getPath(), fileUrl);
+                return setAudioProperties();
 //                return setAudioFile(url);
             }
 /*            case VIDEO_TYPE: {
@@ -148,61 +152,35 @@ public class MediaFileHandler extends AsyncTask<File, Void, Bitmap> {
         }
     }
 
-    private Bitmap setImageProperties(String path, String url) {
+    private Bitmap setImageProperties() {
 
         Bitmap image = MessagesAdapter.mMemoryCache.get(fileUrl);
         if (image == null) {
-            image = BitmapFactory.decodeFile(path);
-            MessagesAdapter.mMemoryCache.put(url, image);
+            image = BitmapFactory.decodeFile(mediaFile.getPath());
+            MessagesAdapter.mMemoryCache.put(fileUrl, image);
         }
 
-        setImageOnClickListener(path);
         return image;
     }
 
-    private void setImageOnClickListener(final String path) {
+    private void setImageOnClickListener() {
         bmImage.setOnClickListener(v -> {
             Intent intent = new Intent(parentContext, ImageViewer.class);
-            intent.putExtra("bitmap", Uri.parse(path));
+            intent.putExtra("bitmap", Uri.parse(mediaFile.getPath()));
             parentContext.startActivity(intent);
         });
     }
 
-    private Bitmap setAudioProperties(final String path, final String url) {
+    private Bitmap setAudioProperties() {
         MediaMetadataRetriever mmr = new MediaMetadataRetriever();
 //        mmr.setDataSource(parentContext.getApplicationContext(), Uri.parse(path));
-        mmr.setDataSource(path);
+        mmr.setDataSource(mediaFile.getPath());
 
         String durationStr = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
         trackDuration = Integer.parseInt(durationStr);
 
         trackSeekBar.setMax(trackDuration);
-        audioButton.setOnClickListener(v -> {
-            try {
-                if(MessagesAdapter.mediaPlayer.isPlaying() && url.equals(
-                        MessagesAdapter.runningAudio.first)) {
-//                        MessagesAdapter.mediaPlayer.pause();
-                    stopTrack(true);
-
-                } else {
-                    stopTrack(false);
-                    MessagesAdapter.mediaPlayer.setDataSource(path);
-                    MessagesAdapter.mediaPlayer.prepare();
-                    MessagesAdapter.mediaPlayer.start();
-                    MessagesAdapter.mediaPlayer.setOnCompletionListener(mp -> stopTrack(true));
-                    setDurationSeek();
-                    audioButton.setImageDrawable(ResourcesCompat.getDrawable(
-                            parentContext.getResources(),
-                            R.drawable.audio_pause_button, null));
-                    MessagesAdapter.runningAudio = new Pair<>(url, audioUI);
-                    MessagesAdapter.trackDuration = trackDuration;
-
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        });
-        if(MessagesAdapter.runningAudio != null && url.equals(MessagesAdapter.runningAudio.first)) {
+        if(MessagesAdapter.runningAudio != null && fileUrl.equals(MessagesAdapter.runningAudio.first)) {
             isTrackPlaying = true;
             MessagesAdapter.mediaPlayer.setOnCompletionListener(mp -> stopTrack(true));
             return drawableItemToBitmap(R.drawable.audio_pause_button);
@@ -210,6 +188,35 @@ public class MediaFileHandler extends AsyncTask<File, Void, Bitmap> {
             isTrackPlaying = false;
             return drawableItemToBitmap(R.drawable.audio_play_button);
         }
+    }
+
+    private void setAudioOnClickListener() {
+        audioButton.setOnClickListener(v -> {
+            try {
+                boolean trackIsPlaying = MessagesAdapter.mediaPlayer.isPlaying();
+                if(trackIsPlaying && fileUrl.equals(MessagesAdapter.runningAudio.first)) {
+//                    MessagesAdapter.mediaPlayer.pause();
+                    stopTrack(true);
+                } else {
+                    stopTrack(false);
+                    MessagesAdapter.mediaPlayer.setDataSource(mediaFile.getPath());
+                    MessagesAdapter.mediaPlayer.prepare();
+                    MessagesAdapter.mediaPlayer.start();
+                    MessagesAdapter.mediaPlayer.setOnCompletionListener(mp -> stopTrack(true));
+                    MessagesAdapter.runningAudio = new Pair<>(fileUrl, audioUI);
+                    MessagesAdapter.trackDuration = trackDuration;
+                    audioButton.setImageDrawable(
+                        ResourcesCompat.getDrawable(
+                                parentContext.getResources(),
+                                R.drawable.audio_pause_button,
+                                null)
+                    );
+                    setDurationSeek();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
     }
 
     private void setDurationSeek() {
@@ -275,18 +282,20 @@ public class MediaFileHandler extends AsyncTask<File, Void, Bitmap> {
                         R.drawable.audio_play_button,
                         null));
                 trackSeekBar.setProgress(0);
+                trackSeekBar.setOnSeekBarChangeListener(null);
                 audioTime.setText(milisecondToTimeString(trackDuration));
             } else {
-                ((SeekBar)MessagesAdapter.runningAudio.second.findViewById(R.id.seekBar)).setProgress(0);
-                ((ImageView)MessagesAdapter.runningAudio.second.findViewById(R.id.audioButton))
+                LinearLayout audioUi = MessagesAdapter.runningAudio.second;
+                ((SeekBar) audioUi.findViewById(R.id.seekBar)).setProgress(0);
+                ((SeekBar) audioUi.findViewById(R.id.seekBar)).setOnSeekBarChangeListener(null);
+                ((ImageView) audioUi.findViewById(R.id.audioButton))
                         .setImageDrawable(ResourcesCompat.getDrawable(
                                 parentContext.getResources(),
                                 R.drawable.audio_play_button,
                                 null));
-                ((TextView)MessagesAdapter.runningAudio.second.findViewById(R.id.tvTime))
+                ((TextView) audioUi.findViewById(R.id.tvTime))
                         .setText(milisecondToTimeString(MessagesAdapter.trackDuration));
             }
-
             MessagesAdapter.runningAudio = null;
         }
     }
