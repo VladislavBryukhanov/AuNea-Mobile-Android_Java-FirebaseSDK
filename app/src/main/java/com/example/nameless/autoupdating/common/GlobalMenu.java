@@ -12,7 +12,6 @@ import android.widget.Toast;
 
 import com.example.nameless.autoupdating.R;
 import com.example.nameless.autoupdating.activities.Settings;
-import com.example.nameless.autoupdating.services.NotifyService;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
@@ -116,7 +115,6 @@ public class GlobalMenu extends AppCompatActivity {
                         .build();
                 GoogleSignInClient mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
 
-                stopService(new Intent(this, NotifyService.class));
                 mAuth.signOut();
                 mGoogleSignInClient.signOut();
 

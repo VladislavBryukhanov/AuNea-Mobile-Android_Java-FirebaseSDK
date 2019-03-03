@@ -268,7 +268,7 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
                 final TextView urlPart = new TextView(ma);
                 urlPart.setText(findUrl);
                 urlPart.setLayoutParams(lparam);
-                urlPart.setTextColor(Color.rgb(0, 172, 162));
+                urlPart.setTextColor(ma.getResources().getColor(R.color.lincIonicColor));
                 urlPart.setTextSize(16);
                 urlPart.setPaintFlags(Paint.UNDERLINE_TEXT_FLAG);
                 float dpi = getContext().getResources().getDisplayMetrics().density;

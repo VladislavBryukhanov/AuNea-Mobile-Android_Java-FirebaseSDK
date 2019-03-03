@@ -18,8 +18,7 @@ import com.example.nameless.autoupdating.fragments.auth.SignUpFragment;
 import com.example.nameless.autoupdating.common.AuthActions;
 import com.example.nameless.autoupdating.common.FirebaseSingleton;
 import com.example.nameless.autoupdating.common.GlobalMenu;
-import com.example.nameless.autoupdating.services.CallService;
-import com.example.nameless.autoupdating.services.NotifyService;
+import com.example.nameless.autoupdating.common.FCMManager;
 import com.example.nameless.autoupdating.R;
 import com.example.nameless.autoupdating.models.User;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
@@ -113,13 +112,6 @@ public class Authentification extends GlobalMenu implements AuthActions {
 
     }
 
-   @Override
-    protected void onStart() {
-        stopService(new Intent(this, NotifyService.class));
-        stopService(new Intent(this, CallService.class));
-        super.onStart();
-    }
-
     @Override
     public void onBackPressed() {
         setResult(Activity.RESULT_CANCELED);
@@ -194,6 +186,7 @@ public class Authentification extends GlobalMenu implements AuthActions {
 
     public void authenticate(User user) {
         UserList.myAcc = user;
+        FCMManager.subscribeToNotificationService();
         setResult(Activity.RESULT_OK);
         finish();
     }

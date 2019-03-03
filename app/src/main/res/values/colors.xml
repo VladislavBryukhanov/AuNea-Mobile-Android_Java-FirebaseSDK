@@ -21,6 +21,6 @@
 
     <color name="darkRed">#a43931</color>
     <color name="lightIonic">#14aba8</color>
+    <color name="lincIonicColor">#00aca2</color>
     <color name="darkIonic">#00726a</color>
-    <!--<color name="darkIonic">#00aca2</color>-->
 </resources>
