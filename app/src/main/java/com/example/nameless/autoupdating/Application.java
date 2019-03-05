@@ -5,19 +5,16 @@ import android.os.Bundle;
 
 import com.example.nameless.autoupdating.common.NetworkUtil;
 
-public class Application extends android.app.Application {
+public class Application extends android.app.Application  implements android.app.Application.ActivityLifecycleCallbacks {
+
+    private int created = 0;
+    private int numStarted = 0;
 
     @Override
     public void onCreate() {
         super.onCreate();
-        registerActivityLifecycleCallbacks(new AppLifecycleTracker());
+        registerActivityLifecycleCallbacks(this);
     }
-}
-
-class AppLifecycleTracker implements android.app.Application.ActivityLifecycleCallbacks {
-
-    private int created = 0;
-    private int numStarted = 0;
 
     @Override
     public void onActivityCreated(Activity activity, Bundle bundle) {
@@ -59,5 +56,4 @@ class AppLifecycleTracker implements android.app.Application.ActivityLifecycleCa
 
     @Override
     public void onActivityPaused(Activity activity) {}
-
 }

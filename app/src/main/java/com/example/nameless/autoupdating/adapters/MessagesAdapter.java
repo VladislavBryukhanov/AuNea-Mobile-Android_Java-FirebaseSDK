@@ -35,6 +35,7 @@ import com.example.nameless.autoupdating.activities.AudioTrackUI;
 import com.example.nameless.autoupdating.R;
 import com.example.nameless.autoupdating.common.ChatActions;
 import com.example.nameless.autoupdating.common.MediaFileUtils.MediaFileDownloader;
+import com.example.nameless.autoupdating.common.MediaFileUtils.RunningAudio;
 import com.example.nameless.autoupdating.models.Message;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
@@ -60,35 +61,19 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
     private ArrayList<Message> messages;
     private ArrayList<Message> filteredMessageList;
 
-    //TODO put in a separate class
-    public static Pair<String, LinearLayout> runningAudio;
-    public static MediaPlayer mediaPlayer;
-    public static Handler trackDurationHandler;
-    public static Handler trackSeekBarHandler;
-    public static LruCache<String, Bitmap> mMemoryCache;
-    public static ArrayList<String> filesLoadingInProgress;
-    public static int trackDuration;
-
 //    public static Picasso mPicasso;
 
     public MessagesAdapter(Context ma, ArrayList<Message> messages, DatabaseReference myRef) {
         super(ma, 0, messages);
 //        mPicasso = Picasso.with(ma);
+        RunningAudio.initInstance(); // init Audio player
+
         this.ma = ma;
         this.messages = messages;
         this.filteredMessageList = messages;
-        mMemoryCache = new LruCache<String, Bitmap>(40) {
-            @Override
-            protected int sizeOf(String key, Bitmap bitmap) {
-                return 1;
-            }
-        };
 
         this.myRef = myRef;
         mAuth = FirebaseAuth.getInstance();
-        filesLoadingInProgress = new ArrayList<>();
-        mediaPlayer = new MediaPlayer();
-        trackDurationHandler = new Handler();
 
         WindowManager wm = (WindowManager) ma.getSystemService(
         Context.WINDOW_SERVICE);
@@ -130,14 +115,6 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
                 ImageView image;
                 ProgressBar loading ;
                 LinearLayout audioUI;
-
-//                Bitmap bitmap = MessagesAdapter.mMemoryCache.get(currentMessage.getFileUrl());
-//                if(bitmap != null) {
-//                    image.setImageBitmap(bitmap);
-//                    image.setVisibility(View.VISIBLE);
-//                } else {
-//                    loading.setVisibility(View.VISIBLE);
-//                }
 
                 if((currentMessage.getFileType()).equals("audio")) {
 

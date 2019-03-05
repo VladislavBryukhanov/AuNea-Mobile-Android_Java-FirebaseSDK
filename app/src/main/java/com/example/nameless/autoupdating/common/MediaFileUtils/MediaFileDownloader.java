@@ -10,7 +10,6 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 
 import com.example.nameless.autoupdating.activities.Settings;
-import com.example.nameless.autoupdating.adapters.MessagesAdapter;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
@@ -60,7 +59,7 @@ public class MediaFileDownloader {
 
     public void downloadFileByUrl() {
         // if downloading in progress
-        if (MessagesAdapter.filesLoadingInProgress.indexOf(fileUrl) != -1) {
+        if (ImagesMemoryCache.filesLoadingInProgress.indexOf(fileUrl) != -1) {
             return;
         }
         // if image cached set up in view because async task has delay before setting
@@ -85,10 +84,8 @@ public class MediaFileDownloader {
         if (targetFile.exists()) {
             handleMediaFile();
         } else {
-            MessagesAdapter.filesLoadingInProgress.add(fileUrl);
-            fileReference.getFile(targetFile).addOnSuccessListener(taskSnapshot -> {
-                handleMediaFile();
-            });
+            ImagesMemoryCache.filesLoadingInProgress.add(fileUrl);
+            fileReference.getFile(targetFile).addOnSuccessListener(taskSnapshot -> handleMediaFile());
         }
     }
 
@@ -112,7 +109,7 @@ public class MediaFileDownloader {
     }
 
     private void setChachedImage() {
-        Bitmap image = MessagesAdapter.mMemoryCache.get(fileUrl);
+        Bitmap image = ImagesMemoryCache.memoryCache.get(fileUrl);
         if (image != null) {
             bmImage.setImageBitmap(image);
             pbLoading.setVisibility(View.GONE);
@@ -121,21 +118,24 @@ public class MediaFileDownloader {
     }
 
     private void handleUndefinedFile() {
+        ImageComponent imageComponent = new ImageComponent(parentContext, targetFile, bmImage, pbLoading, fileUrl);
         MediaFileHandler downloadTask = new MediaFileHandler(
-                parentContext, UNDEFINED_TYPE, fileUrl, bmImage, pbLoading);
+                imageComponent, parentContext, UNDEFINED_TYPE, fileUrl);
         downloadTask.execute();
     }
 
     private void handleImageFile() {
+        ImageComponent imageComponent = new ImageComponent(parentContext, targetFile, bmImage, pbLoading, fileUrl);
         MediaFileHandler downloadTask = new MediaFileHandler(
-                parentContext, IMAGE_TYPE, fileUrl, bmImage, pbLoading);
-        downloadTask.execute(targetFile);
+                imageComponent, parentContext, IMAGE_TYPE, fileUrl);
+        downloadTask.execute();
     }
 
     private void handleAudioFile() {
+        AudioComponent audioComponent = new AudioComponent(parentContext, audioUI, fileUrl, targetFile);
         MediaFileHandler downloadTask = new MediaFileHandler(
-                parentContext, AUDIO_TYPE, fileUrl, audioUI);
-        downloadTask.execute(targetFile);
+                audioComponent, parentContext, AUDIO_TYPE, fileUrl);
+        downloadTask.execute();
     }
 
 /*    private Bitmap setVideoFile(final String url) {
