@@ -1,6 +1,7 @@
 package com.example.nameless.autoupdating.activities;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
@@ -52,7 +53,10 @@ import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -65,6 +69,12 @@ public class Chat extends AppCompatActivity implements ChatActions {
 //    private static final int REQUEST_GALLERY = 100;
     public static final int PICKFILE_RESULT_CODE = 200;
     public static final int CAMERA_REQUEST = 10;
+
+    public static final int MAX_UNDEFINED_FILE_SIZE = 8 * 1024 * 1024;
+    public static final int MAX_IMAGE_FILE_SIZE = 8 * 1024 * 1024;
+    public static final int MAX_AUDIO_FILE_SIZE = 22 * 1024 * 1024;
+    public static final int MAX_VIDEO_FILE_SIZE = 40 * 1024 * 1024;
+
 
     private ImageButton btnSend, btnAffixFile, btnStartRec, btnStopRec;
     private ListView lvMessages;
@@ -224,22 +234,19 @@ public class Chat extends AppCompatActivity implements ChatActions {
                 FirebaseStorage storage = FirebaseStorage.getInstance();
                 StorageReference gsReference = storage.getReferenceFromUrl(
                         "gs://messager-d15a0.appspot.com");
-                Uri file;
-                if(requestCode == CAMERA_REQUEST) {
-                    file = imgUri;
-                } else {
-                    file = data.getData();
-                }
-                String extension = getContentResolver().getType(file);
 
+                Uri file = requestCode == CAMERA_REQUEST ? imgUri : data.getData();
+                String extension = getContentResolver().getType(file);
                 final String fileType = extension.split("/")[0];
+
+                if (!validateFileSize(file, fileType)) return;
+
                 extension = "." + extension.split("/")[1];
                 String fMS = null;
                 if(fileType.equals("image") || fileType.equals("video")) {
                     fMS = getImageSides(file);
                 }
                 final String fileMediaSides = fMS;
-
 
                 StorageReference riversRef = gsReference.child(mAuth.getCurrentUser()
                         .getEmail() + "/images/" + java.util.UUID.randomUUID() + extension); //file.getLastPathSegment()
@@ -539,6 +546,50 @@ public class Chat extends AppCompatActivity implements ChatActions {
             startActivityForResult(intent, PICKFILE_RESULT_CODE);
             popupWindow.dismiss();
         });
+    }
+
+    private boolean validateFileSize(Uri file, String fileType) {
+        int maxSize;
+
+        switch(fileType) {
+            case "image": {
+                maxSize = MAX_IMAGE_FILE_SIZE;
+                break;
+            }
+            case "audio": {
+                maxSize = MAX_AUDIO_FILE_SIZE;
+                break;
+            }
+            case "video": {
+                maxSize = MAX_VIDEO_FILE_SIZE;
+                break;
+            }
+            default: {
+                maxSize = MAX_UNDEFINED_FILE_SIZE;
+            }
+        }
+
+        try {
+            InputStream fis = getContentResolver().openInputStream(file);
+            if (fis.available() > maxSize) {
+                String message = MessageFormat.format("Maximum {0} size is {1}MB. You have exceeded this restriction.",
+                        fileType, maxSize / (1024 *1024)
+                );
+                AlertDialog.Builder alertBuilder = new AlertDialog.Builder(this);
+                alertBuilder.setTitle("Maximal file size exceeded");
+                alertBuilder.setMessage(message);
+                alertBuilder.setPositiveButton("Ok", (dialogInterface, i) -> dialogInterface.cancel());
+                AlertDialog alertDialog = alertBuilder.create();
+                alertDialog.setCancelable(true);
+                alertDialog.show();
+                return false;
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return true;
     }
 
     private void parseMessageContent(Message message) {

@@ -34,7 +34,7 @@ public class ListenVoiceStream {
             udpSocket.setSoTimeout(5000);
 
 
-            AudioTrack audio = new AudioTrack(AudioManager.STREAM_MUSIC,
+            AudioTrack audio = new AudioTrack(AudioManager.STREAM_VOICE_CALL,
                     8000,
                     AudioFormat.CHANNEL_OUT_MONO,
                     AudioFormat.ENCODING_PCM_8BIT,

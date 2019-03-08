@@ -69,8 +69,8 @@ public class VoiceCalling extends AppCompatActivity {
         final Intent intent = getIntent();
         action = intent.getStringExtra("action");
 
-        myRef = FirebaseSingleton.getFirebaseInstanse().getReference("Server");
-        myRef.addListenerForSingleValueEvent(new ValueEventListener() {
+        DatabaseReference serverRef = FirebaseSingleton.getFirebaseInstanse().getReference("Server");
+        serverRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 for (DataSnapshot data : dataSnapshot.getChildren()) {

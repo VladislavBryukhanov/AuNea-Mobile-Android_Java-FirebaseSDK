@@ -69,9 +69,25 @@ public class MediaFileDownloader {
                 return setVideoFile(url);
             }*/
             default: {
-                createImageFileLayout();
+                createUndefinedFileLayout();
             }
         }
+    }
+
+    //TODO undefined UI - button for downloading resource
+    private void createUndefinedFileLayout() {
+        bmImage = new ImageView(parentContext);
+        bmImage.setVisibility(View.GONE);
+        bmImage.setScaleType(ImageView.ScaleType.FIT_CENTER);
+
+        pbLoading = new ProgressBar(parentContext);
+        pbLoading.setIndeterminate(true);
+
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(150, 150);
+        bmImage.setLayoutParams(params);
+        pbLoading.setLayoutParams(params);
+        parentLayout.addView(bmImage);
+        parentLayout.addView(pbLoading);
     }
 
     private void createImageFileLayout() {
@@ -196,21 +212,21 @@ public class MediaFileDownloader {
     private void handleUndefinedFile() {
         ImageComponent imageComponent = new ImageComponent(parentContext, targetFile, fileUrl, bmImage, pbLoading);
         MediaFileHandler downloadTask = new MediaFileHandler(
-                imageComponent, parentContext, UNDEFINED_TYPE, fileUrl);
+                imageComponent, parentContext, UNDEFINED_TYPE);
         downloadTask.execute();
     }
 
     private void handleImageFile() {
         ImageComponent imageComponent = new ImageComponent(parentContext, targetFile, fileUrl, bmImage, pbLoading);
         MediaFileHandler downloadTask = new MediaFileHandler(
-                imageComponent, parentContext, IMAGE_TYPE, fileUrl);
+                imageComponent, parentContext, IMAGE_TYPE);
         downloadTask.execute();
     }
 
     private void handleAudioFile() {
         AudioComponent audioComponent = new AudioComponent(parentContext, targetFile, fileUrl, audioUI);
         MediaFileHandler downloadTask = new MediaFileHandler(
-                audioComponent, parentContext, AUDIO_TYPE, fileUrl);
+                audioComponent, parentContext, AUDIO_TYPE);
         downloadTask.execute();
     }
 
