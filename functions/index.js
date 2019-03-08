@@ -21,9 +21,14 @@ exports.voipNotifier = functions.database.ref('/Users/{userId}/voiceCall').onWri
             tag: VOICE_CALLING_TAG
         }
     };
+    const options = {
+        priority: "high",
+        timeToLive: 25
+    };
+
     const registrationId = await change.after.ref.parent.once("value")
         .then(res => res.val().registrationTokenId);
-    return admin.messaging().sendToDevice(registrationId, notificationPayload);
+    return admin.messaging().sendToDevice(registrationId, notificationPayload, options);
 
 });
 
@@ -49,8 +54,7 @@ exports.notificationSender = functions.database.ref('/Dialogs/{dialogId}/lastMes
     console.log(change.after.val());
     console.log('__');
 
-    const dialogSnapshot = await change.after.ref.parent.once("value")
-        .then(res => res.val());
+    const dialogSnapshot = await change.after.ref.parent.once("value");
     const lastMessage = change.after.val();
     const payload = {
         data: {
@@ -58,9 +62,12 @@ exports.notificationSender = functions.database.ref('/Dialogs/{dialogId}/lastMes
             tag: NOTIFICATION_TAG
         }
     };
+    const options = {
+        collapseKey: dialogSnapshot.key
+    };
     const fetchSpeakersRegIds = [];
 
-    for (let speaker in dialogSnapshot.speakers) {
+    for (let speaker in dialogSnapshot.val().speakers) {
         fetchSpeakersRegIds.push(
             admin.database()
                 .ref('Users')
@@ -87,5 +94,5 @@ exports.notificationSender = functions.database.ref('/Dialogs/{dialogId}/lastMes
             }
         });
     });
-    return admin.messaging().sendToDevice(registrationTokens, payload);
+    return admin.messaging().sendToDevice(registrationTokens, payload, options);
 });
