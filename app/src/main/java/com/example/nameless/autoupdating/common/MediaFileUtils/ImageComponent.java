@@ -20,7 +20,7 @@ public class ImageComponent {
     private ProgressBar pbLoading;
     private String fileUrl;
 
-    ImageComponent(Context parentContext, File mediaFile, ImageView bmImage, ProgressBar pbLoading, String fileUrl) {
+    ImageComponent(Context parentContext, File mediaFile, String fileUrl, ImageView bmImage, ProgressBar pbLoading) {
         this.parentContext = parentContext;
         this.mediaFile = mediaFile;
         this.bmImage = bmImage;
@@ -29,11 +29,11 @@ public class ImageComponent {
     }
 
     Bitmap setImageProperties() {
-        Bitmap image = ImagesMemoryCache.memoryCache.get(fileUrl);
+        Bitmap image = FilesMemoryCache.memoryCache.get(fileUrl);
 
         if (image == null) {
             image = BitmapFactory.decodeFile(mediaFile.getPath());
-            ImagesMemoryCache.memoryCache.put(fileUrl, image);
+            FilesMemoryCache.memoryCache.put(fileUrl, image);
         }
         return image;
     }
@@ -43,6 +43,7 @@ public class ImageComponent {
         bmImage.setImageBitmap(bmp);
         pbLoading.setVisibility(View.GONE);
         bmImage.setVisibility(View.VISIBLE);
+        bmImage.setAdjustViewBounds(true);
     }
 
     private void setImageOnClickListener() {

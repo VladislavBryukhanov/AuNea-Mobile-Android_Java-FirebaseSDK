@@ -81,7 +81,6 @@ public class MediaFileHandler extends AsyncTask<File, Void, Bitmap> {
 
                 }*/
             }
-            ImagesMemoryCache.filesLoadingInProgress.remove(fileUrl);
         }
     }
 }

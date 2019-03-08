@@ -42,7 +42,7 @@ public class AudioComponent {
     private Boolean isTrackPlaying = false;
     private DateFormat formatter;
 
-    AudioComponent(Context parentContext, LinearLayout audioUI, String fileUrl, File mediaFile) {
+    AudioComponent(Context parentContext, File mediaFile, String fileUrl, LinearLayout audioUI) {
         this.parentContext = parentContext;
         this.fileUrl = fileUrl;
         this.mediaFile = mediaFile;

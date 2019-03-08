@@ -4,34 +4,23 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.Point;
-import android.media.MediaPlayer;
 import android.net.Uri;
-import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.util.LruCache;
-import android.util.Pair;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.WindowManager;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.Filter;
 import android.widget.Filterable;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
-import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-import com.example.nameless.autoupdating.activities.AudioTrackUI;
 import com.example.nameless.autoupdating.R;
 import com.example.nameless.autoupdating.common.ChatActions;
 import com.example.nameless.autoupdating.common.MediaFileUtils.MediaFileDownloader;
@@ -55,7 +44,6 @@ import java.util.regex.Pattern;
 public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterable {
 
     private Context ma;
-    private Point screenSize;
     private DatabaseReference myRef;
     private FirebaseAuth mAuth;
     private ArrayList<Message> messages;
@@ -74,12 +62,6 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
 
         this.myRef = myRef;
         mAuth = FirebaseAuth.getInstance();
-
-        WindowManager wm = (WindowManager) ma.getSystemService(
-        Context.WINDOW_SERVICE);
-        screenSize = new Point();
-        wm.getDefaultDisplay().getSize(screenSize);
-        screenSize.x *= 0.5;
     }
 
     @NonNull
@@ -111,56 +93,9 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
             }
 
             if(fileUrl != null) {
-
-                ImageView image;
-                ProgressBar loading ;
-                LinearLayout audioUI;
-
-                if((currentMessage.getFileType()).equals("audio")) {
-
-                    audioUI = new AudioTrackUI(ma, null);
-                    layout.addView(audioUI);
-
-                    ImageView audioButton = audioUI.findViewById(R.id.audioButton);
-                    ProgressBar audioPbLoading = audioUI.findViewById(R.id.pbLoading);
-                    TextView timeDuration = audioUI.findViewById(R.id.tvTime);
-
-                    timeDuration.setText("Loading...");
-                    audioPbLoading.setVisibility(View.VISIBLE);
-                    audioButton.setVisibility(View.GONE);
-                    audioUI.setVisibility(View.VISIBLE);
-
-                    MediaFileDownloader downloadTask = new MediaFileDownloader(
-                            audioUI, getContext(), currentMessage.getFileType(), fileUrl);
-                    downloadTask.downloadFileByUrl();
-                } else if ((currentMessage.getFileType()).equals("image")) {
-
-                    String fileMediaSides = currentMessage.getFileMediaSides();
-
-                    image = new ImageView(ma);
-                    image.setVisibility(View.GONE);
-                    image.setScaleType(ImageView.ScaleType.FIT_CENTER);
-
-                    loading = new ProgressBar(ma);
-                    loading.setIndeterminate(true);
-
-                    setMediaItemSize(fileMediaSides, loading, image);
-                    layout.addView(image);
-                    layout.addView(loading);
-
-//                if((currentMessage.getFileType()).equals("image")) {
-//                    mPicasso.load(fileUrl)
-//                            .resize(200, 200)
-//                            . centerInside()
-//                            .into(image);
-//                    loading.setVisibility(View.GONE);
-//                    image.setVisibility(View.VISIBLE);
-//                } else {
-                        MediaFileDownloader downloadTask = new MediaFileDownloader(
-                                image, loading, getContext(), currentMessage.getFileType(), fileUrl);
-                        downloadTask.downloadFileByUrl();
-                        image.setAdjustViewBounds(true);
-                }
+                MediaFileDownloader downloadTask =
+                        new MediaFileDownloader(getContext(), layout, currentMessage, this);
+                downloadTask.downloadFileByUrl();
             }
 
             parseMessageContent(currentMessage, convertView);
@@ -170,20 +105,6 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
                     .format(currentMessage.getDateOfSend()));
         }
         return convertView;
-    }
-
-    private void setMediaItemSize(String resolution, ProgressBar loading, ImageView img) {
-        int imageWidth = Integer.parseInt(resolution.split("x")[0]);
-        int imageHeight = Integer.parseInt(resolution.split("x")[1]);
-        double scale = (double) imageWidth / screenSize.x;
-        if(imageWidth > screenSize.x) {
-            imageWidth = screenSize.x;
-            imageHeight /= scale;
-        }
-
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(imageWidth, imageHeight);
-        loading.setLayoutParams(params);
-        img.setLayoutParams(params);
     }
 
     @Override

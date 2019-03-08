@@ -5,7 +5,7 @@ import android.util.LruCache;
 
 import java.util.ArrayList;
 
-class ImagesMemoryCache {
+class FilesMemoryCache {
     public static LruCache<String, Bitmap> memoryCache  = new LruCache<String, Bitmap>(40) {
         @Override
         protected int sizeOf(String key, Bitmap bitmap) {
