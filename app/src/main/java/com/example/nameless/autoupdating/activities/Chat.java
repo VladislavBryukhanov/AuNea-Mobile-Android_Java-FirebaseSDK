@@ -13,6 +13,8 @@ import android.support.annotation.NonNull;
 import android.support.v7.app.ActionBar;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.Gravity;
@@ -77,7 +79,7 @@ public class Chat extends AppCompatActivity implements ChatActions {
 
 
     private ImageButton btnSend, btnAffixFile, btnStartRec, btnStopRec;
-    private ListView lvMessages;
+    private RecyclerView rvMessages;
     private EditText etMessage;
     private ImageView ivEdit;
     private Message messageForEditing;
@@ -107,7 +109,7 @@ public class Chat extends AppCompatActivity implements ChatActions {
         btnStopRec = findViewById(R.id.btnStopRec);
         btnAffixFile = findViewById(R.id.btnAffixFile);
         etMessage = findViewById(R.id.etMessage);
-        lvMessages = findViewById(R.id.lvMessages);
+        rvMessages = findViewById(R.id.rvMessages);
         ivEdit = findViewById(R.id.ivEdit);
 
         dialogFound = false;
@@ -122,8 +124,13 @@ public class Chat extends AppCompatActivity implements ChatActions {
         messagesDb = database.getReference("Messages");
 
         setActionBar();
-        lvMessages.setTranscriptMode(ListView.TRANSCRIPT_MODE_NORMAL);
-        lvMessages.setStackFromBottom(true); // if dialog started first time need false
+        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
+//        linearLayoutManager.setStackFromEnd(true);
+//        linearLayoutManager.setReverseLayout(true);
+        rvMessages.setLayoutManager(linearLayoutManager);
+
+//        rvMessages.setTranscriptMode(ListView.TRANSCRIPT_MODE_NORMAL);
+//        rvMessages.setStackFromBottom(true); // if dialog started first time need false
 
 
 //todo с помощью запроса получить название таблицы, которае содержит подстроку - логин нашего профиля, вместо поиска через листенер
@@ -303,7 +310,7 @@ public class Chat extends AppCompatActivity implements ChatActions {
                 }
 
                 adapter = new MessagesAdapter(Chat.this, messages, messagesRef);
-                lvMessages.setAdapter(adapter);
+                rvMessages.setAdapter(adapter);
 
                 messagesRef.addValueEventListener(new ValueEventListener() {
                     @Override
@@ -347,7 +354,7 @@ public class Chat extends AppCompatActivity implements ChatActions {
                         //TODO invalid for infinite scroll
                         if (firstUnreadMessageIndex == -1 && !message.isRead() && !message.getWho().equals(mAuth.getUid())) {
                             firstUnreadMessageIndex = messages.size() - 1;
-                            lvMessages.setSelection(firstUnreadMessageIndex);
+//                            rvMessages.setSelection(firstUnreadMessageIndex);
                         }
                         adapter.notifyDataSetChanged();
                     }

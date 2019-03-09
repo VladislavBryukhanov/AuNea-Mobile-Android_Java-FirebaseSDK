@@ -8,6 +8,7 @@ import android.graphics.Paint;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v7.widget.RecyclerView;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -41,43 +42,63 @@ import java.util.regex.Pattern;
  * Created by nameless on 07.04.18.
  */
 
-public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterable {
+public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHolder> {
 
     private Context ma;
     private DatabaseReference myRef;
     private FirebaseAuth mAuth;
     private ArrayList<Message> messages;
-    private ArrayList<Message> filteredMessageList;
 
 //    public static Picasso mPicasso;
 
     public MessagesAdapter(Context ma, ArrayList<Message> messages, DatabaseReference myRef) {
-        super(ma, 0, messages);
 //        mPicasso = Picasso.with(ma);
         RunningAudio.initInstance(); // init Audio player
-
         this.ma = ma;
         this.messages = messages;
-        this.filteredMessageList = messages;
-
         this.myRef = myRef;
         mAuth = FirebaseAuth.getInstance();
     }
 
+
     @NonNull
     @Override
-    public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
-        if(filteredMessageList.size() > 0) {
-            LayoutInflater li = (LayoutInflater)ma.getSystemService( Context.LAYOUT_INFLATER_SERVICE );
-            convertView = li.inflate(R.layout.message_item, parent, false);
+    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+//        LayoutInflater li = (LayoutInflater)ma.getSystemService( Context.LAYOUT_INFLATER_SERVICE );
+//        View v  = li.inflate(R.layout.message_item, parent, false);
 
-            LinearLayout layout = convertView.findViewById(R.id.content);
+        View v = LayoutInflater.from(ma).inflate(R.layout.message_item, parent, false);
+        return new ViewHolder(v);
+    }
+
+    @Override
+    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+        holder.setMessageLayout(position);
+    }
+
+    @Override
+    public int getItemCount() {
+        return messages.size();
+    }
+
+    public class ViewHolder extends RecyclerView.ViewHolder {
+
+        private View view;
+
+        public ViewHolder(View itemView) {
+            super(itemView);
+            this.view = itemView;
+        }
+
+        public void setMessageLayout(int position) {
+
+            LinearLayout layout = view.findViewById(R.id.content);
             RelativeLayout.LayoutParams layoutParams =
                     (RelativeLayout.LayoutParams) layout.getLayoutParams();
             RelativeLayout.LayoutParams timeLayoutParams =
-                    (RelativeLayout.LayoutParams) convertView.findViewById(R.id.tvDate).getLayoutParams();
+                    (RelativeLayout.LayoutParams) view.findViewById(R.id.tvDate).getLayoutParams();
 
-            Message currentMessage = filteredMessageList.get(position);
+            Message currentMessage = messages.get(position);
             final String fileUrl = currentMessage.getFileUrl();
 
             if((currentMessage.getWho()).equals(mAuth.getUid())) {
@@ -94,55 +115,16 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
 
             if(fileUrl != null) {
                 MediaFileDownloader downloadTask =
-                        new MediaFileDownloader(getContext(), layout, currentMessage, this);
+                        new MediaFileDownloader(ma, layout, currentMessage);
                 downloadTask.downloadFileByUrl();
             }
 
-            parseMessageContent(currentMessage, convertView);
+            parseMessageContent(currentMessage, view);
 
             DateFormat dateFormat = (new SimpleDateFormat("HH:mm:ss \n dd MMM"));
-            ((TextView)convertView.findViewById(R.id.tvDate)).setText(dateFormat
+            ((TextView)view.findViewById(R.id.tvDate)).setText(dateFormat
                     .format(currentMessage.getDateOfSend()));
         }
-        return convertView;
-    }
-
-    @Override
-    public int getCount() {
-        return filteredMessageList.size();
-    }
-
-    @NonNull
-    @Override
-    public Filter getFilter() {
-        Filter filter = new Filter() {
-            @Override
-            protected FilterResults performFiltering(CharSequence constraint) {
-                FilterResults result = new FilterResults();
-                ArrayList<Message> filteredList  = new ArrayList<>();
-                constraint = constraint.toString().toLowerCase();
-                for(int i = 0; i < messages.size(); i++) {
-                    if((messages.get(i).getContent()).toLowerCase()
-                            .contains(constraint.toString())) {
-                        filteredList.add(messages.get(i));
-                    }
-                }
-                result.count = filteredList.size();
-                result.values = filteredList;
-                return result;
-            }
-
-            @Override
-            protected void publishResults(CharSequence constraint, FilterResults results) {
-                filteredMessageList = (ArrayList<Message>)results.values;
-                if (filteredMessageList.size() > 0) {
-                    notifyDataSetChanged();
-                } else {
-                    notifyDataSetInvalidated();
-                }
-            }
-        };
-        return filter;
     }
 
     private void parseMessageContent(final Message message, View convertView) {
@@ -169,7 +151,7 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
                 urlPart.setTextColor(ma.getResources().getColor(R.color.lincIonicColor));
                 urlPart.setTextSize(16);
                 urlPart.setPaintFlags(Paint.UNDERLINE_TEXT_FLAG);
-                float dpi = getContext().getResources().getDisplayMetrics().density;
+                float dpi = ma.getResources().getDisplayMetrics().density;
                 urlPart.setMaxWidth((int)(240 * dpi));
 
                 urlPart.setOnClickListener(v -> {

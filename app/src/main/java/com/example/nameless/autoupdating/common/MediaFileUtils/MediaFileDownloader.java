@@ -15,7 +15,6 @@ import android.widget.TextView;
 import com.example.nameless.autoupdating.R;
 import com.example.nameless.autoupdating.activities.AudioTrackUI;
 import com.example.nameless.autoupdating.activities.Settings;
-import com.example.nameless.autoupdating.adapters.MessagesAdapter;
 import com.example.nameless.autoupdating.models.Message;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
@@ -32,7 +31,6 @@ public class MediaFileDownloader {
     private File targetFile;
     private Context parentContext;
     private LinearLayout parentLayout;
-    private MessagesAdapter adapterInterface;
     private Message message;
     private String fileType;
     private String fileUrl;
@@ -44,13 +42,11 @@ public class MediaFileDownloader {
     public MediaFileDownloader(
             Context parentContext,
             LinearLayout parentLayout,
-            Message message,
-            MessagesAdapter adapterInterface) {
+            Message message) {
 
         this.parentContext = parentContext;
         this.parentLayout = parentLayout;
         this.message = message;
-        this.adapterInterface = adapterInterface;
         this.fileType = message.getFileType();
         this.fileUrl = message.getFileUrl();
     }
@@ -125,8 +121,6 @@ public class MediaFileDownloader {
     }
 
     private void createAudioFileLayout() {
-        parentLayout.findViewById(R.id.audioButton);
-
         audioUI = new AudioTrackUI(parentContext, null);
         parentLayout.addView(audioUI);
 
@@ -176,7 +170,7 @@ public class MediaFileDownloader {
                 FilesMemoryCache.filesLoadingInProgress.remove(fileUrl);
                 // impossible use "callback" because adapter regularly reset all
                 // layouts and after downloading old layout may will be removed
-                adapterInterface.notifyDataSetChanged();
+//                adapterInterface.notifyDataSetChanged();
             });
         }
     }

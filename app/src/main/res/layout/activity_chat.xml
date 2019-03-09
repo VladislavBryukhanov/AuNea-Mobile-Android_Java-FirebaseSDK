@@ -15,10 +15,10 @@
     <!--android:background="#17181a"-->
     <!--android:background="#121617"-->
 
-    <ListView
-        android:id="@+id/lvMessages"
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/rvMessages"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
         android:layout_weight="1"
         android:divider="@null" />
 
