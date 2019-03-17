@@ -1,5 +1,6 @@
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
+const path = require('path');
 const _ = require('lodash');
 admin.initializeApp();
 
@@ -12,7 +13,7 @@ exports.voipNotifier = functions.database.ref('/Users/{userId}/voiceCall').onWri
     const CALLING_STATE = "calling...";
 
     if (!change.after.exists() || change.after.val() === CALLING_STATE) {
-        return null;
+        return Promise.reject(new Error('Incorrect calling state'));
     }
 
     const notificationPayload = {
@@ -34,7 +35,7 @@ exports.voipNotifier = functions.database.ref('/Users/{userId}/voiceCall').onWri
 
 exports.notificationSender = functions.database.ref('/Dialogs/{dialogId}/lastMessage').onWrite(async (change, context) => {
     if (!change.after.exists()) {
-        return null;
+        return Promise.reject(new Error('Delete event will be ignored'));
     }
 
     const prevSnapshot = {
@@ -47,7 +48,7 @@ exports.notificationSender = functions.database.ref('/Dialogs/{dialogId}/lastMes
     };
 
     if (_.isEqual(prevSnapshot, currentSnapshot)) {
-        return null;
+        return Promise.reject(new Error('Reading changes will be ignored'));
     }
 
     console.log(change.before.val());
@@ -95,4 +96,43 @@ exports.notificationSender = functions.database.ref('/Dialogs/{dialogId}/lastMes
         });
     });
     return admin.messaging().sendToDevice(registrationTokens, payload, options);
+});
+
+exports.messageResourceCascadeDelete = functions.database.ref('/Messages/{dialogId}/{messageId}').onDelete((change, context) => {
+    const deletedItem = change.val();
+
+    if (deletedItem.mediaFile) {
+        let { relativePath, bucket } = deletedItem.mediaFile;
+        const fileName = path.basename(relativePath);
+        const fileDirname = path.dirname(relativePath);
+        console.log(path.join(fileDirname, `thumb_${fileName}`));
+        bucket = admin.storage().bucket(bucket);
+        bucket.file(relativePath).delete(res => console.log(res));
+        bucket.file(path.join(fileDirname, `thumb_${fileName}`)).delete(res => console.log(res));
+        return Promise.resolve();
+    }
+    return Promise.reject(new Error('Data without mediaFile will be ignored'));
+});
+
+exports.lastMessage = functions.database.ref('/Messages/{dialogId}/{messageId}').onWrite( async (change, context) => {
+    const dialogId = context.params.dialogId;
+    let lastMessage = change.after.val();
+
+    if (!change.after.exists()) {
+        const lastMsgSnapshot = await admin.database()
+            .ref(`/Messages/${dialogId}`)
+            .limitToLast(1)
+            .once('value');
+        lastMsgSnapshot.forEach(lastMsg => lastMessage = lastMsg.val());
+
+        if (!lastMessage) {
+            return admin.database()
+                .ref(`/Dialogs/${dialogId}`)
+                .remove();
+        }
+    }
+
+    return admin.database()
+        .ref(`/Dialogs/${dialogId}/lastMessage`)
+        .set(lastMessage);
 });
