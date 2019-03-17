@@ -26,7 +26,7 @@ import com.google.firebase.database.ValueEventListener;
  * Created by nameless on 29.04.18.
  */
 
-public class GlobalMenu extends AppCompatActivity {
+public class GlobalMenu extends AuthGuard {
 
     private FirebaseDatabase database;
     private DatabaseReference myRef;
@@ -40,15 +40,6 @@ public class GlobalMenu extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_auth);
-
-        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this,
-                    new String[]{android.Manifest.permission.INTERNET,
-                            android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                            android.Manifest.permission.RECORD_AUDIO,
-                            android.Manifest.permission.CAPTURE_AUDIO_OUTPUT}, 1);
-        }
 
         PackageInfo pInfo = null;
         try {

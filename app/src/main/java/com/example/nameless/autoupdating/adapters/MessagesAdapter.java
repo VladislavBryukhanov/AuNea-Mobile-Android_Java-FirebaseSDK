@@ -22,7 +22,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.example.nameless.autoupdating.R;
-import com.example.nameless.autoupdating.common.ChatActions;
+import com.example.nameless.autoupdating.models.ChatActions;
 import com.example.nameless.autoupdating.common.MediaFileUtils.MediaFileDownloader;
 import com.example.nameless.autoupdating.common.MediaFileUtils.RunningAudio;
 import com.example.nameless.autoupdating.models.Message;
@@ -193,7 +193,7 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
             }
         }
 
-        (convertView.findViewById(R.id.msgItem)).setOnClickListener(v -> showPopupMenu(v, message));
+        convertView.setOnClickListener(v -> showPopupMenu(v, message));
 
         TextView tvContent = convertView.findViewById(R.id.tvContent);
         if(msg.length() > 0) {
@@ -219,8 +219,7 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
 
     private void showPopupMenu(final View view, final Message msg) {
 
-        LayoutInflater layoutInflater
-                = (LayoutInflater)ma.getApplicationContext()
+        LayoutInflater layoutInflater = (LayoutInflater)ma.getApplicationContext()
                 .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         View popupView = layoutInflater.inflate(R.layout.message_context, null);
 

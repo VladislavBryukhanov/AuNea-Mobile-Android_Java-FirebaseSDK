@@ -13,7 +13,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.example.nameless.autoupdating.R;
-import com.example.nameless.autoupdating.activities.AudioTrackUI;
+import com.example.nameless.autoupdating.common.AudioTrackUI;
 import com.example.nameless.autoupdating.activities.Settings;
 import com.example.nameless.autoupdating.adapters.MessagesAdapter;
 import com.example.nameless.autoupdating.models.Message;

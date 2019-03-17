@@ -12,7 +12,6 @@ import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.v7.app.ActionBar;
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.Gravity;
@@ -31,7 +30,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.nameless.autoupdating.asyncTasks.DownloadAvatarByUrl;
-import com.example.nameless.autoupdating.common.ChatActions;
+import com.example.nameless.autoupdating.common.AuthGuard;
+import com.example.nameless.autoupdating.models.AuthComplete;
+import com.example.nameless.autoupdating.models.ChatActions;
 import com.example.nameless.autoupdating.common.FirebaseSingleton;
 import com.example.nameless.autoupdating.models.Dialog;
 import com.example.nameless.autoupdating.common.FCMManager;
@@ -40,7 +41,6 @@ import com.example.nameless.autoupdating.adapters.MessagesAdapter;
 import com.example.nameless.autoupdating.models.ClientToClient;
 import com.example.nameless.autoupdating.models.Message;
 import com.example.nameless.autoupdating.models.User;
-import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -64,7 +64,7 @@ import java.util.Iterator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class Chat extends AppCompatActivity implements ChatActions {
+public class Chat extends AuthGuard implements ChatActions, AuthComplete {
 
 //    private static final int REQUEST_GALLERY = 100;
     public static final int PICKFILE_RESULT_CODE = 200;
@@ -87,19 +87,29 @@ public class Chat extends AppCompatActivity implements ChatActions {
     private DatabaseReference messagesDb, dialogsDb, dialogsRef, messagesRef;
     private String dialogId;
     private int firstUnreadMessageIndex = -1;
-
+    
     private ArrayList<Message> messages;
     private User toUser;
 
     private boolean keyboardListenerLocker = false;
     private boolean dialogFound;
-    private FirebaseAuth mAuth;
     private Uri imgUri;
     private MediaRecorder mediaRecorder;
+    private String myUid, myEmail;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_loading_light);
+
+        Intent intent = getIntent();
+        toUser = (User)intent.getSerializableExtra("to");
+
+        super.checkAccess(this);
+    }
+
+    @Override
+    public void onAuthSuccess() {
         setContentView(R.layout.activity_chat);
 
         btnSend = findViewById(R.id.btnSend);
@@ -110,20 +120,21 @@ public class Chat extends AppCompatActivity implements ChatActions {
         lvMessages = findViewById(R.id.lvMessages);
         ivEdit = findViewById(R.id.ivEdit);
 
+        myUid = getMyAccount().getUid();
+        myEmail = getMyAccount().getEmail();
+        
         dialogFound = false;
         btnSend.setEnabled(false);
         btnStartRec.setEnabled(false);
         messages = new ArrayList<>();
-        Intent intent = getIntent();
-        toUser = (User)intent.getSerializableExtra("to");
-        mAuth = FirebaseAuth.getInstance();
+
         database = FirebaseSingleton.getFirebaseInstanse();
         dialogsDb = database.getReference("Dialogs");
         messagesDb = database.getReference("Messages");
 
-        setActionBar();
         lvMessages.setTranscriptMode(ListView.TRANSCRIPT_MODE_NORMAL);
         lvMessages.setStackFromBottom(true); // if dialog started first time need false
+        setActionBar();
 
 
 //todo с помощью запроса получить название таблицы, которае содержит подстроку - логин нашего профиля, вместо поиска через листенер
@@ -167,7 +178,7 @@ public class Chat extends AppCompatActivity implements ChatActions {
             }
 //                if (!(String.valueOf(etMessage.getText()).trim()).equals("")) {
             Message newMsg = new Message(String.valueOf(etMessage.getText()), null,
-                    new Date(), mAuth.getUid(), toUser.getUid(), null, null, false);
+                    new Date(), myUid, toUser.getUid(), null, null, false);
             parseMessageContent(newMsg);
 //                }
         });
@@ -216,7 +227,7 @@ public class Chat extends AppCompatActivity implements ChatActions {
         switch(item.getItemId()) {
             case R.id.mCall: {
                 Intent intent = new Intent(getApplicationContext(), VoiceCalling.class);
-                ClientToClient ctc = new ClientToClient(mAuth.getUid(), toUser.getUid());
+                ClientToClient ctc = new ClientToClient(myUid, toUser.getUid());
                 intent.putExtra("dialog", ctc);
                 intent.putExtra("action", VoiceCalling.OUTGOING_CALL_ACTION);
                 startActivity(intent);
@@ -248,13 +259,13 @@ public class Chat extends AppCompatActivity implements ChatActions {
                 }
                 final String fileMediaSides = fMS;
 
-                StorageReference riversRef = gsReference.child(mAuth.getCurrentUser()
-                        .getEmail() + "/images/" + java.util.UUID.randomUUID() + extension); //file.getLastPathSegment()
+                StorageReference riversRef = gsReference.child(myEmail
+                        + "/images/" + java.util.UUID.randomUUID() + extension); //file.getLastPathSegment()
                 UploadTask uploadTask = riversRef.putFile(file);
 
                 uploadTask.addOnSuccessListener(taskSnapshot -> {
                     Message newMsg = new Message(String.valueOf(etMessage.getText()), taskSnapshot.getDownloadUrl().toString(),
-                            new Date(), mAuth.getUid(), toUser.getUid(), fileType, fileMediaSides, false);
+                            new Date(), myUid, toUser.getUid(), fileType, fileMediaSides, false);
                     parseMessageContent(newMsg);
                 });
 
@@ -266,7 +277,7 @@ public class Chat extends AppCompatActivity implements ChatActions {
 
     private void setChatListeners() {
 
-        Query getChat = dialogsDb.orderByChild("speakers/" + mAuth.getUid()).equalTo(mAuth.getUid());
+        Query getChat = dialogsDb.orderByChild("speakers/" + myUid).equalTo(myUid);
         getChat.addValueEventListener(new ValueEventListener() {
 
             @Override
@@ -305,29 +316,6 @@ public class Chat extends AppCompatActivity implements ChatActions {
                 adapter = new MessagesAdapter(Chat.this, messages, messagesRef);
                 lvMessages.setAdapter(adapter);
 
-                messagesRef.addValueEventListener(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-
-                        messagesRef.limitToLast(1).addListenerForSingleValueEvent(new ValueEventListener() {
-                            @Override
-                            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                                for(DataSnapshot data : dataSnapshot.getChildren()) {
-                                    dialogsRef.child("lastMessage").setValue(data.getValue());
-                                }
-                            }
-
-                            @Override
-                            public void onCancelled(@NonNull DatabaseError databaseError) {
-
-                            }
-                        });
-                    }
-
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError databaseError) {}
-                });
-
                 Query unreadMessages = messagesRef.orderByChild("read").equalTo(false);
                 unreadMessages.addValueEventListener(new ValueEventListener() {
                     @Override
@@ -345,7 +333,7 @@ public class Chat extends AppCompatActivity implements ChatActions {
                         Message message = new Message(dataSnapshot.getKey(), dataSnapshot.getValue(Message.class));
                         messages.add(message);
                         //TODO invalid for infinite scroll
-                        if (firstUnreadMessageIndex == -1 && !message.isRead() && !message.getWho().equals(mAuth.getUid())) {
+                        if (firstUnreadMessageIndex == -1 && !message.isRead() && !message.getWho().equals(myUid)) {
                             firstUnreadMessageIndex = messages.size() - 1;
                             lvMessages.setSelection(firstUnreadMessageIndex);
                         }
@@ -418,13 +406,12 @@ public class Chat extends AppCompatActivity implements ChatActions {
         final Uri file = Uri.fromFile(new File(getApplicationContext().getCacheDir()
                 + "AudioCache.3gp"));
 
-        StorageReference riversRef = gsReference.child(mAuth.getCurrentUser()
-                .getEmail() + "/audioRecords/" + java.util.UUID.randomUUID() + ".3gp");
+        StorageReference riversRef = gsReference.child(myEmail + "/audioRecords/" + java.util.UUID.randomUUID() + ".3gp");
         UploadTask uploadTask = riversRef.putFile(file);
 
         uploadTask.addOnSuccessListener(taskSnapshot -> {
             Message newMsg = new Message(String.valueOf(etMessage.getText()), taskSnapshot.getDownloadUrl().toString(),
-                    new Date(), mAuth.getUid(), toUser.getUid(), "audio", null, false);
+                    new Date(), myUid, toUser.getUid(), "audio", null, false);
             parseMessageContent(newMsg);
 
             File fdelete = new File(file.getPath());
@@ -481,10 +468,9 @@ public class Chat extends AppCompatActivity implements ChatActions {
             public void onCancelled(DatabaseError databaseError) {}
         });
 
-        final ViewGroup actionBarLayout = (ViewGroup) getLayoutInflater().inflate(
-                R.layout.chat_action_bar,
-                null);
-        final ActionBar actionBar = getSupportActionBar();
+        ViewGroup actionBarLayout = (ViewGroup) getLayoutInflater()
+                .inflate(R.layout.chat_action_bar, null);
+        ActionBar actionBar = getSupportActionBar();
         actionBar.setDisplayShowHomeEnabled(false);
         actionBar.setDisplayShowTitleEnabled(false);
         actionBar.setDisplayShowCustomEnabled(true);
@@ -620,7 +606,7 @@ public class Chat extends AppCompatActivity implements ChatActions {
 
             HashMap<String, String> speakers = new HashMap<>();
             speakers.put(toUser.getUid(), toUser.getUid());
-            speakers.put(mAuth.getUid(), mAuth.getUid());
+            speakers.put(myUid, myUid);
             Dialog dialog = new Dialog(message, 1, speakers, true);
             dialogsRef.setValue(dialog);
 //            dialogFound = true;

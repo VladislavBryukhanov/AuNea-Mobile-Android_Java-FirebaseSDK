@@ -16,7 +16,9 @@ import android.view.View;
 import android.widget.Toast;
 
 import com.example.nameless.autoupdating.R;
+import com.example.nameless.autoupdating.common.AuthGuard;
 import com.example.nameless.autoupdating.common.FirebaseSingleton;
+import com.example.nameless.autoupdating.models.AuthComplete;
 import com.example.nameless.autoupdating.voip.ListenVoiceStream;
 import com.example.nameless.autoupdating.voip.UDPClient;
 import com.example.nameless.autoupdating.voip.WriteVoiceStream;
@@ -35,7 +37,7 @@ import java.net.UnknownHostException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 
-public class VoiceCalling extends AppCompatActivity {
+public class VoiceCalling extends AuthGuard implements AuthComplete {
     public static int voiceStreamServerPort = 2891;
     public static InetAddress voiceStreamServerIpAddress;
 
@@ -61,6 +63,12 @@ public class VoiceCalling extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        super.checkAccess(this);
+//        setContentView(R.layout.activity_loading_dark);
+    }
+
+    @Override
+    public void onAuthSuccess() {
         setContentView(R.layout.activity_voice_calling);
 
         btnAccept = findViewById(R.id.btnAccept);
@@ -99,6 +107,7 @@ public class VoiceCalling extends AppCompatActivity {
             public void onCancelled(DatabaseError databaseError) {}
         });
     }
+
 
     private void onAccept() {
         myRef.setValue(CALLING_STATE).addOnCompleteListener(task -> {

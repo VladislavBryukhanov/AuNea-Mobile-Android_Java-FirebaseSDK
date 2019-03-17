@@ -13,9 +13,10 @@ import android.view.MenuItem;
 import android.widget.Toast;
 
 import com.example.nameless.autoupdating.adapters.TabAdapter;
+import com.example.nameless.autoupdating.common.AuthGuard;
 import com.example.nameless.autoupdating.fragments.auth.SignInFragment;
 import com.example.nameless.autoupdating.fragments.auth.SignUpFragment;
-import com.example.nameless.autoupdating.common.AuthActions;
+import com.example.nameless.autoupdating.models.AuthActions;
 import com.example.nameless.autoupdating.common.FirebaseSingleton;
 import com.example.nameless.autoupdating.common.GlobalMenu;
 import com.example.nameless.autoupdating.common.FCMManager;
@@ -185,7 +186,7 @@ public class Authentification extends GlobalMenu implements AuthActions {
     }
 
     public void authenticate(User user) {
-        UserList.myAcc = user;
+        setMyAccount(user);
         FCMManager.subscribeToNotificationService();
         setResult(Activity.RESULT_OK);
         finish();
