@@ -1,7 +1,12 @@
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 const path = require('path');
+const os = require('os');
+const fs = require('fs');
 const _ = require('lodash');
+const uuid = require('uuid');
+const sharp = require('sharp');
+const Busboy = require('busboy');
 admin.initializeApp();
 
 const VOICE_CALLING_TAG = 'VOICE_CALLING_TAG';
@@ -57,15 +62,29 @@ exports.notificationSender = functions.database.ref('/Dialogs/{dialogId}/lastMes
 
     const dialogSnapshot = await change.after.ref.parent.once("value");
     const lastMessage = change.after.val();
-    const payload = {
+    const messageContent = lastMessage.fileType || lastMessage.content;
+    const message = {
         data: {
-            content: lastMessage.fileType || lastMessage.content,
+            content: messageContent,
             tag: NOTIFICATION_TAG
+        },
+        tokens: [],
+        android: {
+            collapseKey: dialogSnapshot.key,
+            priority: "high"
+        },
+        webpush: {
+            headers: {
+                Urgency: "high"
+            },
+            notification: {
+                body: messageContent,
+                // requireInteraction: "true",
+                // badge: "/badge-icon.png"
+            }
         }
     };
-    const options = {
-        collapseKey: dialogSnapshot.key
-    };
+
     const fetchSpeakersRegIds = [];
 
     for (let speaker in dialogSnapshot.val().speakers) {
@@ -79,23 +98,26 @@ exports.notificationSender = functions.database.ref('/Dialogs/{dialogId}/lastMes
     }
 
     const usersSnapshots = await Promise.all(fetchSpeakersRegIds);
-    const registrationTokens = [];
     usersSnapshots.forEach(userSnapshot => {
         userSnapshot.forEach(snap => {
             const user = snap.val();
 
             if (user.uid === lastMessage.who) {
                 const {avatarUrl, login, uid} = user;
-                payload.data.sender = JSON.stringify({avatarUrl, login, uid});
+                message.data.sender = JSON.stringify({avatarUrl, login, uid});
             }
 
-            const regToken = user.registrationTokenId;
-            if (regToken) {
-                registrationTokens.push(regToken);
+            const { registrationTokenId, webNotificationToken } = user;
+            if (registrationTokenId) {
+                message.tokens.push(registrationTokenId);
+            }
+            if (webNotificationToken) {
+                message.tokens.push(webNotificationToken);
             }
         });
     });
-    return admin.messaging().sendToDevice(registrationTokens, payload, options);
+
+    return admin.messaging().sendMulticast(message);
 });
 
 exports.messageResourceCascadeDelete = functions.database.ref('/Messages/{dialogId}/{messageId}').onDelete((change, context) => {
@@ -135,4 +157,81 @@ exports.lastMessage = functions.database.ref('/Messages/{dialogId}/{messageId}')
     return admin.database()
         .ref(`/Dialogs/${dialogId}/lastMessage`)
         .set(lastMessage);
+});
+
+/*
+exports.generateThumbnail = functions.storage.object().onFinalize(async object => {
+
+    const contentType = object.contentType;
+    const filePath = object.name;
+
+    if (!contentType.startsWith('image/')) {
+        return Promise.reject(new Error('Data type is not image'));
+    }
+
+    const fileName = path.basename(filePath);
+    if (fileName.startsWith('thumb_')) {
+        return Promise.reject(new Error('Data already resized'));
+    }
+
+    const metadata = { contentType };
+    const fileBucket = object.bucket;
+    const bucket = admin.storage().bucket(fileBucket);
+
+    const tmpFilePath = path.join(os.tmpdir(), fileName);
+    const tmpThumbFilePath = path.join(os.tmpdir(), `thumb_${fileName}`);
+    const thumbFilePath = path.join(path.dirname(filePath), `thumb_${fileName}`);
+
+    await bucket.file(filePath).download({destination: tmpFilePath});
+
+    await sharp(tmpFilePath)
+        .resize(null, 450)
+        .toFile(tmpThumbFilePath);
+
+    await bucket.upload(tmpThumbFilePath, {destination: thumbFilePath, metadata});
+
+    fs.unlink(tmpFilePath, (err) => err && console.error(err));
+    fs.unlink(tmpThumbFilePath, (err) => err && console.error(err));
+    return Promise.resolve('Ok');
+});
+*/
+
+exports.uploadImage = functions.https.onRequest(async (request, response) => {
+
+    const busboy = new Busboy({ headers: request.headers });
+    const fetchFile = new Promise((resolve, reject) => {
+        busboy.on('file', (fieldname, file, filename, encoding, mimetype) => {
+            file.on('data', data => {
+                console.log('read');
+                resolve({file: data, mimetype});
+            })
+        });
+    });
+    busboy.end(request.rawBody);
+
+    const fetchedFile = await fetchFile;
+    const {file, mimetype} = fetchedFile;
+
+    if (!mimetype.startsWith('image/')) {
+        return Promise.reject(new Error('Data type is not image'));
+    }
+
+    const fileExtension = mimetype.split('/')[1];
+    const fileName = `${uuid.v4()}.${fileExtension}`;
+    const fileDir = '/testDir';
+
+    const bucket = admin.storage().bucket();
+
+    const thumbFilePath = `${fileDir}/thumb_${fileName}`;
+    const tmpThumbFilePath = path.join(os.tmpdir(), `thumb_${fileName}`);
+
+    await sharp(file)
+        .resize(null, 450)
+        .toFile(tmpThumbFilePath);
+    console.log('rseized');
+    await bucket.upload(tmpThumbFilePath, {destination: thumbFilePath })
+    console.log('saved');
+
+    fs.unlink(tmpThumbFilePath, (err) => err && console.error(err));
+    return response.status(200).send();
 });
