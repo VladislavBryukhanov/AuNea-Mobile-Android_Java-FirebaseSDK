@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.example.nameless.autoupdating.activities.AudioTrackUI">
+    tools:context="com.example.nameless.autoupdating.common.AudioTrackUI">
 
     <ImageView
         android:id="@+id/audioButton"

@@ -107,6 +107,7 @@ public class DialogListFragment  extends Fragment {
 
 
     public void fetchData() {
+        // Todo Зарегался новый юзер и создал диалог - в диалог листе не отобразится
         dbUsers.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {

@@ -38,10 +38,11 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:ems="10"
-                    android:textColor="#ffffff"
-                    android:textSize="24sp"
                     android:hint="Login"
-                    android:inputType="textPersonName" />
+                    android:inputType="textPersonName"
+                    android:maxLength="20"
+                    android:textColor="#ffffff"
+                    android:textSize="24sp" />
 
                 <Spinner
                     android:id="@+id/spinner"
@@ -63,16 +64,18 @@
         android:layout_weight="1"
         android:ems="10"
         android:hint="Nickname"
-        android:inputType="textPersonName" />
+        android:inputType="textPersonName"
+        android:maxLength="20" />
 
     <EditText
         android:id="@+id/etBio"
         android:layout_width="match_parent"
         android:layout_height="55dp"
-        android:ems="10"
-        android:inputType="textPersonName"
         android:layout_margin="10dp"
-        android:hint="Bio" />
+        android:ems="10"
+        android:hint="Bio"
+        android:inputType="textPersonName"
+        android:maxLength="60" />
 
     <Spinner
         android:id="@+id/spStorage"

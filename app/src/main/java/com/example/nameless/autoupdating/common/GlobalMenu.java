@@ -26,7 +26,7 @@ import com.google.firebase.database.ValueEventListener;
  * Created by nameless on 29.04.18.
  */
 
-public class GlobalMenu extends AppCompatActivity {
+public class GlobalMenu extends AuthGuard {
 
     private FirebaseDatabase database;
     private DatabaseReference myRef;
@@ -41,25 +41,14 @@ public class GlobalMenu extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_auth);
 
-        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this,
-                    new String[]{android.Manifest.permission.INTERNET,
-                            android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                            android.Manifest.permission.RECORD_AUDIO,
-                            android.Manifest.permission.CAPTURE_AUDIO_OUTPUT}, 1);
-        }
-
-        PackageInfo pInfo = null;
         try {
-            pInfo = this.getPackageManager().getPackageInfo(getPackageName(), 0);
+            PackageInfo pInfo = this.getPackageManager().getPackageInfo(getPackageName(), 0);
+            myVersion = pInfo.versionName;
         } catch (PackageManager.NameNotFoundException e) {
             e.printStackTrace();
         }
-        myVersion = pInfo.versionName;
         database = FirebaseSingleton.getFirebaseInstanse();
         mAuth = FirebaseAuth.getInstance();
-
     }
 
 /*    @Override
@@ -72,14 +61,12 @@ public class GlobalMenu extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch(item.getItemId()) {
             case R.id.mUpdate: {
-                myRef = database.getReference("LastVersion");
+                myRef = database.getReference("AppData");
 
                 myRef.addValueEventListener(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
-                        lastVersion =  dataSnapshot.child("Ver").getValue().toString();
-
-                        if (Double.parseDouble(lastVersion) > Double.parseDouble(myVersion)) {
+                        if (getAppData().getCurrentVersion() > Double.parseDouble(myVersion)) {
                             Updating update = new Updating(getApplicationContext());
                             update.startUpdating();
                         } else {
@@ -117,6 +104,7 @@ public class GlobalMenu extends AppCompatActivity {
 
                 mAuth.signOut();
                 mGoogleSignInClient.signOut();
+                setMyAccount(null);
 
                 finish();
                 break;

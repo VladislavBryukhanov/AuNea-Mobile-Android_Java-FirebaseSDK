@@ -16,7 +16,9 @@ import android.view.View;
 import android.widget.Toast;
 
 import com.example.nameless.autoupdating.R;
+import com.example.nameless.autoupdating.common.AuthGuard;
 import com.example.nameless.autoupdating.common.FirebaseSingleton;
+import com.example.nameless.autoupdating.models.AuthComplete;
 import com.example.nameless.autoupdating.voip.ListenVoiceStream;
 import com.example.nameless.autoupdating.voip.UDPClient;
 import com.example.nameless.autoupdating.voip.WriteVoiceStream;
@@ -35,7 +37,7 @@ import java.net.UnknownHostException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 
-public class VoiceCalling extends AppCompatActivity {
+public class VoiceCalling extends AuthGuard implements AuthComplete {
     public static int voiceStreamServerPort = 2891;
     public static InetAddress voiceStreamServerIpAddress;
 
@@ -61,6 +63,12 @@ public class VoiceCalling extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        super.checkAccess(this);
+//        setContentView(R.layout.activity_loading_dark);
+    }
+
+    @Override
+    public void onAuthSuccess() {
         setContentView(R.layout.activity_voice_calling);
 
         btnAccept = findViewById(R.id.btnAccept);
@@ -69,36 +77,24 @@ public class VoiceCalling extends AppCompatActivity {
         final Intent intent = getIntent();
         action = intent.getStringExtra("action");
 
-        myRef = FirebaseSingleton.getFirebaseInstanse().getReference("Server");
-        myRef.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                for (DataSnapshot data : dataSnapshot.getChildren()) {
-                    try {
-                        voiceStreamServerIpAddress = InetAddress.getByName(
-                                data.getValue().toString());
+        try {
+            voiceStreamServerIpAddress = InetAddress.getByName(getAppData().getServer());
+            initAction(intent);
 
-                        initAction(intent);
+            btnAccept.setOnClickListener(view -> {
+                CoordinatorLayout.LayoutParams lp = (CoordinatorLayout.LayoutParams) btnReject.getLayoutParams();
+                lp.anchorGravity = Gravity.CENTER;
+                btnReject.setLayoutParams(lp);
+                btnAccept.setVisibility(View.GONE);
+                onAccept();
+            });
+            btnReject.setOnClickListener(view -> onReject());
 
-                        btnAccept.setOnClickListener(view -> {
-                            CoordinatorLayout.LayoutParams lp = (CoordinatorLayout.LayoutParams) btnReject.getLayoutParams();
-                            lp.anchorGravity = Gravity.CENTER;
-                            btnReject.setLayoutParams(lp);
-                            btnAccept.setVisibility(View.GONE);
-                            onAccept();
-                        });
-                        btnReject.setOnClickListener(view -> onReject());
-
-                    } catch (UnknownHostException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {}
-        });
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        }
     }
+
 
     private void onAccept() {
         myRef.setValue(CALLING_STATE).addOnCompleteListener(task -> {

@@ -24,7 +24,9 @@ import android.widget.Toast;
 
 import com.example.nameless.autoupdating.asyncTasks.DownloadAvatarByUrl;
 import com.example.nameless.autoupdating.R;
+import com.example.nameless.autoupdating.common.AuthGuard;
 import com.example.nameless.autoupdating.common.FirebaseSingleton;
+import com.example.nameless.autoupdating.models.User;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -42,7 +44,7 @@ import java.util.regex.Pattern;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
-public class Settings extends AppCompatActivity {
+public class Settings extends AuthGuard {
 
     public static final String APP_PREFERENCES = "preferences";
     public static final String IS_NOTIFY_ENABLED = "IS_NOTIFY_ENABLED";
@@ -52,6 +54,7 @@ public class Settings extends AppCompatActivity {
     public static final String LOCAL_STORAGE  = "Local storage";
     private SharedPreferences settings;
 
+    private User myProfile;
     private CircleImageView avatar;
     private EditText etLogin, etNickname, etBio;
     private Switch cbLocation, cbNotify;
@@ -78,6 +81,7 @@ public class Settings extends AppCompatActivity {
         spStorage = findViewById(R.id.spStorage);
 
         settings = getSharedPreferences(APP_PREFERENCES, Context.MODE_PRIVATE);
+        myProfile = getMyAccount();
 
         /*boolean test = settings.contains(IS_NOTIFY_ENABLED);
         String tt = settings.getString(IS_NOTIFY_ENABLED, "");
@@ -87,9 +91,9 @@ public class Settings extends AppCompatActivity {
         cbNotify.setChecked(settings.getBoolean(IS_NOTIFY_ENABLED, false));
         cbLocation.setChecked(settings.getBoolean(IS_LOCATION_ENABLED, false));
 
-        etLogin.setText(UserList.myAcc.getLogin());
-        etNickname.setText(UserList.myAcc.getNickname());
-        etBio.setText(UserList.myAcc.getBio());
+        etLogin.setText(myProfile.getLogin());
+        etNickname.setText(myProfile.getNickname());
+        etBio.setText(myProfile.getBio());
 
         storageModeList = new ArrayList<>();
         storageModeList.add(CACHE_STORAGE);
@@ -128,8 +132,8 @@ public class Settings extends AppCompatActivity {
             public void onNothingSelected(AdapterView<?> adapterView) {}
         });
 
-        if(UserList.myAcc.getAvatar() != null) {
-            avatar.setImageBitmap(BitmapFactory.decodeFile(UserList.myAcc.getAvatar()));
+        if(myProfile.getAvatar() != null) {
+            avatar.setImageBitmap(BitmapFactory.decodeFile(myProfile.getAvatar()));
         }
 
         avatar.setOnClickListener(v -> {
@@ -149,12 +153,12 @@ public class Settings extends AppCompatActivity {
                 isNewAvatar = true;
                 avatarImage = data.getData();
 /*                try {
-                    UserList.myAcc.setAvatar(MediaStore.Images.Media.getBitmap(this.getContentResolver(), avatarImage));
+                    myProfile.setAvatar(MediaStore.Images.Media.getBitmap(this.getContentResolver(), avatarImage));
                 } catch (IOException e) {
                     e.printStackTrace();
                 }*/
 
-//                UserList.myAcc.setAvatar(avatarImage);
+//                myProfile.setAvatar(avatarImage);
                 avatar.setImageURI(avatarImage);
             }
         }
@@ -165,8 +169,8 @@ public class Settings extends AppCompatActivity {
         mSave.setVisible(false);
         FirebaseStorage storage = FirebaseStorage.getInstance();
         StorageReference gsReference;
-        if(UserList.myAcc.getAvatarUrl() != null) {
-            gsReference = storage.getReferenceFromUrl(UserList.myAcc.getAvatarUrl());
+        if(myProfile.getAvatarUrl() != null) {
+            gsReference = storage.getReferenceFromUrl(myProfile.getAvatarUrl());
             gsReference.delete(); // Remove old avatar
         }
 
@@ -174,17 +178,17 @@ public class Settings extends AppCompatActivity {
         extension = "." + extension.split("/")[1];
 
         gsReference = storage.getReferenceFromUrl("gs://messager-d15a0.appspot.com/");
-        StorageReference riversRef = gsReference.child(UserList.myAcc
+        StorageReference riversRef = gsReference.child(myProfile
                 .getEmail() + "/Avatar/" + java.util.UUID.randomUUID() + extension);
         UploadTask uploadTask = riversRef.putFile(avatarImage);
 
         uploadTask.addOnSuccessListener(taskSnapshot -> {
-            UserList.myAcc.setAvatarUrl(taskSnapshot.getDownloadUrl().toString());
-            myRef.child(data.getKey()).child("avatarUrl").setValue(UserList.myAcc.getAvatarUrl());
+            myProfile.setAvatarUrl(taskSnapshot.getDownloadUrl().toString());
+            myRef.child(data.getKey()).child("avatarUrl").setValue(myProfile.getAvatarUrl());
 
-            DownloadAvatarByUrl downloadTask = new DownloadAvatarByUrl(avatar, UserList.myAcc, getApplication());
+            DownloadAvatarByUrl downloadTask = new DownloadAvatarByUrl(avatar, myProfile, getApplication());
             try {
-                downloadTask.execute(UserList.myAcc.getAvatarUrl()).get();
+                downloadTask.execute(myProfile.getAvatarUrl()).get();
             } catch (InterruptedException e) {
                 e.printStackTrace();
             } catch (ExecutionException e) {
@@ -224,24 +228,24 @@ public class Settings extends AppCompatActivity {
                         if(dataSnapshot.exists()) {
                             for (DataSnapshot data : dataSnapshot.getChildren()) {
                                 String currentUid = (String) (data.child("uid").getValue());
-                                if (currentUid != null && currentUid.equals(UserList.myAcc.getUid())) {
+                                if (currentUid != null && currentUid.equals(myProfile.getUid())) {
                                     isMyNickname = true;
                                 }
                             }
                         }
                         if(!dataSnapshot.exists() || isMyNickname) {
-                            Query getUser = database.getReference("Users").orderByChild("uid").equalTo(UserList.myAcc.getUid());
+                            Query getUser = database.getReference("Users").orderByChild("uid").equalTo(myProfile.getUid());
                             getUser.addListenerForSingleValueEvent(new ValueEventListener() {
                                 @Override
                                 public void onDataChange(DataSnapshot dataSnapshot) {
                                     for(DataSnapshot data : dataSnapshot.getChildren()) {
-                                        UserList.myAcc.setBio(etBio.getText().toString());
-                                        UserList.myAcc.setLogin(etLogin.getText().toString());
-                                        UserList.myAcc.setNickname(etNickname.getText().toString());
+                                        myProfile.setBio(etBio.getText().toString());
+                                        myProfile.setLogin(etLogin.getText().toString());
+                                        myProfile.setNickname(etNickname.getText().toString());
 
-                                        myRef.child(data.getKey()).child("login").setValue(UserList.myAcc.getLogin());
-                                        myRef.child(data.getKey()).child("bio").setValue(UserList.myAcc.getBio());
-                                        myRef.child(data.getKey()).child("nickname").setValue(UserList.myAcc.getNickname());
+                                        myRef.child(data.getKey()).child("login").setValue(myProfile.getLogin());
+                                        myRef.child(data.getKey()).child("bio").setValue(myProfile.getBio());
+                                        myRef.child(data.getKey()).child("nickname").setValue(myProfile.getNickname());
 
                                         SharedPreferences.Editor prefs = settings.edit();
                                         prefs.putBoolean(IS_NOTIFY_ENABLED, cbNotify.isChecked());

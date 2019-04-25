@@ -3,14 +3,20 @@ package com.example.nameless.autoupdating.common.MediaFileUtils;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
+import android.graphics.Point;
 import android.os.Environment;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 
+import com.example.nameless.autoupdating.R;
+import com.example.nameless.autoupdating.common.AudioTrackUI;
 import com.example.nameless.autoupdating.activities.Settings;
 import com.example.nameless.autoupdating.adapters.MessagesAdapter;
+import com.example.nameless.autoupdating.models.Message;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
@@ -25,46 +31,126 @@ public class MediaFileDownloader {
 
     private File targetFile;
     private Context parentContext;
+    private LinearLayout parentLayout;
+    private MessagesAdapter adapterInterface;
+    private Message message;
     private String fileType;
-    private ImageView bmImage;
-    private ProgressBar pbLoading;
-
-    private LinearLayout audioUI;
     private String fileUrl;
 
-    public MediaFileDownloader(
-            ImageView bmImage,
-            ProgressBar pbLoading,
-            Context parentContext,
-            String fileType,
-            String fileUrl) {
+    private ImageView bmImage;
+    private ProgressBar pbLoading;
+    private LinearLayout audioUI;
 
-        this.bmImage = bmImage;
-        this.pbLoading = pbLoading;
+    public MediaFileDownloader(
+            Context parentContext,
+            LinearLayout parentLayout,
+            Message message,
+            MessagesAdapter adapterInterface) {
+
         this.parentContext = parentContext;
-        this.fileType = fileType;
-        this.fileUrl = fileUrl;
+        this.parentLayout = parentLayout;
+        this.message = message;
+        this.adapterInterface = adapterInterface;
+        this.fileType = message.getFileType();
+        this.fileUrl = message.getFileUrl();
     }
 
-    public MediaFileDownloader(
-            LinearLayout audioUI,
-            Context parentContext,
-            String fileType,
-            String fileUrl) {
+    private void createItemsLayout() {
+        switch (fileType) {
+            case IMAGE_TYPE: {
+                createImageFileLayout();
+                break;
+            }
+            case AUDIO_TYPE: {
+                createAudioFileLayout();
+                break;
+            }
+/*            case VIDEO_TYPE: {
+                return setVideoFile(url);
+            }*/
+            default: {
+                createUndefinedFileLayout();
+            }
+        }
+    }
 
-        this.audioUI = audioUI;
-        this.parentContext = parentContext;
-        this.fileType = fileType;
-        this.fileUrl = fileUrl;
+    //TODO undefined UI - button for downloading resource
+    private void createUndefinedFileLayout() {
+        bmImage = new ImageView(parentContext);
+        bmImage.setVisibility(View.GONE);
+        bmImage.setScaleType(ImageView.ScaleType.FIT_CENTER);
+
+        pbLoading = new ProgressBar(parentContext);
+        pbLoading.setIndeterminate(true);
+
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(150, 150);
+        bmImage.setLayoutParams(params);
+        pbLoading.setLayoutParams(params);
+        parentLayout.addView(bmImage);
+        parentLayout.addView(pbLoading);
+    }
+
+    private void createImageFileLayout() {
+        String fileMediaSides = message.getFileMediaSides();
+
+        bmImage = new ImageView(parentContext);
+        bmImage.setVisibility(View.GONE);
+        bmImage.setScaleType(ImageView.ScaleType.FIT_CENTER);
+
+        pbLoading = new ProgressBar(parentContext);
+        pbLoading.setIndeterminate(true);
+
+        setMediaItemSize(fileMediaSides, pbLoading, bmImage);
+        parentLayout.addView(bmImage);
+        parentLayout.addView(pbLoading);
+    }
+
+    private void setMediaItemSize(String resolution, ProgressBar loading, ImageView img) {
+        Point screenSize = new Point();
+        WindowManager wm = (WindowManager) parentContext.getSystemService(Context.WINDOW_SERVICE);
+        wm.getDefaultDisplay().getSize(screenSize);
+        screenSize.x *= 0.5;
+
+        int imageWidth = Integer.parseInt(resolution.split("x")[0]);
+        int imageHeight = Integer.parseInt(resolution.split("x")[1]);
+        double scale = (double) imageWidth / screenSize.x;
+        if(imageWidth > screenSize.x) {
+            imageWidth = screenSize.x;
+            imageHeight /= scale;
+        }
+
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(imageWidth, imageHeight);
+        loading.setLayoutParams(params);
+        img.setLayoutParams(params);
+    }
+
+    private void createAudioFileLayout() {
+        parentLayout.findViewById(R.id.audioButton);
+
+        audioUI = new AudioTrackUI(parentContext, null);
+        parentLayout.addView(audioUI);
+
+        ImageView audioButton = audioUI.findViewById(R.id.audioButton);
+        ProgressBar audioPbLoading = audioUI.findViewById(R.id.pbLoading);
+        TextView timeDuration = audioUI.findViewById(R.id.tvTime);
+
+        timeDuration.setText("Loading...");
+        audioPbLoading.setVisibility(View.VISIBLE);
+        audioButton.setVisibility(View.GONE);
+        audioUI.setVisibility(View.VISIBLE);
     }
 
     public void downloadFileByUrl() {
+        // TODO лейату создается 2-3 (инит, окончание загрузки-колбек 3-й смена статуса месседжа на прочитанный)
+        // раза и из за этого дергается прогресс бар (из за пересоздания разный результат сетится)
+        createItemsLayout();
+
         // if downloading in progress
-        if (MessagesAdapter.filesLoadingInProgress.indexOf(fileUrl) != -1) {
+        if (FilesMemoryCache.filesLoadingInProgress.indexOf(fileUrl) != -1) {
             return;
         }
         // if image cached set up in view because async task has delay before setting
-        setChachedImage();
+        setCachedImage();
 
         FirebaseStorage storage = FirebaseStorage.getInstance();
         StorageReference fileReference = storage.getReferenceFromUrl(fileUrl);
@@ -85,10 +171,22 @@ public class MediaFileDownloader {
         if (targetFile.exists()) {
             handleMediaFile();
         } else {
-            MessagesAdapter.filesLoadingInProgress.add(fileUrl);
+            FilesMemoryCache.filesLoadingInProgress.add(fileUrl);
             fileReference.getFile(targetFile).addOnSuccessListener(taskSnapshot -> {
-                handleMediaFile();
+                FilesMemoryCache.filesLoadingInProgress.remove(fileUrl);
+                // impossible use "callback" because adapter regularly reset all
+                // layouts and after downloading old layout may will be removed
+                adapterInterface.notifyDataSetChanged();
             });
+        }
+    }
+
+    private void setCachedImage() {
+        Bitmap image = FilesMemoryCache.memoryCache.get(fileUrl);
+        if (image != null) {
+            bmImage.setImageBitmap(image);
+            pbLoading.setVisibility(View.GONE);
+            bmImage.setVisibility(View.VISIBLE);
         }
     }
 
@@ -111,31 +209,25 @@ public class MediaFileDownloader {
         }
     }
 
-    private void setChachedImage() {
-        Bitmap image = MessagesAdapter.mMemoryCache.get(fileUrl);
-        if (image != null) {
-            bmImage.setImageBitmap(image);
-            pbLoading.setVisibility(View.GONE);
-            bmImage.setVisibility(View.VISIBLE);
-        }
-    }
-
     private void handleUndefinedFile() {
+        ImageComponent imageComponent = new ImageComponent(parentContext, targetFile, fileUrl, bmImage, pbLoading);
         MediaFileHandler downloadTask = new MediaFileHandler(
-                parentContext, UNDEFINED_TYPE, fileUrl, bmImage, pbLoading);
+                imageComponent, parentContext, UNDEFINED_TYPE);
         downloadTask.execute();
     }
 
     private void handleImageFile() {
+        ImageComponent imageComponent = new ImageComponent(parentContext, targetFile, fileUrl, bmImage, pbLoading);
         MediaFileHandler downloadTask = new MediaFileHandler(
-                parentContext, IMAGE_TYPE, fileUrl, bmImage, pbLoading);
-        downloadTask.execute(targetFile);
+                imageComponent, parentContext, IMAGE_TYPE);
+        downloadTask.execute();
     }
 
     private void handleAudioFile() {
+        AudioComponent audioComponent = new AudioComponent(parentContext, targetFile, fileUrl, audioUI);
         MediaFileHandler downloadTask = new MediaFileHandler(
-                parentContext, AUDIO_TYPE, fileUrl, audioUI);
-        downloadTask.execute(targetFile);
+                audioComponent, parentContext, AUDIO_TYPE);
+        downloadTask.execute();
     }
 
 /*    private Bitmap setVideoFile(final String url) {

@@ -60,6 +60,7 @@ public class DialogsAdapter  extends ArrayAdapter<Dialog> implements Filterable 
             Dialog dialog = filteredDialogList.get(position);
             int messageCounter = dialog.getUnreadCounter();
             String sender = dialog.getLastMessage().getWho();
+
             TextView msgCounter = (convertView.findViewById(R.id.msgCounter));
             TextView lastMsg = (convertView.findViewById(R.id.tvLastMsg));
             TextView tvLastMsgTime = (convertView.findViewById(R.id.tvLastMsgTime));
@@ -96,7 +97,11 @@ public class DialogsAdapter  extends ArrayAdapter<Dialog> implements Filterable 
                 lastMsg.setTextColor(ContextCompat.getColor(ma, R.color.outcomeMessage));
                 lastMsg.setVisibility(View.VISIBLE);
             } else {
-                lastMsg.setTextColor(ContextCompat.getColor(ma, R.color.black_overlay));
+                if (dialog.getLastMessage().isRead()) {
+                    lastMsg.setTextColor(ContextCompat.getColor(ma, R.color.borderColor));
+                } else {
+                    lastMsg.setTextColor(ContextCompat.getColor(ma, R.color.black_overlay));
+                }
                 lastMsg.setVisibility(View.VISIBLE);
             }
 

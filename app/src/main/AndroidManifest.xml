@@ -36,9 +36,9 @@
                 android:resource="@xml/provider_paths" />
         </provider>
 
-        <!--<activity android:name=".common.GlobalMenu" />-->
         <activity android:name=".activities.Authentification"
             android:theme="@style/BlackActionBar" />
+
         <activity
             android:name=".activities.UserList"
             android:label="@string/app_name"
@@ -50,24 +50,30 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name=".activities.Settings"
+            android:theme="@style/BlackActionBar" />
+
         <!--android:windowSoftInputMode="adjustPan"-->
+        <!--android:parentActivityName=".activities.UserList"-->
         <activity
             android:name=".activities.Chat"
             android:configChanges="orientation|screenSize"
             android:theme="@style/BlackActionBar" />
         <activity android:name=".activities.ImageViewer" />
+
         <activity
             android:name=".activities.VoiceCalling"
             android:label="@string/title_activity_voice_calling"
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme.NoActionBar" />
-        <activity
-            android:name=".activities.Settings"
-            android:theme="@style/BlackActionBar" />
+
         <activity
             android:name=".activities.AlienPage"
             android:theme="@style/BlackActionBar" />
         <activity android:name=".activities.VideoPlayer" />
+
     </application>
 
 </manifest>

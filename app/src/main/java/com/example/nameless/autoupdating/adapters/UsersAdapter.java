@@ -27,7 +27,7 @@ import de.hdodenhof.circleimageview.CircleImageView;
  * Created by nameless on 07.04.18.
  */
 
-public class UsersAdapter extends ArrayAdapter<User>  implements Filterable{
+public class UsersAdapter extends ArrayAdapter<User>  implements Filterable {
 
     private Context ma;
     private ArrayList<User> users;

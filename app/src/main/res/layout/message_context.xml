@@ -19,41 +19,42 @@
             android:id="@+id/btnCopy"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-
             android:textAllCaps="false"
             android:textSize="16dp"
             android:layout_margin="0dip"
-            android:background="@drawable/popup_style"
-            android:gravity="left|center_horizontal"
-            android:padding="18dip"
-
+            android:background="?android:attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="start|center_horizontal"
+            android:padding="16dip"
             android:text="Copy content" />
 
         <Button
             android:id="@+id/btnEdit"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-
             android:textAllCaps="false"
             android:textSize="16dp"
             android:layout_margin="0dip"
-            android:background="@drawable/popup_style"
-            android:gravity="left|center_horizontal"
-            android:padding="18dip"
+            android:background="?android:attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="start|center_horizontal"
+            android:padding="16dip"
             android:text="Edit" />
 
         <Button
             android:id="@+id/btnDelete"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-
             android:textAllCaps="false"
             android:textSize="16dp"
             android:layout_margin="0dip"
-            android:background="@drawable/popup_style"
-            android:gravity="left|center_horizontal"
-            android:padding="18dip"
-
+            android:background="?android:attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="start|center_horizontal"
+            android:padding="16dip"
             android:text="Delete" />
     </LinearLayout>
 

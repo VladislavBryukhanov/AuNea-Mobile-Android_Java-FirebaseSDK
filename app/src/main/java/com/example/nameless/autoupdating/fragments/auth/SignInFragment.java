@@ -10,7 +10,7 @@ import android.widget.Button;
 
 import com.example.nameless.autoupdating.R;
 import com.example.nameless.autoupdating.activities.Authentification;
-import com.example.nameless.autoupdating.common.AuthActions;
+import com.example.nameless.autoupdating.models.AuthActions;
 
 public class SignInFragment extends Fragment {
 

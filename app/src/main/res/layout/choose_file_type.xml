@@ -22,22 +22,26 @@
             android:textAllCaps="false"
             android:textSize="16dp"
             android:layout_margin="0dip"
-            android:background="@drawable/popup_style"
-            android:gravity="left|center_horizontal"
-            android:padding="18dip"
+            android:background="?android:attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="start|center_horizontal"
+            android:padding="16dip"
             android:text="Use camera" />
 
         <Button
             android:id="@+id/btnGallery"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_margin="0dip"
-            android:background="@drawable/popup_style"
-            android:gravity="left|center_horizontal"
-            android:padding="18dip"
-            android:text="Load from gallery"
             android:textAllCaps="false"
-            android:textSize="16dp" />
+            android:textSize="16dp"
+            android:layout_margin="0dip"
+            android:background="?android:attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="start|center_horizontal"
+            android:padding="16dip"
+            android:text="Load from gallery" />
 
         <Button
             android:id="@+id/btnDevice"
@@ -46,9 +50,11 @@
             android:textAllCaps="false"
             android:textSize="16dp"
             android:layout_margin="0dip"
-            android:background="@drawable/popup_style"
-            android:gravity="left|center_horizontal"
-            android:padding="18dip"
+            android:background="?android:attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="start|center_horizontal"
+            android:padding="16dip"
             android:text="Load from device" />
 
 

@@ -1,4 +1,4 @@
-package com.example.nameless.autoupdating.activities;
+package com.example.nameless.autoupdating.common;
 
 import android.content.Context;
 import android.util.AttributeSet;
