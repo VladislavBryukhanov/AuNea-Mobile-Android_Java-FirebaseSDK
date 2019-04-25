@@ -20,6 +20,8 @@ public class User implements Serializable{
 //    private Bitmap avatar;
     private String status;
     private String avatar;
+    private boolean banned;
+
 
     public User(){}
 
@@ -98,5 +100,13 @@ public class User implements Serializable{
 
     public void setBio(String bio) {
         this.bio = bio;
+    }
+
+    public boolean isBanned() {
+        return banned;
+    }
+
+    public void setBanned(boolean banned) {
+        this.banned = banned;
     }
 }

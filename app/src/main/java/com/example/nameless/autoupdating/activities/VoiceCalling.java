@@ -77,35 +77,22 @@ public class VoiceCalling extends AuthGuard implements AuthComplete {
         final Intent intent = getIntent();
         action = intent.getStringExtra("action");
 
-        DatabaseReference serverRef = FirebaseSingleton.getFirebaseInstanse().getReference("Server");
-        serverRef.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                for (DataSnapshot data : dataSnapshot.getChildren()) {
-                    try {
-                        voiceStreamServerIpAddress = InetAddress.getByName(
-                                data.getValue().toString());
+        try {
+            voiceStreamServerIpAddress = InetAddress.getByName(getAppData().getServer());
+            initAction(intent);
 
-                        initAction(intent);
+            btnAccept.setOnClickListener(view -> {
+                CoordinatorLayout.LayoutParams lp = (CoordinatorLayout.LayoutParams) btnReject.getLayoutParams();
+                lp.anchorGravity = Gravity.CENTER;
+                btnReject.setLayoutParams(lp);
+                btnAccept.setVisibility(View.GONE);
+                onAccept();
+            });
+            btnReject.setOnClickListener(view -> onReject());
 
-                        btnAccept.setOnClickListener(view -> {
-                            CoordinatorLayout.LayoutParams lp = (CoordinatorLayout.LayoutParams) btnReject.getLayoutParams();
-                            lp.anchorGravity = Gravity.CENTER;
-                            btnReject.setLayoutParams(lp);
-                            btnAccept.setVisibility(View.GONE);
-                            onAccept();
-                        });
-                        btnReject.setOnClickListener(view -> onReject());
-
-                    } catch (UnknownHostException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {}
-        });
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        }
     }
 
 

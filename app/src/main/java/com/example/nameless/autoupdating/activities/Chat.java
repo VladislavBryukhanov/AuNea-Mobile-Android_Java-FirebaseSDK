@@ -316,6 +316,18 @@ public class Chat extends AuthGuard implements ChatActions, AuthComplete {
                 adapter = new MessagesAdapter(Chat.this, messages, messagesRef);
                 lvMessages.setAdapter(adapter);
 
+                messagesRef.limitToLast(1).addValueEventListener(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                        for(DataSnapshot data : dataSnapshot.getChildren()) {
+                            dialogsRef.child("lastMessage").setValue(data.getValue());
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError databaseError) {}
+                });
+                //TODO replace
                 Query unreadMessages = messagesRef.orderByChild("read").equalTo(false);
                 unreadMessages.addValueEventListener(new ValueEventListener() {
                     @Override
@@ -326,7 +338,7 @@ public class Chat extends AuthGuard implements ChatActions, AuthComplete {
                     @Override
                     public void onCancelled(@NonNull DatabaseError databaseError) {}
                 });
-
+                //
                 messagesRef.addChildEventListener(new ChildEventListener() {
                     @Override
                     public void onChildAdded(DataSnapshot dataSnapshot, String s) {
