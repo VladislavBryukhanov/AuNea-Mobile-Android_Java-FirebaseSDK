@@ -1,14 +1,13 @@
 package com.example.nameless.autoupdating.models;
 
-import java.util.HashMap;
+import java.util.Map;
 
 public class Dialog {
-    public String uid;
-    public Message lastMessage;
-    public int unreadCounter;
-    public User speaker;
-    public HashMap speakers;
-    public boolean notify;
+    private String uid;
+    private Message lastMessage;
+    private User speaker;
+    private Map<String, Long> interlocutors;
+    private boolean notify;
 
     public Message getLastMessage() {
         return lastMessage;
@@ -16,14 +15,6 @@ public class Dialog {
 
     public void setLastMessage(Message lastMessage) {
         this.lastMessage = lastMessage;
-    }
-
-    public int getUnreadCounter() {
-        return unreadCounter;
-    }
-
-    public void setUnreadCounter(int unreadCounter) {
-        this.unreadCounter = unreadCounter;
     }
 
     public User getSpeaker() {
@@ -50,19 +41,26 @@ public class Dialog {
         this.notify = notify;
     }
 
+    public Map<String, Long> getInterlocutors() {
+        return this.interlocutors;
+    }
+
+    public void setInterlocutors(Map<String, Long> interlocutors) {
+        this.interlocutors = interlocutors;
+    }
+
     public Dialog() {}
 
-    public Dialog(String uid, Message lastMessage, int unreadCounter, User speaker) {
+    public Dialog(String uid, Map<String, Long> interlocutors, Message lastMessage, User speaker) {
         this.uid = uid;
         this.lastMessage = lastMessage;
-        this.unreadCounter = unreadCounter;
+        this.interlocutors = interlocutors;
         this.speaker = speaker;
     }
 
-    public Dialog(Message lastMessage, int unreadCounter, HashMap speakers, boolean notify) {
+    public Dialog(Message lastMessage, Map<String, Long> interlocutors, boolean notify) {
         this.lastMessage = lastMessage;
-        this.unreadCounter = unreadCounter;
-        this.speakers = speakers;
+        this.interlocutors = interlocutors;
         this.notify = notify;
     }
 }

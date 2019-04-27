@@ -66,7 +66,7 @@ public class UserList extends GlobalMenu implements AuthComplete {
 
         DatabaseReference dialogsDb = database.getReference("Dialogs");
         String myUid = getMyAccount().getUid();
-        Query getChat = dialogsDb.orderByChild("speakers/" + myUid).equalTo(myUid);
+        Query getChat = dialogsDb.orderByChild("interlocutors/" + myUid);
         getChat.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {

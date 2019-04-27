@@ -137,6 +137,9 @@ public class AuthGuard extends AppCompatActivity {
                     data.child("banned").getRef().addValueEventListener(new ValueEventListener() {
                         @Override
                         public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                            if (!dataSnapshot.exists()) {
+                                return;
+                            }
                             boolean isBanned = dataSnapshot.getValue(Boolean.class);
                             if (isBanned) {
                                 appLockDialog("You were banned", "Your account banned by administrator");
@@ -246,7 +249,7 @@ public class AuthGuard extends AppCompatActivity {
     private void completeAppUpdating(DataSnapshot snap) {
         SharedPreferences appPref = getSharedPreferences(Settings.APP_PREFERENCES, Context.MODE_PRIVATE);
 
-        if (appPref.getBoolean(Updating.APP_UPDATING_PROCESS, false)) {
+        if (appPref.getBoolean(Updating.APP_UPDATING_PROCESS, true)) {
             snap.child("AppVersion").getRef().setValue(myVersion);
             FCMManager.subscribeToNotificationService();
             SharedPreferences.Editor prefs = appPref.edit();

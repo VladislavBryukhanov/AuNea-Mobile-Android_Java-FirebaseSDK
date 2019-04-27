@@ -30,6 +30,8 @@ import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 public class DialogListFragment  extends Fragment {
@@ -157,7 +159,7 @@ public class DialogListFragment  extends Fragment {
         FirebaseDatabase database = FirebaseSingleton.getFirebaseInstanse();
         DatabaseReference dialogsDb = database.getReference("Dialogs");
 
-        Query getChat = dialogsDb.orderByChild("speakers/" + mAuth.getUid()).equalTo(mAuth.getUid());
+        Query getChat = dialogsDb.orderByChild("interlocutors/" + mAuth.getUid());
         getChat.keepSynced(true);
         getChat.addChildEventListener(new ChildEventListener() {
             @Override
@@ -174,11 +176,11 @@ public class DialogListFragment  extends Fragment {
 
                     Dialog newDialog = dialogSearch.get();
                     int index = dialogs.indexOf(newDialog);
+                    HashMap<String, Long> interlocutors = (HashMap<String, Long>)dataSnapshot.child("interlocutors").getValue();
 
                     newDialog.setLastMessage(
                             dataSnapshot.child("lastMessage").getValue(Message.class));
-                    newDialog.setUnreadCounter(
-                            dataSnapshot.child("unreadCounter").getValue(Integer.class));
+                    newDialog.setInterlocutors(interlocutors);
 
                     dialogs.set(index, newDialog);
                     adapter.notifyDataSetChanged();
@@ -197,25 +199,26 @@ public class DialogListFragment  extends Fragment {
     }
 
     public void assocDialogWithUser(DataSnapshot dataSnapshot) {
-        Iterable<DataSnapshot> speakers = dataSnapshot.child("speakers").getChildren();
-        speakers.forEach(item -> {
+        Iterable<DataSnapshot> interlocutorsSnap = dataSnapshot.child("interlocutors").getChildren();
+        interlocutorsSnap.forEach(item -> {
 
             Optional<User> userSearch = users.stream().filter(u ->
-                    u.getUid().equals(item.getValue())).findFirst();
+                    u.getUid().equals(item.getKey())).findFirst();
 
             if (userSearch.isPresent()) {
                 User user =  userSearch.get();
 
-                int unreadCounter = dataSnapshot.child("unreadCounter")
-                        .getValue(Integer.class);
+                Map<String, Long> interlocutors = (Map<String, Long>)dataSnapshot
+                        .child("interlocutors")
+                        .getValue();
 
                 Message lastMessage = dataSnapshot.child("lastMessage")
                         .getValue(Message.class);
 
                 Dialog dialog = new Dialog(
                         dataSnapshot.getKey(),
+                        interlocutors,
                         lastMessage,
-                        unreadCounter,
                         user
                 );
                 dialogs.add(dialog);
