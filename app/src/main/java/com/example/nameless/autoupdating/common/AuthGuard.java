@@ -137,6 +137,9 @@ public class AuthGuard extends AppCompatActivity {
                     data.child("banned").getRef().addValueEventListener(new ValueEventListener() {
                         @Override
                         public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                            if (!dataSnapshot.exists()) {
+                                return;
+                            }
                             boolean isBanned = dataSnapshot.getValue(Boolean.class);
                             if (isBanned) {
                                 appLockDialog("You were banned", "Your account banned by administrator");
@@ -169,7 +172,6 @@ public class AuthGuard extends AppCompatActivity {
     }
 
     private void manageApplicationState() {
-
         new Thread(() -> {
             try {
                 // Waiting for completing app state checking
@@ -180,6 +182,13 @@ public class AuthGuard extends AppCompatActivity {
                 e.printStackTrace();
             }
         }).start();
+
+        try {
+            PackageInfo pInfo = AuthGuard.this.getPackageManager().getPackageInfo(getPackageName(), 0);
+            myVersion = Double.parseDouble(pInfo.versionName);
+        } catch (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
+        }
 
         Query getAppVersion = database.getReference("AppData");
         getAppVersion.addValueEventListener(new ValueEventListener() {
@@ -246,7 +255,7 @@ public class AuthGuard extends AppCompatActivity {
     private void completeAppUpdating(DataSnapshot snap) {
         SharedPreferences appPref = getSharedPreferences(Settings.APP_PREFERENCES, Context.MODE_PRIVATE);
 
-        if (appPref.getBoolean(Updating.APP_UPDATING_PROCESS, false)) {
+        if (appPref.getBoolean(Updating.APP_UPDATING_PROCESS, true)) {
             snap.child("AppVersion").getRef().setValue(myVersion);
             FCMManager.subscribeToNotificationService();
             SharedPreferences.Editor prefs = appPref.edit();

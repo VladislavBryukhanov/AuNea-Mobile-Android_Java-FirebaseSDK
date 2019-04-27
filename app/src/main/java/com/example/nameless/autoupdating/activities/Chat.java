@@ -56,9 +56,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.sql.Timestamp;
 import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.regex.Matcher;
@@ -178,7 +178,7 @@ public class Chat extends AuthGuard implements ChatActions, AuthComplete {
             }
 //                if (!(String.valueOf(etMessage.getText()).trim()).equals("")) {
             Message newMsg = new Message(String.valueOf(etMessage.getText()), null,
-                    new Date(), myUid, toUser.getUid(), null, null, false);
+                    timestampNow(), myUid, toUser.getUid(), null, null, false);
             parseMessageContent(newMsg);
 //                }
         });
@@ -265,7 +265,7 @@ public class Chat extends AuthGuard implements ChatActions, AuthComplete {
 
                 uploadTask.addOnSuccessListener(taskSnapshot -> {
                     Message newMsg = new Message(String.valueOf(etMessage.getText()), taskSnapshot.getDownloadUrl().toString(),
-                            new Date(), myUid, toUser.getUid(), fileType, fileMediaSides, false);
+                            timestampNow(), myUid, toUser.getUid(), fileType, fileMediaSides, false);
                     parseMessageContent(newMsg);
                 });
 
@@ -423,7 +423,7 @@ public class Chat extends AuthGuard implements ChatActions, AuthComplete {
 
         uploadTask.addOnSuccessListener(taskSnapshot -> {
             Message newMsg = new Message(String.valueOf(etMessage.getText()), taskSnapshot.getDownloadUrl().toString(),
-                    new Date(), myUid, toUser.getUid(), "audio", null, false);
+                    timestampNow(), myUid, toUser.getUid(), "audio", null, false);
             parseMessageContent(newMsg);
 
             File fdelete = new File(file.getPath());
@@ -649,6 +649,11 @@ public class Chat extends AuthGuard implements ChatActions, AuthComplete {
         } else {
             super.onBackPressed();
         }
+    }
+
+    private long timestampNow() {
+        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+        return timestamp.getTime();
     }
 }
 //todo в уведомлениях закрепить уведомление о том что сейчас происходит звонок, по клику а нем звонок завершать или переходить в соответствующий диалог

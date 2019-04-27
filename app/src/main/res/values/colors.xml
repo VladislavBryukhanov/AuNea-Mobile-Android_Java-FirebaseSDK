@@ -17,6 +17,7 @@
 
     <color name="incomingMessage">#243443</color>
     <color name="outcomeMessage">#1A567B</color>
+    <color name="unreadMessage">#FFC4C4C4</color>
     <color name="lightBlue">#6B9BC2</color>
 
     <color name="darkRed">#a43931</color>

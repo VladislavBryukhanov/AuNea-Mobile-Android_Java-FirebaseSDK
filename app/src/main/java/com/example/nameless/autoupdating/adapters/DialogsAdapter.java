@@ -18,6 +18,7 @@ import com.bumptech.glide.request.RequestOptions;
 import com.example.nameless.autoupdating.R;
 import com.example.nameless.autoupdating.common.NetworkUtil;
 import com.example.nameless.autoupdating.models.Dialog;
+import com.example.nameless.autoupdating.models.Message;
 import com.google.firebase.auth.FirebaseAuth;
 
 import java.text.DateFormat;
@@ -58,58 +59,50 @@ public class DialogsAdapter  extends ArrayAdapter<Dialog> implements Filterable 
             }*/
 
             Dialog dialog = filteredDialogList.get(position);
-            int messageCounter = dialog.getUnreadCounter();
-            String sender = dialog.getLastMessage().getWho();
+            int unseenCounter = dialog.getUnreadCounter();
+            Message lastMessage = dialog.getLastMessage();
+            String sender = lastMessage.getWho();
 
             TextView msgCounter = (convertView.findViewById(R.id.msgCounter));
             TextView lastMsg = (convertView.findViewById(R.id.tvLastMsg));
             TextView tvLastMsgTime = (convertView.findViewById(R.id.tvLastMsgTime));
 
             String userStatus = dialog.getSpeaker().getStatus();
-            if (userStatus.contains(NetworkUtil.ONLINE_STATUS)) {
-                convertView.findViewById(R.id.onlineStatus)
-                        .setBackground(ContextCompat.getDrawable(getContext(), R.drawable.network_status_online));
-            } else if (userStatus.contains(NetworkUtil.AFK_STATUS)) {
-                convertView.findViewById(R.id.onlineStatus)
-                        .setBackground(ContextCompat.getDrawable(getContext(), R.drawable.network_status_afk));
-            //AFK contains OFFLINE_STATUS contains, but OFFLINE_STATUS contains not AFK_STATUS
-            } else if (userStatus.contains(NetworkUtil.OFFLINE_STATUS)) {
-                convertView.findViewById(R.id.onlineStatus)
-                        .setBackground(ContextCompat.getDrawable(getContext(), R.drawable.network_status_offline));
-            } else {
-            // Exception - may be able if user use old app version
-                convertView.findViewById(R.id.onlineStatus)
-                        .setBackground(ContextCompat.getDrawable(getContext(), R.drawable.network_status_offline));
-            }
+            int statusIcon = R.drawable.network_status_offline;
 
-            if (dialog.getUnreadCounter() > 0 && !sender.equals(mAuth.getUid())) {
-                msgCounter.setText(String.valueOf(messageCounter));
+            if (userStatus.contains(NetworkUtil.ONLINE_STATUS)) {
+                statusIcon = R.drawable.network_status_online;
+            } else if (userStatus.contains(NetworkUtil.AFK_STATUS)) {
+                statusIcon = R.drawable.network_status_afk;
+            }
+            convertView.findViewById(R.id.onlineStatus)
+                    .setBackground(ContextCompat.getDrawable(getContext(), statusIcon));
+
+            if (unseenCounter > 0 && !sender.equals(mAuth.getUid())) {
+                msgCounter.setText(String.valueOf(unseenCounter));
                 msgCounter.setVisibility(View.VISIBLE);
             }
 
-            if (dialog.getLastMessage().getFileType() != null) {
-                lastMsg.setText(dialog.getLastMessage().getFileType());
+            if (lastMessage.getFileType() != null) {
+                lastMsg.setText(lastMessage.getFileType());
                 lastMsg.setTypeface(null, Typeface.ITALIC);
             } else {
-                lastMsg.setText(dialog.getLastMessage().getContent());
-            }
-            if (!sender.equals(mAuth.getUid())) {
-                lastMsg.setTextColor(ContextCompat.getColor(ma, R.color.outcomeMessage));
-                lastMsg.setVisibility(View.VISIBLE);
-            } else {
-                if (dialog.getLastMessage().isRead()) {
-                    lastMsg.setTextColor(ContextCompat.getColor(ma, R.color.borderColor));
-                } else {
-                    lastMsg.setTextColor(ContextCompat.getColor(ma, R.color.black_overlay));
-                }
-                lastMsg.setVisibility(View.VISIBLE);
+                lastMsg.setText(lastMessage.getContent());
             }
 
-            Date dateOfSend = dialog.getLastMessage().getDateOfSend();
-            DateFormat dateFormat = (new SimpleDateFormat("HH:mm:ss"));
-            if (dateOfSend.getDay() != new Date().getDay()) {
-                dateFormat = (new SimpleDateFormat("dd MMM"));
+            int messageColor = R.color.unreadMessage;
+            if (!sender.equals(mAuth.getUid())) {
+                messageColor = R.color.outcomeMessage;
+            } else if (lastMessage.isRead()) {
+                messageColor = R.color.borderColor;
             }
+            lastMsg.setVisibility(View.VISIBLE);
+            lastMsg.setTextColor(ContextCompat.getColor(ma, messageColor));
+
+            Date dateOfSend = new Date(lastMessage.getTimestamp());
+            boolean isToday = dateOfSend.getDay() != new Date().getDay();
+            String format = isToday ? "HH:mm:ss" : "dd MMM";
+            DateFormat dateFormat = (new SimpleDateFormat(format));
             tvLastMsgTime.setText(dateFormat.format(dateOfSend));
 
             // Прекратить пересечивание
@@ -131,7 +124,6 @@ public class DialogsAdapter  extends ArrayAdapter<Dialog> implements Filterable 
                                 .placeholder(R.drawable.avatar))
                         .into(avatar);
             }
-
         }
         return convertView;
     }

@@ -102,7 +102,7 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
 
             DateFormat dateFormat = (new SimpleDateFormat("HH:mm:ss \n dd MMM"));
             ((TextView)convertView.findViewById(R.id.tvDate)).setText(dateFormat
-                    .format(currentMessage.getDateOfSend()));
+                    .format(currentMessage.getTimestamp()));
         }
         return convertView;
     }
@@ -205,10 +205,7 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
         if(!message.isRead()) {
             if(message.getTo().equals(mAuth.getUid())) {
                 String uid = message.getUid();
-                message.setRead(true);
-                message.setUid(null);
-                myRef.child(uid).setValue(message);
-                message.setUid(uid);
+                myRef.child(uid + "/read").setValue(true);
 //                notifyDataSetChanged();
             } else {
                 (convertView.findViewById(R.id.content))
