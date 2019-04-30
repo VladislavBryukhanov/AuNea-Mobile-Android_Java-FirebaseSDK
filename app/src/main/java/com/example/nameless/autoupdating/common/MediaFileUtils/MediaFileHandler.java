@@ -16,6 +16,7 @@ public class MediaFileHandler extends AsyncTask<File, Void, Bitmap> {
 
     private AudioComponent audioComponent;
     private ImageComponent imageComponent;
+    private VideoComponent videoComponent;
 
     MediaFileHandler(
             ImageComponent imageComponent,
@@ -37,6 +38,16 @@ public class MediaFileHandler extends AsyncTask<File, Void, Bitmap> {
         this.fileType = fileType;
     }
 
+    MediaFileHandler(
+            VideoComponent videoComponent,
+            Context parentContext,
+            String fileType) {
+
+        this.videoComponent = videoComponent;
+        this.parentContext = parentContext;
+        this.fileType = fileType;
+    }
+
     @Override
     protected Bitmap doInBackground(File... file) {
         switch (fileType) {
@@ -46,9 +57,9 @@ public class MediaFileHandler extends AsyncTask<File, Void, Bitmap> {
             case MediaFileDownloader.AUDIO_TYPE: {
                 return audioComponent.setAudioProperties();
             }
-/*            case VIDEO_TYPE: {
-                return setVideoFile(url);
-            }*/
+            case MediaFileDownloader.VIDEO_TYPE: {
+                return videoComponent.setVideoProperties();
+            }
             default: {
                 return Bitmap.createScaledBitmap(BitmapFactory.decodeResource(
                         parentContext.getResources(),
@@ -69,9 +80,10 @@ public class MediaFileHandler extends AsyncTask<File, Void, Bitmap> {
                     audioComponent.setAudioUI(bmp);
                     break;
                 }
-//                case VIDEO_TYPE: {
-//                    return setVideoFile(url);
-//                }
+                case MediaFileDownloader.VIDEO_TYPE: {
+                    videoComponent.setVideoUi(bmp);
+                    break;
+                }
                 default: {
                     imageComponent.setImageUi(bmp);
                 }

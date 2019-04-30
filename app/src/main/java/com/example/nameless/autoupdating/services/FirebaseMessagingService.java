@@ -128,7 +128,7 @@ public class FirebaseMessagingService extends com.google.firebase.messaging.Fire
         buildNotify(user, msg, largeIconBitmap);
     }
 
-    private void buildNotify(User sender, Message msg, Bitmap largeIconBitmap) {
+    private void buildNotify(User sender, Message msg, Bitmap senderAvatar) {
         String messageContent = msg.getContent();
         if (msg.getFileType() != null && messageContent.length() == 0) {
             messageContent = msg.getFileType();
@@ -170,9 +170,10 @@ public class FirebaseMessagingService extends com.google.firebase.messaging.Fire
 
         builder .setContentTitle(sender.getLogin())
                 .setContentText(messageContent)
+                .setStyle(new Notification.BigTextStyle().bigText(messageContent))
                 .setContentIntent(intent)
                 .setAutoCancel(true)
-                .setLargeIcon(largeIconBitmap)
+                .setLargeIcon(senderAvatar)
                 .setShowWhen(true)
                 .setDefaults(Notification.DEFAULT_VIBRATE)
                 .setWhen(Calendar.getInstance().getTimeInMillis())

@@ -93,8 +93,8 @@ public class MessagesAdapter extends ArrayAdapter<Message>  implements Filterabl
             }
 
             if(fileUrl != null) {
-                MediaFileDownloader downloadTask =
-                        new MediaFileDownloader(getContext(), layout, currentMessage, this);
+                MediaFileDownloader downloadTask = new MediaFileDownloader(
+                        getContext(), layout, currentMessage, this);
                 downloadTask.downloadFileByUrl();
             }
 

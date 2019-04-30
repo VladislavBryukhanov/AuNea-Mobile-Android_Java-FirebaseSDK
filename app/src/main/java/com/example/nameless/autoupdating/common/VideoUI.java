@@ -1,18 +1,18 @@
 package com.example.nameless.autoupdating.common;
 
 import android.content.Context;
-import android.widget.LinearLayout;
+import android.support.annotation.NonNull;
+import android.widget.FrameLayout;
 
 import com.example.nameless.autoupdating.R;
 
-public class AudioTrackUI extends LinearLayout {
-
-    public AudioTrackUI(Context context) {
+public class VideoUI extends FrameLayout {
+    public VideoUI(@NonNull Context context) {
         super(context);
         init(context);
     }
 
     private void init(Context context) {
-        inflate(context, R.layout.audio_track_ui, this);
+        inflate(context, R.layout.video_preview_ui, this);
     }
 }

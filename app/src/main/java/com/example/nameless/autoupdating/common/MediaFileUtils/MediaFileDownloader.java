@@ -7,22 +7,23 @@ import android.graphics.Point;
 import android.os.Environment;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
-import android.widget.TextView;
 
 import com.example.nameless.autoupdating.R;
 import com.example.nameless.autoupdating.common.AudioTrackUI;
 import com.example.nameless.autoupdating.activities.Settings;
 import com.example.nameless.autoupdating.adapters.MessagesAdapter;
+import com.example.nameless.autoupdating.common.VideoUI;
 import com.example.nameless.autoupdating.models.Message;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
 import java.io.File;
 
-public class MediaFileDownloader {
+public class MediaFileDownloader implements DownloadingFinish {
 
     public static final String UNDEFINED_TYPE = "undefined";
     public static final String AUDIO_TYPE = "audio";
@@ -30,6 +31,7 @@ public class MediaFileDownloader {
     public static final String VIDEO_TYPE = "video";
 
     private File targetFile;
+    private File basePath;
     private Context parentContext;
     private LinearLayout parentLayout;
     private MessagesAdapter adapterInterface;
@@ -40,6 +42,7 @@ public class MediaFileDownloader {
     private ImageView bmImage;
     private ProgressBar pbLoading;
     private LinearLayout audioUI;
+    private FrameLayout videoUI;
 
     public MediaFileDownloader(
             Context parentContext,
@@ -65,9 +68,10 @@ public class MediaFileDownloader {
                 createAudioFileLayout();
                 break;
             }
-/*            case VIDEO_TYPE: {
-                return setVideoFile(url);
-            }*/
+            case VIDEO_TYPE: {
+                createVideoFileLayout();
+                break;
+            }
             default: {
                 createUndefinedFileLayout();
             }
@@ -105,6 +109,22 @@ public class MediaFileDownloader {
         parentLayout.addView(pbLoading);
     }
 
+    private void createVideoFileLayout() {
+        String fileMediaSides = message.getFileMediaSides();
+
+        videoUI = new VideoUI(parentContext);
+        bmImage = videoUI.findViewById(R.id.vpPreview);
+        pbLoading = videoUI.findViewById(R.id.vpPreloader);
+
+        setMediaItemSize(fileMediaSides, pbLoading, bmImage);
+        parentLayout.addView(videoUI);
+    }
+
+    private void createAudioFileLayout() {
+        audioUI = new AudioTrackUI(parentContext);
+        parentLayout.addView(audioUI);
+    }
+
     private void setMediaItemSize(String resolution, ProgressBar loading, ImageView img) {
         Point screenSize = new Point();
         WindowManager wm = (WindowManager) parentContext.getSystemService(Context.WINDOW_SERVICE);
@@ -124,22 +144,6 @@ public class MediaFileDownloader {
         img.setLayoutParams(params);
     }
 
-    private void createAudioFileLayout() {
-        parentLayout.findViewById(R.id.audioButton);
-
-        audioUI = new AudioTrackUI(parentContext, null);
-        parentLayout.addView(audioUI);
-
-        ImageView audioButton = audioUI.findViewById(R.id.audioButton);
-        ProgressBar audioPbLoading = audioUI.findViewById(R.id.pbLoading);
-        TextView timeDuration = audioUI.findViewById(R.id.tvTime);
-
-        timeDuration.setText("Loading...");
-        audioPbLoading.setVisibility(View.VISIBLE);
-        audioButton.setVisibility(View.GONE);
-        audioUI.setVisibility(View.VISIBLE);
-    }
-
     public void downloadFileByUrl() {
         // TODO лейату создается 2-3 (инит, окончание загрузки-колбек 3-й смена статуса месседжа на прочитанный)
         // раза и из за этого дергается прогресс бар (из за пересоздания разный результат сетится)
@@ -155,39 +159,50 @@ public class MediaFileDownloader {
         FirebaseStorage storage = FirebaseStorage.getInstance();
         StorageReference fileReference = storage.getReferenceFromUrl(fileUrl);
 
-        File path = parentContext.getCacheDir();
-
         SharedPreferences settings = parentContext.getSharedPreferences(Settings.APP_PREFERENCES, Context.MODE_PRIVATE);
-        if (settings.getString(Settings.STORAGE_MODE, Settings.CACHE_STORAGE).equals(Settings.LOCAL_STORAGE)) {
-            path = new File(Environment.getExternalStorageDirectory()
-                    + "/AUMessanger/");
-            if (!path.exists()) {
-                path.mkdirs();
+        String storage_mode = settings.getString(Settings.STORAGE_MODE, Settings.CACHE_STORAGE);
+
+        basePath = parentContext.getCacheDir();
+        if (storage_mode.equals(Settings.LOCAL_STORAGE)) {
+            basePath = new File(Environment.getExternalStorageDirectory() + "/AUMessanger/");
+            if (!basePath.exists()) {
+                basePath.mkdirs();
             }
         }
 
-        targetFile = new File(path, fileReference.getName());
+        targetFile = new File(basePath, fileReference.getName());
 
         if (targetFile.exists()) {
             handleMediaFile();
         } else {
             FilesMemoryCache.filesLoadingInProgress.add(fileUrl);
-            fileReference.getFile(targetFile).addOnSuccessListener(taskSnapshot -> {
-                FilesMemoryCache.filesLoadingInProgress.remove(fileUrl);
-                // impossible use "callback" because adapter regularly reset all
-                // layouts and after downloading old layout may will be removed
-                adapterInterface.notifyDataSetChanged();
-            });
+
+            if (fileType.equals(VIDEO_TYPE)) {
+//                new Thread(this::downloadVideoPreview).start();
+                handleVideoFile();
+                return;
+            }
+
+            fileReference.getFile(targetFile)
+                .addOnSuccessListener(taskSnapshot -> finishDownloadingCallback());
         }
     }
 
     private void setCachedImage() {
         Bitmap image = FilesMemoryCache.memoryCache.get(fileUrl);
-        if (image != null) {
+        if (image != null && fileType.equals(IMAGE_TYPE)) {
             bmImage.setImageBitmap(image);
-            pbLoading.setVisibility(View.GONE);
             bmImage.setVisibility(View.VISIBLE);
+            pbLoading.setVisibility(View.GONE);
         }
+    }
+
+    @Override
+    public void finishDownloadingCallback() {
+        FilesMemoryCache.filesLoadingInProgress.remove(fileUrl);
+        // impossible use "callback" because adapter regularly reset all
+        // layouts and after downloading old layout may will be removed
+        adapterInterface.notifyDataSetChanged();
     }
 
     private void handleMediaFile() {
@@ -200,9 +215,10 @@ public class MediaFileDownloader {
                 handleAudioFile();
                 break;
             }
-/*            case VIDEO_TYPE: {
-                return setVideoFile(url);
-            }*/
+            case VIDEO_TYPE: {
+                handleVideoFile();
+                break;
+            }
             default: {
                 handleUndefinedFile();
             }
@@ -230,15 +246,10 @@ public class MediaFileDownloader {
         downloadTask.execute();
     }
 
-/*    private Bitmap setVideoFile(final String url) {
-        bmImage.setOnClickListener(v -> {
-            Intent intent = new Intent(parentContext, VideoPlayer.class);
-            intent.putExtra("videoUrl", url);
-            parentContext.startActivity(intent);
-        });
-//        Bitmap img = ThumbnailUtils.createVideoThumbnail(url, MediaStore.Video.Thumbnails.MINI_KIND);
-
-        return Bitmap.createScaledBitmap(BitmapFactory.decodeResource(parentContext.getResources(),
-                R.drawable.file), 100, 100, true);
-    }*/
+    private void handleVideoFile() {
+        VideoComponent videoComponent = new VideoComponent(parentContext, basePath, targetFile, fileUrl, videoUI, this);
+        MediaFileHandler downloadTask = new MediaFileHandler(
+                videoComponent, parentContext, VIDEO_TYPE);
+        downloadTask.execute();
+    }
 }

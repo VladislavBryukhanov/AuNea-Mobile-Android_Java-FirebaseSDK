@@ -22,7 +22,7 @@
                 android:layout_width="100dp"
                 android:layout_height="100dp"
                 android:indeterminate="true"
-                android:indeterminateTint="@color/lightBlue" />
+                android:indeterminateTint="@color/colorAccent" />
 
             <TextView
                 android:id="@+id/textView"

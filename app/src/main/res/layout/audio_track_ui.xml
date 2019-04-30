@@ -9,15 +9,13 @@
     <ImageView
         android:id="@+id/audioButton"
         android:layout_width="45dp"
-        android:layout_height="45dp" />
+        android:layout_height="45dp"
+        android:visibility="gone"/>
 
     <ProgressBar
         android:id="@+id/pbLoading"
         android:layout_width="45dp"
-        android:layout_height="45dp"
-        android:indeterminate="true"
-        android:indeterminateTint="@color/lightBlue"
-        android:visibility="gone" />
+        android:layout_height="45dp" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -39,7 +37,7 @@
             android:layout_height="wrap_content"
             android:paddingLeft="12dp"
             android:paddingRight="12dp"
-            android:text="TextView"
+            android:text="Loading..."
             android:textColor="@color/common_google_signin_btn_text_dark_pressed" />
     </LinearLayout>
 
