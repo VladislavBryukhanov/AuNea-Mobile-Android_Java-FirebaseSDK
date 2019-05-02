@@ -5,8 +5,10 @@ import android.app.AlertDialog;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.media.MediaRecorder;
+import android.media.ThumbnailUtils;
 import android.net.Uri;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
@@ -56,9 +58,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.sql.Timestamp;
 import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.regex.Matcher;
@@ -178,7 +180,7 @@ public class Chat extends AuthGuard implements ChatActions, AuthComplete {
             }
 //                if (!(String.valueOf(etMessage.getText()).trim()).equals("")) {
             Message newMsg = new Message(String.valueOf(etMessage.getText()), null,
-                    new Date(), myUid, toUser.getUid(), null, null, false);
+                    timestampNow(), myUid, toUser.getUid(), null, null, false);
             parseMessageContent(newMsg);
 //                }
         });
@@ -254,18 +256,28 @@ public class Chat extends AuthGuard implements ChatActions, AuthComplete {
 
                 extension = "." + extension.split("/")[1];
                 String fMS = null;
-                if(fileType.equals("image") || fileType.equals("video")) {
+                if (fileType.equals("image")) {
                     fMS = getImageSides(file);
+                } else if (fileType.equals("video")) {
+                    fMS = getVideoSides(file);
                 }
                 final String fileMediaSides = fMS;
 
-                StorageReference riversRef = gsReference.child(myEmail
-                        + "/images/" + java.util.UUID.randomUUID() + extension); //file.getLastPathSegment()
+                StorageReference riversRef = gsReference.child(
+                        myEmail + "/" + fileType + "s/" + java.util.UUID.randomUUID() + extension); //file.getLastPathSegment()
                 UploadTask uploadTask = riversRef.putFile(file);
 
                 uploadTask.addOnSuccessListener(taskSnapshot -> {
-                    Message newMsg = new Message(String.valueOf(etMessage.getText()), taskSnapshot.getDownloadUrl().toString(),
-                            new Date(), myUid, toUser.getUid(), fileType, fileMediaSides, false);
+                    Message newMsg = new Message(
+                        String.valueOf(etMessage.getText()),
+                        taskSnapshot.getDownloadUrl().toString(),
+                        timestampNow(),
+                        myUid,
+                        toUser.getUid(),
+                        fileType,
+                        fileMediaSides,
+                        false
+                    );
                     parseMessageContent(newMsg);
                 });
 
@@ -423,7 +435,7 @@ public class Chat extends AuthGuard implements ChatActions, AuthComplete {
 
         uploadTask.addOnSuccessListener(taskSnapshot -> {
             Message newMsg = new Message(String.valueOf(etMessage.getText()), taskSnapshot.getDownloadUrl().toString(),
-                    new Date(), myUid, toUser.getUid(), "audio", null, false);
+                    timestampNow(), myUid, toUser.getUid(), "audio", null, false);
             parseMessageContent(newMsg);
 
             File fdelete = new File(file.getPath());
@@ -439,9 +451,9 @@ public class Chat extends AuthGuard implements ChatActions, AuthComplete {
         mediaRecorder.stop();
         mediaRecorder.release();
         mediaRecorder = null;
-        File audioCahce = new File(getApplicationContext().getCacheDir()
+        File audioCache = new File(getApplicationContext().getCacheDir()
                 + "AudioCache.3gp");
-        audioCahce.delete();
+        audioCache.delete();
     }
 
     private String getImageSides(Uri uri) {
@@ -451,6 +463,17 @@ public class Chat extends AuthGuard implements ChatActions, AuthComplete {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        return image.getWidth() + "x" + image.getHeight();
+    }
+
+    private String getVideoSides(Uri uri) {
+        String[] filePathColumn = { MediaStore.Images.Media.DATA };
+        Cursor cursor = this.getContentResolver().query(uri, filePathColumn, null, null, null);
+        cursor.moveToFirst();
+        int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
+        String picturePath = cursor.getString(columnIndex);
+        cursor.close();
+        Bitmap image = ThumbnailUtils.createVideoThumbnail(picturePath, MediaStore.Video.Thumbnails.MINI_KIND);
         return image.getWidth() + "x" + image.getHeight();
     }
 
@@ -529,7 +552,7 @@ public class Chat extends AuthGuard implements ChatActions, AuthComplete {
 
         btnGallery.setOnClickListener(v -> {
             Intent intent = new Intent();
-            intent.setType("image/*");
+            intent.setType("image/*,video/*");
             intent.setAction(Intent.ACTION_PICK);
 //            intent.setAction(Intent.ACTION_GET_CONTENT);
             startActivityForResult(Intent.createChooser(
@@ -649,6 +672,11 @@ public class Chat extends AuthGuard implements ChatActions, AuthComplete {
         } else {
             super.onBackPressed();
         }
+    }
+
+    private long timestampNow() {
+        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+        return timestamp.getTime();
     }
 }
 //todo в уведомлениях закрепить уведомление о том что сейчас происходит звонок, по клику а нем звонок завершать или переходить в соответствующий диалог

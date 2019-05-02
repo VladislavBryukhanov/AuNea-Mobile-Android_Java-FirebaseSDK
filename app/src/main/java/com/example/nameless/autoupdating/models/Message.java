@@ -13,20 +13,20 @@ public class Message {
     private String fileUrl;
     private String fileType;
     private String fileMediaSides;
-    private Date dateOfSend;
+    private long timestamp;
     private String who;
     private String to;
     private boolean read;
 
     public Message(){}
 
-    public Message(String content, String fileUrl, Date dateOfSend, String who, String to, String fileType, String fileMediaSides, boolean read) {
+    public Message(String content, String fileUrl, long timestamp, String who, String to, String fileType, String fileMediaSides, boolean read) {
         this.uid = uid;
         this.content = content;
         this.fileUrl = fileUrl;
         this.fileType = fileType;
         this.fileMediaSides = fileMediaSides;
-        this.dateOfSend = dateOfSend;
+        this.timestamp = timestamp;
         this.who = who;
         this.to = to;
         this.read = read;
@@ -36,12 +36,20 @@ public class Message {
         this.uid = uid;
         this.content = msg.content;
         this.fileUrl = msg.fileUrl;
-        this.dateOfSend = msg.dateOfSend;
+        this.timestamp = msg.timestamp;
         this.who = msg.who;
         this.to = msg.to;
         this.fileType = msg.fileType;
         this.fileMediaSides = msg.fileMediaSides;
         this.read = msg.read;
+    }
+
+    public long getTimestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(long timestamp) {
+        this.timestamp = timestamp;
     }
 
     public boolean isRead() {
@@ -90,14 +98,6 @@ public class Message {
 
     public void setFileUrl(String fileUrl) {
         this.fileUrl = fileUrl;
-    }
-
-    public Date getDateOfSend() {
-        return dateOfSend;
-    }
-
-    public void setDateOfSend(Date dateOfSend) {
-        this.dateOfSend = dateOfSend;
     }
 
     public String getWho() {

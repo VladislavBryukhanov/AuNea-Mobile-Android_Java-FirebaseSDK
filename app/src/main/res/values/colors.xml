@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#3F51B5</color>
-    <color name="colorPrimaryDark">#303F9F</color>
-    <color name="colorAccent">#FF4081</color>
+    <color name="colorPrimary">#282828</color>
+    <color name="colorPrimaryDark">#161616</color>
+    <color name="colorAccent">#6B9BC2</color>
     <color name="whiteShadow">#f1f1f1</color>
 
     <color name="solid_dark">#282828</color>
@@ -17,6 +17,7 @@
 
     <color name="incomingMessage">#243443</color>
     <color name="outcomeMessage">#1A567B</color>
+    <color name="unreadMessage">#FFC4C4C4</color>
     <color name="lightBlue">#6B9BC2</color>
 
     <color name="darkRed">#a43931</color>
