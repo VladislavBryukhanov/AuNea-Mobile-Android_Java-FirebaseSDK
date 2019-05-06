@@ -100,7 +100,7 @@ public class DialogsAdapter  extends ArrayAdapter<Dialog> implements Filterable 
             lastMsg.setTextColor(ContextCompat.getColor(ma, messageColor));
 
             Date dateOfSend = new Date(lastMessage.getTimestamp());
-            boolean isToday = dateOfSend.getDay() != new Date().getDay();
+            boolean isToday = dateOfSend.getDay() == new Date().getDay();
             String format = isToday ? "HH:mm:ss" : "dd MMM";
             DateFormat dateFormat = (new SimpleDateFormat(format));
             tvLastMsgTime.setText(dateFormat.format(dateOfSend));

@@ -95,7 +95,7 @@ public class Chat extends AuthGuard implements ChatActions, AuthComplete {
 
     private boolean keyboardListenerLocker = false;
     private boolean dialogFound;
-    private Uri imgUri;
+    private Uri resourceUri;
     private MediaRecorder mediaRecorder;
     private String myUid, myEmail;
 
@@ -248,7 +248,7 @@ public class Chat extends AuthGuard implements ChatActions, AuthComplete {
                 StorageReference gsReference = storage.getReferenceFromUrl(
                         "gs://messager-d15a0.appspot.com");
 
-                Uri file = requestCode == CAMERA_REQUEST ? imgUri : data.getData();
+                Uri file = requestCode == CAMERA_REQUEST ? resourceUri : data.getData();
                 String extension = getContentResolver().getType(file);
                 final String fileType = extension.split("/")[0];
 
@@ -536,27 +536,48 @@ public class Chat extends AuthGuard implements ChatActions, AuthComplete {
         popupWindow.showAtLocation(view, Gravity.CENTER, 0, 0);
         popupView.setOnClickListener(v -> popupWindow.dismiss());
         Button btnCamera = popupView.findViewById(R.id.btnCamera);
+        Button btnVideo = popupView.findViewById(R.id.btnVideo);
         Button btnGallery = popupView.findViewById(R.id.btnGallery);
         Button btnDevice = popupView.findViewById(R.id.btnDevice);
 
         btnCamera.setOnClickListener(v -> {
-            Intent i = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+            Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
             ContentValues values = new ContentValues();
             values.put(MediaStore.Images.Media.TITLE, "New Picture");
             values.put(MediaStore.Images.Media.DESCRIPTION, "From camera");
-            imgUri = getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
-            i.putExtra(MediaStore.EXTRA_OUTPUT, imgUri);
-            startActivityForResult(i, CAMERA_REQUEST);
+
+            resourceUri = getContentResolver()
+                    .insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+
+            intent.putExtra(MediaStore.EXTRA_OUTPUT, resourceUri);
+            startActivityForResult(intent, CAMERA_REQUEST);
+            popupWindow.dismiss();
+        });
+
+        btnVideo.setOnClickListener(v -> {
+            Intent intent = new Intent(MediaStore.ACTION_VIDEO_CAPTURE);
+            ContentValues values = new ContentValues();
+            values.put(MediaStore.Images.Media.TITLE, "New Video");
+            values.put(MediaStore.Images.Media.DESCRIPTION, "From camera");
+
+            resourceUri = getContentResolver()
+                    .insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, values);
+
+            intent.putExtra(MediaStore.EXTRA_OUTPUT, resourceUri);
+            startActivityForResult(intent, CAMERA_REQUEST);
             popupWindow.dismiss();
         });
 
         btnGallery.setOnClickListener(v -> {
-            Intent intent = new Intent();
-            intent.setType("image/*,video/*");
-            intent.setAction(Intent.ACTION_PICK);
+            Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+            intent.setType("image/* video/*");
+
 //            intent.setAction(Intent.ACTION_GET_CONTENT);
-            startActivityForResult(Intent.createChooser(
-                    intent, "Select Picture"), PICKFILE_RESULT_CODE);
+            intent.setAction(Intent.ACTION_PICK);
+            startActivityForResult(
+                Intent.createChooser(intent, "Select Resource"),
+                PICKFILE_RESULT_CODE
+            );
             popupWindow.dismiss();
         });
 
