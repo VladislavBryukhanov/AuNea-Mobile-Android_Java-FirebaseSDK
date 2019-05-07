@@ -10,6 +10,7 @@ import android.graphics.Bitmap;
 import android.media.MediaRecorder;
 import android.media.ThumbnailUtils;
 import android.net.Uri;
+import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.v7.app.ActionBar;
@@ -95,7 +96,7 @@ public class Chat extends AuthGuard implements ChatActions, AuthComplete {
 
     private boolean keyboardListenerLocker = false;
     private boolean dialogFound;
-    private Uri imgUri;
+    private Uri resourceUri;
     private MediaRecorder mediaRecorder;
     private String myUid, myEmail;
 
@@ -248,7 +249,7 @@ public class Chat extends AuthGuard implements ChatActions, AuthComplete {
                 StorageReference gsReference = storage.getReferenceFromUrl(
                         "gs://messager-d15a0.appspot.com");
 
-                Uri file = requestCode == CAMERA_REQUEST ? imgUri : data.getData();
+                Uri file = requestCode == CAMERA_REQUEST ? resourceUri : data.getData();
                 String extension = getContentResolver().getType(file);
                 final String fileType = extension.split("/")[0];
 
@@ -467,14 +468,53 @@ public class Chat extends AuthGuard implements ChatActions, AuthComplete {
     }
 
     private String getVideoSides(Uri uri) {
-        String[] filePathColumn = { MediaStore.Images.Media.DATA };
-        Cursor cursor = this.getContentResolver().query(uri, filePathColumn, null, null, null);
-        cursor.moveToFirst();
-        int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
-        String picturePath = cursor.getString(columnIndex);
-        cursor.close();
+        String picturePath = getPath(uri);
+
         Bitmap image = ThumbnailUtils.createVideoThumbnail(picturePath, MediaStore.Video.Thumbnails.MINI_KIND);
         return image.getWidth() + "x" + image.getHeight();
+    }
+
+    public String getPath(Uri uri) {
+
+        // DocumentProvider
+        if (DocumentsContract.isDocumentUri(this, uri)) {
+
+            final String docId = DocumentsContract.getDocumentId(uri);
+            final String[] split = docId.split(":");
+            final String selection = "_id=?";
+            final String[] selectionArgs = new String[] {
+                split[1]
+            };
+
+            Uri contentUri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
+
+
+            return getDataColumn(contentUri, selection, selectionArgs);
+        }
+        // MediaStore (and general)
+        else if ("content".equalsIgnoreCase(uri.getScheme())) {
+            return getDataColumn(uri, null, null);
+        }
+        // File
+        else if ("file".equalsIgnoreCase(uri.getScheme())) {
+            return uri.getPath();
+        }
+
+        return null;
+    }
+
+    public String getDataColumn(Uri uri, String selection, String[] selectionArgs) {
+
+        String[] projection = { MediaStore.Images.Media.DATA };
+        try (Cursor cursor = this.getContentResolver()
+                .query(uri, projection, selection, selectionArgs, null)) {
+            if (cursor.moveToFirst()) {
+                final int column_index = cursor.getColumnIndexOrThrow(projection[0]);
+                return cursor.getString(column_index);
+            }
+        }
+        Toast.makeText(this, "Can't send video", Toast.LENGTH_LONG).show();
+        return null;
     }
 
 //    public String getRealPathFromURI (Uri uri) {
@@ -536,27 +576,48 @@ public class Chat extends AuthGuard implements ChatActions, AuthComplete {
         popupWindow.showAtLocation(view, Gravity.CENTER, 0, 0);
         popupView.setOnClickListener(v -> popupWindow.dismiss());
         Button btnCamera = popupView.findViewById(R.id.btnCamera);
+        Button btnVideo = popupView.findViewById(R.id.btnVideo);
         Button btnGallery = popupView.findViewById(R.id.btnGallery);
         Button btnDevice = popupView.findViewById(R.id.btnDevice);
 
         btnCamera.setOnClickListener(v -> {
-            Intent i = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+            Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
             ContentValues values = new ContentValues();
             values.put(MediaStore.Images.Media.TITLE, "New Picture");
             values.put(MediaStore.Images.Media.DESCRIPTION, "From camera");
-            imgUri = getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
-            i.putExtra(MediaStore.EXTRA_OUTPUT, imgUri);
-            startActivityForResult(i, CAMERA_REQUEST);
+
+            resourceUri = getContentResolver()
+                    .insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+
+            intent.putExtra(MediaStore.EXTRA_OUTPUT, resourceUri);
+            startActivityForResult(intent, CAMERA_REQUEST);
+            popupWindow.dismiss();
+        });
+
+        btnVideo.setOnClickListener(v -> {
+            Intent intent = new Intent(MediaStore.ACTION_VIDEO_CAPTURE);
+            ContentValues values = new ContentValues();
+            values.put(MediaStore.Images.Media.TITLE, "New Video");
+            values.put(MediaStore.Images.Media.DESCRIPTION, "From camera");
+
+            resourceUri = getContentResolver()
+                    .insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, values);
+
+            intent.putExtra(MediaStore.EXTRA_OUTPUT, resourceUri);
+            startActivityForResult(intent, CAMERA_REQUEST);
             popupWindow.dismiss();
         });
 
         btnGallery.setOnClickListener(v -> {
-            Intent intent = new Intent();
-            intent.setType("image/*,video/*");
-            intent.setAction(Intent.ACTION_PICK);
+            Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+            intent.setType("image/* video/*");
+
 //            intent.setAction(Intent.ACTION_GET_CONTENT);
-            startActivityForResult(Intent.createChooser(
-                    intent, "Select Picture"), PICKFILE_RESULT_CODE);
+            intent.setAction(Intent.ACTION_PICK);
+            startActivityForResult(
+                Intent.createChooser(intent, "Select Resource"),
+                PICKFILE_RESULT_CODE
+            );
             popupWindow.dismiss();
         });
 
