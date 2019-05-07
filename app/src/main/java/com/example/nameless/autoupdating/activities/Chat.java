@@ -10,6 +10,7 @@ import android.graphics.Bitmap;
 import android.media.MediaRecorder;
 import android.media.ThumbnailUtils;
 import android.net.Uri;
+import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.v7.app.ActionBar;
@@ -467,14 +468,53 @@ public class Chat extends AuthGuard implements ChatActions, AuthComplete {
     }
 
     private String getVideoSides(Uri uri) {
-        String[] filePathColumn = { MediaStore.Images.Media.DATA };
-        Cursor cursor = this.getContentResolver().query(uri, filePathColumn, null, null, null);
-        cursor.moveToFirst();
-        int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
-        String picturePath = cursor.getString(columnIndex);
-        cursor.close();
+        String picturePath = getPath(uri);
+
         Bitmap image = ThumbnailUtils.createVideoThumbnail(picturePath, MediaStore.Video.Thumbnails.MINI_KIND);
         return image.getWidth() + "x" + image.getHeight();
+    }
+
+    public String getPath(Uri uri) {
+
+        // DocumentProvider
+        if (DocumentsContract.isDocumentUri(this, uri)) {
+
+            final String docId = DocumentsContract.getDocumentId(uri);
+            final String[] split = docId.split(":");
+            final String selection = "_id=?";
+            final String[] selectionArgs = new String[] {
+                split[1]
+            };
+
+            Uri contentUri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
+
+
+            return getDataColumn(contentUri, selection, selectionArgs);
+        }
+        // MediaStore (and general)
+        else if ("content".equalsIgnoreCase(uri.getScheme())) {
+            return getDataColumn(uri, null, null);
+        }
+        // File
+        else if ("file".equalsIgnoreCase(uri.getScheme())) {
+            return uri.getPath();
+        }
+
+        return null;
+    }
+
+    public String getDataColumn(Uri uri, String selection, String[] selectionArgs) {
+
+        String[] projection = { MediaStore.Images.Media.DATA };
+        try (Cursor cursor = this.getContentResolver()
+                .query(uri, projection, selection, selectionArgs, null)) {
+            if (cursor.moveToFirst()) {
+                final int column_index = cursor.getColumnIndexOrThrow(projection[0]);
+                return cursor.getString(column_index);
+            }
+        }
+        Toast.makeText(this, "Can't send video", Toast.LENGTH_LONG).show();
+        return null;
     }
 
 //    public String getRealPathFromURI (Uri uri) {
