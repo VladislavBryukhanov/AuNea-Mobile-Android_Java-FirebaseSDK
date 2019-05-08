@@ -307,15 +307,15 @@ public class Chat extends AuthGuard implements ChatActions, AuthComplete {
                 dialogsDb.keepSynced(true);
 
                 for(DataSnapshot data : dataSnapshot.getChildren()) {
-                    Iterable<DataSnapshot> speakers = data.child("speakers").getChildren();
-                    speakers.forEach(item -> {
-                        if(item.getValue().equals(toUser.getUid())) {
+                    for(DataSnapshot speaker : data.child("speakers").getChildren()) {
+                        if(speaker.getValue().equals(toUser.getUid())) {
                             dialogId = data.getKey();
                             dialogsRef = dialogsDb.child(dialogId);
                             messagesRef = messagesDb.child(dialogId);
                             dialogFound = true;
+                            break;
                         }
-                    });
+                    }
                 }
 
                 // TODO animation and disabling

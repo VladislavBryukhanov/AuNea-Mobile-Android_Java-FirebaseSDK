@@ -167,21 +167,40 @@ public class DialogListFragment  extends Fragment {
 
             @Override
             public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-                Optional<Dialog> dialogSearch = dialogs.stream().filter(d ->
-                        d.getUid().equals(dataSnapshot.getKey())).findFirst();
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+                    Optional<Dialog> dialogSearch = dialogs
+                            .stream()
+                            .filter(d -> d.getUid().equals(dataSnapshot.getKey()))
+                            .findFirst();
 
-                if (dialogSearch.isPresent()) {
+                    if (dialogSearch.isPresent()) {
 
-                    Dialog newDialog = dialogSearch.get();
-                    int index = dialogs.indexOf(newDialog);
+                        Dialog newDialog = dialogSearch.get();
+                        int index = dialogs.indexOf(newDialog);
 
-                    newDialog.setLastMessage(
-                            dataSnapshot.child("lastMessage").getValue(Message.class));
-                    newDialog.setUnreadCounter(
-                            dataSnapshot.child("unreadCounter").getValue(Integer.class));
+                        newDialog.setLastMessage(
+                                dataSnapshot.child("lastMessage").getValue(Message.class));
+                        newDialog.setUnreadCounter(
+                                dataSnapshot.child("unreadCounter").getValue(Integer.class));
 
-                    dialogs.set(index, newDialog);
-                    adapter.notifyDataSetChanged();
+                        dialogs.set(index, newDialog);
+                        adapter.notifyDataSetChanged();
+                    }
+                } else {
+                    for (Dialog dialog : dialogs) {
+                        if (dialog.getUid().equals(dataSnapshot.getKey())) {
+                            int index = dialogs.indexOf(dialog);
+
+                            dialog.setLastMessage(
+                                    dataSnapshot.child("lastMessage").getValue(Message.class));
+                            dialog.setUnreadCounter(
+                                    dataSnapshot.child("unreadCounter").getValue(Integer.class));
+
+                            dialogs.set(index, dialog);
+                            adapter.notifyDataSetChanged();
+                            return;
+                        }
+                    }
                 }
             }
 
@@ -197,30 +216,57 @@ public class DialogListFragment  extends Fragment {
     }
 
     public void assocDialogWithUser(DataSnapshot dataSnapshot) {
-        Iterable<DataSnapshot> speakers = dataSnapshot.child("speakers").getChildren();
-        speakers.forEach(item -> {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
 
-            Optional<User> userSearch = users.stream().filter(u ->
-                    u.getUid().equals(item.getValue())).findFirst();
+            Iterable<DataSnapshot> speakers = dataSnapshot.child("speakers").getChildren();
 
-            if (userSearch.isPresent()) {
-                User user =  userSearch.get();
+            speakers.forEach(item -> {
+                Optional<User> userSearch = users
+                        .stream()
+                        .filter(u -> u.getUid().equals(item.getValue()))
+                        .findFirst();
 
-                int unreadCounter = dataSnapshot.child("unreadCounter")
-                        .getValue(Integer.class);
+                if (userSearch.isPresent()) {
+                    User user = userSearch.get();
 
-                Message lastMessage = dataSnapshot.child("lastMessage")
-                        .getValue(Message.class);
+                    int unreadCounter = dataSnapshot.child("unreadCounter")
+                            .getValue(Integer.class);
 
-                Dialog dialog = new Dialog(
-                        dataSnapshot.getKey(),
-                        lastMessage,
-                        unreadCounter,
-                        user
-                );
-                dialogs.add(dialog);
+                    Message lastMessage = dataSnapshot.child("lastMessage")
+                            .getValue(Message.class);
+
+                    Dialog dialog = new Dialog(
+                            dataSnapshot.getKey(),
+                            lastMessage,
+                            unreadCounter,
+                            user
+                    );
+                    dialogs.add(dialog);
+                }
+            });
+        } else {
+            for (DataSnapshot speaker : dataSnapshot.child("speakers").getChildren()) {
+
+                for (User user: users) {
+
+                    if (user.getUid().equals(speaker.getValue())) {
+                        int unreadCounter = dataSnapshot.child("unreadCounter")
+                                .getValue(Integer.class);
+
+                        Message lastMessage = dataSnapshot.child("lastMessage")
+                                .getValue(Message.class);
+
+                        Dialog dialog = new Dialog(
+                                dataSnapshot.getKey(),
+                                lastMessage,
+                                unreadCounter,
+                                user
+                        );
+                        dialogs.add(dialog);
+                    }
+                }
             }
-        });
+        }
         adapter.notifyDataSetChanged();
     }
 }

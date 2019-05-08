@@ -38,6 +38,8 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
+import java.util.ArrayList;
+
 public class Authentification extends GlobalMenu implements AuthActions {
 
     private FirebaseDatabase database;
@@ -59,15 +61,22 @@ public class Authentification extends GlobalMenu implements AuthActions {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_auth);
 
-        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this,
-                    new String[]{android.Manifest.permission.INTERNET,
-                            android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                            android.Manifest.permission.RECORD_AUDIO,
-                            android.Manifest.permission.RECEIVE_BOOT_COMPLETED,
-                            Manifest.permission.CAPTURE_AUDIO_OUTPUT}, RC_PERMISSION);
+        String[] requiredPermissions = new String[] {
+                android.Manifest.permission.INTERNET,
+                android.Manifest.permission.ACCESS_FINE_LOCATION,
+                android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                android.Manifest.permission.RECORD_AUDIO,
+                android.Manifest.permission.CAPTURE_AUDIO_OUTPUT };
+        ArrayList<String> permissionRequest = new ArrayList<>();
+
+        for (String permission: requiredPermissions) {
+            if (ActivityCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
+                permissionRequest.add(permission);
+            }
         }
+        ActivityCompat.requestPermissions(this, permissionRequest.toArray(new String[0]), 1);
+        // TODO open Dialog and close app if user denied perms
+
 
         database = FirebaseSingleton.getFirebaseInstanse();
         usersRef = database.getReference("Users");

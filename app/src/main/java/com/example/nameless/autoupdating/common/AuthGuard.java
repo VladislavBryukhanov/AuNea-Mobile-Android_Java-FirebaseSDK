@@ -68,16 +68,22 @@ public class AuthGuard extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        if (ActivityCompat.checkSelfPermission(
-                this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(
-                    this,
-                    new String[] {
-                            android.Manifest.permission.INTERNET,
-                            android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                            android.Manifest.permission.RECORD_AUDIO,
-                            android.Manifest.permission.CAPTURE_AUDIO_OUTPUT }, 1);
+/*
+        String[] requiredPermissions = new String[] {
+                android.Manifest.permission.INTERNET,
+                android.Manifest.permission.ACCESS_FINE_LOCATION,
+                android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                android.Manifest.permission.RECORD_AUDIO,
+                android.Manifest.permission.CAPTURE_AUDIO_OUTPUT };
+        ArrayList<String> permissionRequest = new ArrayList<>();
+
+        for (String permission: requiredPermissions) {
+            if (ActivityCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
+                permissionRequest.add(permission);
+            }
         }
+        ActivityCompat.requestPermissions(this, (String[]) permissionRequest.toArray(), 1);
+*/
 
         database = FirebaseSingleton.getFirebaseInstanse();
         mAuth = FirebaseAuth.getInstance();
